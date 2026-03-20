@@ -26,3 +26,23 @@ processing/Processing/data/*
 
 # R session history
 .Rhistory
+
+# Out-of-scope local notes, reports, and reference materials
+/Friedman_umd_0117E_24463.pdf
+/abstract_versions.org
+/algumas_infos_institucionais.org*
+/diagnostico_checks_2014_2018_2022.md
+/marginalia.org
+/notas_desenvolvimento.org*
+/todo.org*
+/codex_instructions/
+/notes/
+/pdfs/
+/processing/Processing/exploratory/
+/processing/national_party_votes_2018.md
+/r_scripts/readmes/
+/readmes/
+/reporting/
+/reports/
+/scraping/links_wikipedia.md
+/test_scripts/
