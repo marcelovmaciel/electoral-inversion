@@ -1,0 +1,28 @@
+name = "Processing"
+uuid = "bbc8e6fb-2b07-4aaf-ad6f-f958404c17fb"
+version = "0.1.0"
+authors = ["Mvm <marcelovmaciel@gmail.com>"]
+
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+FloatingTableView = "197bc772-8d3f-4a3f-b50f-4eb5086fedbf"
+Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
+Humanize = "7ec9b9c5-1998-51e1-b7fc-fc3590c18259"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+Unicode = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
+
+[compat]
+FloatingTableView = "0.2.0"
+Humanize = "1.0.0"
+Revise = "3.12.3"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

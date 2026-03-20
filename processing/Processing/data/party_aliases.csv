@@ -1,0 +1,111 @@
+alias_norm,canonical,valid_from_year,valid_to_year,notes
+AVANTE,AVANTE,"","",Alias observado nas fontes-alvo.
+CIDADANIA,CIDADANIA,"","",Alias observado nas fontes-alvo.
+CIDADANIA,CIDADANIA,2018,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+CIDADANIA,CIDADANIA,2022,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+DC,DC,"","",Auto: canônico também aparece como alias.
+DEM,DEM,"","",Auto: canônico também aparece como alias.
+DEMOCRACIA CRISTA,DC,2018,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+DEMOCRATAS,DEM,2014,2018,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+MDB,MDB,"","",Auto: canônico também aparece como alias.
+MOVIMENTO DEMOCRATICO BRASILEIRO,MDB,2018,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+NOVO,NOVO,"","",Alias observado nas fontes-alvo.
+PARTIDO COMUNISTA BRASILEIRO,PCB,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO COMUNISTA DO BRASIL,PCdoB,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO DA CAUSA OPERARIA,PCO,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO DA MOBILIZACAO NACIONAL,PMN,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO DA MULHER BRASILEIRA,PMB,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO DA MULHER BRASILEIRA,PMB,2018,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO DA REPUBLICA,PR,2014,2018,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO DA SOCIAL DEMOCRACIA BRASILEIRA,PSDB,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO DEMOCRATICO TRABALHISTA,PDT,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO DO MOVIMENTO DEMOCRATICO BRASILEIRO,PMDB,2014,2014,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO DOS TRABALHADORES,PT,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO ECOLOGICO NACIONAL,PEN,"",2016,Regra histórica condicionada por ano; não aplicar merge global sem year. | Nome extenso com rename histórico; usar janela temporal.
+PARTIDO ECOLOGICO NACIONAL,PATRIOTA,2017,"",Regra histórica condicionada por ano; não aplicar merge global sem year. | Nome extenso com rename histórico; usar janela temporal.
+PARTIDO HUMANISTA DA SOLIDARIEDADE,PHS,2014,2018,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO LIBERAL,PL,2018,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO LIBERAL,PL,2022,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO NOVO,NOVO,2018,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO PATRIA LIVRE,PPL,2014,2018,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO POPULAR SOCIALISTA,PPS,2014,2018,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO PROGRESSISTA,PP,2014,2014,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO PROGRESSISTA,PP,2014,2018,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO RENOVADOR TRABALHISTA BRASILEIRO,PRTB,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO REPUBLICANO BRASILEIRO,PRB,2014,2018,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO REPUBLICANO DA ORDEM SOCIAL,PROS,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO REPUBLICANO PROGRESSISTA,PRP,2014,2018,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO SOCIAL CRISTAO,PSC,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO SOCIAL DEMOCRATA CRISTAO,PSDC,2014,2014,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO SOCIAL DEMOCRATICO,PSD,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO SOCIAL LIBERAL,PSL,2014,2018,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO SOCIALISMO E LIBERDADE,PSOL,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO SOCIALISTA BRASILEIRO,PSB,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO SOCIALISTA DOS TRABALHADORES UNIFICADO,PSTU,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO TRABALHISTA BRASILEIRO,PTB,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO TRABALHISTA CRISTAO,PTC,2014,2018,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO TRABALHISTA DO BRASIL,PT DO B,2014,2014,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO TRABALHISTA NACIONAL,PTN,2014,2014,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PARTIDO VERDE,PV,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PATRI,PATRIOTA,"","",Alias observado nas fontes-alvo.
+PATRIOTA,PATRIOTA,"","",Alias observado nas fontes-alvo.
+PATRIOTA,PATRIOTA,2018,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PC DO B,PCdoB,"","",Alias observado nas fontes-alvo.
+PCB,PCB,"","",Auto: canônico também aparece como alias.
+PCDOB,PCdoB,"","",Alias observado nas fontes-alvo.
+PCO,PCO,"","",Auto: canônico também aparece como alias.
+PDT,PDT,"","",Auto: canônico também aparece como alias.
+PEN,PEN,"",2016,Regra histórica condicionada por ano; não aplicar merge global sem year.
+PEN,PATRIOTA,2017,"",Regra histórica condicionada por ano; não aplicar merge global sem year.
+PHS,PHS,"","",Auto: canônico também aparece como alias.
+PL,PL,"","",Auto: canônico também aparece como alias.
+PMB,PMB,"","",Auto: canônico também aparece como alias.
+PMDB,PMDB,"",2017,Regra histórica condicionada por ano; não aplicar merge global sem year.
+PMDB,MDB,2018,"",Regra histórica condicionada por ano; não aplicar merge global sem year.
+PMN,PMN,"","",Auto: canônico também aparece como alias.
+PODE,PODE,"","",Alias observado nas fontes-alvo.
+PODEMOS,PODE,"","",Alias observado nas fontes-alvo.
+PODEMOS,PODE,2018,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PP,PP,"","",Auto: canônico também aparece como alias.
+PPL,PPL,"","",Auto: canônico também aparece como alias.
+PPS,PPS,"",2018,Regra histórica condicionada por ano; não aplicar merge global sem year.
+PPS,CIDADANIA,2019,"",Regra histórica condicionada por ano; não aplicar merge global sem year.
+PR,PR,"",2018,Regra histórica condicionada por ano; não aplicar merge global sem year.
+PR,PL,2019,"",Regra histórica condicionada por ano; não aplicar merge global sem year.
+PRB,PRB,"",2018,Regra histórica condicionada por ano; não aplicar merge global sem year.
+PRB,REPUBLICANOS,2019,"",Regra histórica condicionada por ano; não aplicar merge global sem year.
+PROGRESSISTAS,PP,"","",Alias observado nas fontes-alvo.
+PROGRESSISTAS,PP,2018,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PROS,PROS,"","",Alias observado nas fontes-alvo.
+PRP,PRP,"","",Auto: canônico também aparece como alias.
+PRTB,PRTB,"","",Auto: canônico também aparece como alias.
+PSB,PSB,"","",Auto: canônico também aparece como alias.
+PSC,PSC,"","",Auto: canônico também aparece como alias.
+PSD,PSD,"","",Auto: canônico também aparece como alias.
+PSDB,PSDB,"","",Auto: canônico também aparece como alias.
+PSDC,PSDC,"","",Auto: canônico também aparece como alias.
+PSL,PSL,"","",Auto: canônico também aparece como alias.
+PSOL,PSOL,"","",Auto: canônico também aparece como alias.
+PSTU,PSTU,"","",Auto: canônico também aparece como alias.
+PT,PT,"","",Auto: canônico também aparece como alias.
+PT DO B,PT DO B,"",2016,Regra histórica condicionada por ano; não aplicar merge global sem year.
+PT DO B,AVANTE,2017,"",Regra histórica condicionada por ano; não aplicar merge global sem year.
+PTB,PTB,"","",Auto: canônico também aparece como alias.
+PTC,PTC,"","",Auto: canônico também aparece como alias.
+PTN,PTN,"",2016,Regra histórica condicionada por ano; não aplicar merge global sem year.
+PTN,PODE,2017,"",Regra histórica condicionada por ano; não aplicar merge global sem year.
+PV,PV,"","",Auto: canônico também aparece como alias.
+REDE,REDE,"","",Alias observado nas fontes-alvo.
+REDE SUSTENTABILIDADE,REDE,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+REP,REPUBLICANOS,"","",Alias observado nas fontes-alvo.
+REPU,REPUBLICANOS,"","",Alias observado nas fontes-alvo.
+REPUBLICANOS,REPUBLICANOS,"","",Alias observado nas fontes-alvo.
+REPUBLICANOS,REPUBLICANOS,2018,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+SD,SOLIDARIEDADE,"","",Alias observado nas fontes-alvo.
+SDD,SOLIDARIEDADE,"","",Alias observado nas fontes-alvo.
+SOLIDARIEDADE,SOLIDARIEDADE,"","",Alias observado nas fontes-alvo.
+SOLIDARIEDADE,SOLIDARIEDADE,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+UNIAO,UNIÃO,"","",Alias observado nas fontes-alvo.
+UNIAO BRASIL,UNIÃO,2022,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+UNIDADE POPULAR,UP,2022,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+UP,UP,"","",Auto: canônico também aparece como alias.

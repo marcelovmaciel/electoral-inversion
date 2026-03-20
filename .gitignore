@@ -1,0 +1,28 @@
+# Local environments and caches
+.venv/
+__pycache__/
+*.pyc
+
+# Local tool state
+.agent-shell/
+.projectile
+
+# Temporary and generated artifacts
+tmp/
+reporting/_tmp/
+scraping/output/
+scrape_classification/output/
+processing/Processing/output/
+processing/Processing/exploratory/out/
+
+# Large local datasets
+/data/
+/votacao_candidato_munzona_2024/
+processing/Processing/data/*
+!processing/Processing/data/party_aliases.csv
+
+# Logs
+*.log
+
+# R session history
+.Rhistory
