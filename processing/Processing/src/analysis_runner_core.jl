@@ -170,6 +170,7 @@ function compute_inversion_tables(seat_differentials::DataFrame;
             seat_differentials;
             coalition_year = coalition_year,
             mandate_id = mandate_id,
+            election_year = y,
         )
         table = normalize_inversion_table(raw_table)
         table[!, :election_year] = fill(y, nrow(table))

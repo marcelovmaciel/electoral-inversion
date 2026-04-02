@@ -119,6 +119,105 @@ NON_ENTRY_TERMS = {
     "decisão judicial",
 }
 
+SOURCE_PARTY_ALIASES = {
+    "REP": "Republicanos",
+    "REPU": "Republicanos",
+    "REPUBLICANOS": "Republicanos",
+    "UNIAO": "UNIÃO",
+    "UNIAO BRASIL": "UNIÃO",
+}
+
+# These are the only multi-party appointment rows currently present in the
+# source tables. The dashboard must not treat them as simultaneous coalition
+# memberships, so each row either resolves to one start-date party from
+# repository evidence or fails closed as unresolved.
+AMBIGUOUS_START_PARTY_RESOLUTIONS = {
+    (
+        "jair_bolsonaro",
+        "Ministério da Agricultura, Pecuária e Abastecimento",
+        "Tereza Cristina",
+        "2019-01-01",
+    ): {
+        "status": "resolved",
+        "method": "repository_evidence",
+        "start_party": "DEM",
+        "confidence": "medium",
+        "evidence": "Resolved to DEM from processing/Processing/data/raw/electionsBR/2018/candidate.csv, the latest pre-posse election record in the repo.",
+    },
+    (
+        "jair_bolsonaro",
+        "Ministério da Mulher, da Família e dos Direitos Humanos",
+        "Damares Alves",
+        "2019-01-01",
+    ): {
+        "status": "unresolved",
+        "method": "insufficient_repository_evidence",
+        "start_party": None,
+        "confidence": "low",
+        "evidence": "Unresolved: the repo only supplies the ambiguous source row and a 2022 candidacy for Republicanos, which does not pin the 2019-01-01 start-date party.",
+    },
+    (
+        "jair_bolsonaro",
+        "Ministério do Desenvolvimento Regional",
+        "Rogério Marinho",
+        "2020-02-11",
+    ): {
+        "status": "resolved",
+        "method": "repository_evidence",
+        "start_party": "PSDB",
+        "confidence": "medium",
+        "evidence": "Resolved to PSDB from processing/Processing/data/raw/electionsBR/2018/candidate.csv, the latest pre-posse election record in the repo.",
+    },
+    (
+        "jair_bolsonaro",
+        "Ministério das Comunicações",
+        "Fábio Faria",
+        "2020-06-17",
+    ): {
+        "status": "resolved",
+        "method": "repository_evidence",
+        "start_party": "PSD",
+        "confidence": "medium",
+        "evidence": "Resolved to PSD from processing/Processing/data/raw/electionsBR/2018/candidate.csv, the latest pre-posse election record in the repo.",
+    },
+    (
+        "jair_bolsonaro",
+        "Ministério do Turismo",
+        "Gilson Machado Neto",
+        "2020-12-09",
+    ): {
+        "status": "unresolved",
+        "method": "insufficient_repository_evidence",
+        "start_party": None,
+        "confidence": "low",
+        "evidence": "Unresolved: the repo only supplies the ambiguous source row and a 2022 candidacy for PL, which does not pin the 2020-12-09 start-date party.",
+    },
+    (
+        "jair_bolsonaro",
+        "Ministério da Cidadania",
+        "João Roma",
+        "2021-02-12",
+    ): {
+        "status": "resolved",
+        "method": "repository_evidence",
+        "start_party": "Republicanos",
+        "confidence": "medium",
+        "evidence": "Resolved to Republicanos from processing/Processing/data/raw/electionsBR/2018/candidate.csv, where João Inácio Ribeiro Roma Neto appears under PRB, the pre-2019 party code that canonicalizes to Republicanos.",
+    },
+    (
+        "jair_bolsonaro",
+        "Ministério da Justiça e Segurança Pública",
+        "Anderson Torres",
+        "2021-03-29",
+    ): {
+        "status": "resolved",
+        "method": "temporal_constraint",
+        "start_party": "PSL",
+        "confidence": "medium",
+        "evidence": "Resolved to PSL because the alternative token UNIÃO is only valid from 2022 onward in processing/Processing/data/party_aliases.csv, so it cannot be the 2021-03-29 start-date party.",
+    },
+}
+
 
 def normalize_space(value):
     return re.sub(r"\s+", " ", value or "").strip()
@@ -345,6 +444,25 @@ def normalize_key(value):
     return normalize_space(value)
 
 
+def canonicalize_party_code(value):
+    token = normalize_space(value)
+    if not token:
+        return token
+    alias_key = normalize_space(strip_accents(token).upper())
+    return SOURCE_PARTY_ALIASES.get(alias_key, token)
+
+
+def dedupe_preserve_order(values):
+    seen = set()
+    ordered = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        ordered.append(value)
+    return ordered
+
+
 def extract_date_candidates(value):
     normalized = normalize_space(strip_accents(value).lower())
     normalized = re.sub(r"\bno dia\b", "", normalized)
@@ -422,8 +540,53 @@ def parse_party_field(raw_party):
             continue
         if norm.startswith("sem partido"):
             continue
-        parties.append(chunk)
-    return raw_party, parties
+        parties.append(canonicalize_party_code(chunk))
+    return raw_party, dedupe_preserve_order(parties)
+
+
+def party_resolution_key(record):
+    return (
+        record["source_page_id"],
+        record["ministerio_canonical"],
+        record["person_name_canonical"],
+        iso_or_none(record["start_date"]),
+    )
+
+
+def resolve_start_party(record):
+    party_codes = dedupe_preserve_order(record.get("party_codes") or [])
+    if not party_codes:
+        return {
+            "status": "missing",
+            "method": "no_party_code",
+            "start_party": None,
+            "candidate_parties": [],
+            "confidence": record["confidence"],
+            "evidence": "Source row does not expose a usable party code.",
+        }
+    if len(party_codes) == 1:
+        return {
+            "status": "resolved",
+            "method": "single_raw_party",
+            "start_party": party_codes[0],
+            "candidate_parties": party_codes,
+            "confidence": "high",
+            "evidence": "Source row exposes a single party code.",
+        }
+    resolution = AMBIGUOUS_START_PARTY_RESOLUTIONS.get(party_resolution_key(record))
+    if resolution is None:
+        return {
+            "status": "unresolved",
+            "method": "insufficient_repository_evidence",
+            "start_party": None,
+            "candidate_parties": party_codes,
+            "confidence": "low",
+            "evidence": "Unresolved: repository evidence does not pin a single start-date party for this multi-party row.",
+        }
+    return {
+        **resolution,
+        "candidate_parties": party_codes,
+    }
 
 
 def infer_source_scope(page_label, table_index, rows):
@@ -754,6 +917,16 @@ def extract_records():
                     "flags": flags,
                     "source_snippet": snippet,
                 }
+                record["party_resolution"] = resolve_start_party(record)
+                resolution = record["party_resolution"]
+                if resolution["status"] == "unresolved":
+                    record["needs_review"] = True
+                    record["confidence"] = "low"
+                    record["notes"].append(resolution["evidence"])
+                elif resolution["status"] == "resolved" and resolution["confidence"] == "medium" and record["confidence"] == "high":
+                    record["confidence"] = "medium"
+                    if resolution["method"] != "single_raw_party":
+                        record["notes"].append(resolution["evidence"])
                 records.append(record)
     return page_outputs, records
 
@@ -985,8 +1158,11 @@ def build_dashboard_appointments(records, party_periods):
             intervals = []
 
         for interval in intervals:
+            resolution = record["party_resolution"]
+            resolved_party = resolution["start_party"] if resolution["status"] == "resolved" and resolution["start_party"] else None
+            effective_party_codes = [resolved_party] if resolved_party else []
             matches = coalition_matches(
-                record["party_codes"],
+                effective_party_codes,
                 interval["start"],
                 interval["end"],
                 party_periods,
@@ -1000,7 +1176,10 @@ def build_dashboard_appointments(records, party_periods):
                     "person": record["person_name_canonical"],
                     "person_raw": record["person_name_raw"],
                     "party": record["party"],
-                    "party_codes": record["party_codes"],
+                    "party_codes": effective_party_codes,
+                    "party_candidates": resolution.get("candidate_parties", record["party_codes"]),
+                    "resolved_party": resolved_party,
+                    "party_resolution": resolution,
                     "start": iso_or_none(interval["start"]),
                     "end": iso_or_none(interval["end"]),
                     "actual_start": iso_or_none(actual_start),

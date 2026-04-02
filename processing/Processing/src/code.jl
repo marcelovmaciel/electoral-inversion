@@ -5,6 +5,10 @@
 const RAW_ROOT = Ref("../data/raw/electionsBR")
 const COALITION_PATH = Ref("../scraping/output/partidos_por_periodo.json")
 
+_cabinet_to_election_crosswalk_path() = abspath(
+    joinpath(@__DIR__, "..", "data", "cabinet_to_election_party_crosswalk.csv"),
+)
+
 """
     set_root!(path::AbstractString)
 
@@ -688,6 +692,92 @@ function coalitions_by_period_raw(; path::AbstractString = get_coalition_path())
     return out
 end
 
+"""
+    load_cabinet_to_election_crosswalk(path = _cabinet_to_election_crosswalk_path()) -> DataFrame
+
+Carrega a tabela explícita que traduz partidos do objeto ministerial
+(verdade em ano de gabinete) para o espaço de identidade do ano eleitoral
+usado nos joins de inversão.
+
+Uma linha pode expandir para vários partidos eleitorais. Exemplo:
+`UNIÃO` em joins com a eleição de 2018 vira `DEM` + `PSL`.
+"""
+function load_cabinet_to_election_crosswalk(
+    path::AbstractString = _cabinet_to_election_crosswalk_path(),
+)::DataFrame
+    isfile(path) || error("Crosswalk gabinete->eleição não encontrado: $path")
+    df = CSV.read(path, DataFrame)
+
+    for col in (:election_year, :cabinet_party, :election_party)
+        hasproperty(df, col) || error("Crosswalk gabinete->eleição sem coluna obrigatória: $col")
+    end
+
+    if !hasproperty(df, :notes)
+        df[!, :notes] = fill("", nrow(df))
+    end
+
+    df[!, :election_year] = Int.(df.election_year)
+    df[!, :cabinet_party] = strip.(String.(coalesce.(df.cabinet_party, "")))
+    df[!, :election_party] = strip.(String.(coalesce.(df.election_party, "")))
+    df[!, :notes] = String.(coalesce.(df.notes, ""))
+    df[!, :cabinet_party_norm] = normalize_party.(df.cabinet_party)
+    df[!, :election_party] = [
+        canonical_party(row.election_party; year = row.election_year, strict = true)
+        for row in eachrow(df)
+    ]
+
+    filter!(row -> !isempty(row.cabinet_party_norm) && !isempty(row.election_party), df)
+    return df
+end
+
+"""
+    cabinet_parties_in_election_space(cabinet_parties; election_year, valid_election_parties, crosswalk_path)
+
+Traduz partidos do gabinete para o espaço de identidade do ano eleitoral
+antes do join com votos/cadeiras.
+
+Regra explícita:
+- se houver linha no crosswalk para `cabinet_party × election_year`, usa ela;
+- sem linha explícita, a identidade só é aceita se o mesmo rótulo já existir
+  no DataFrame eleitoral alvo;
+- se nenhuma dessas duas condições valer, o join falha fechado e pede edição
+  explícita do crosswalk.
+"""
+function cabinet_parties_in_election_space(
+    cabinet_parties::AbstractVector{<:AbstractString};
+    election_year::Integer,
+    valid_election_parties::AbstractVector{<:AbstractString},
+    crosswalk_path::AbstractString = _cabinet_to_election_crosswalk_path(),
+)::Vector{String}
+    crosswalk = load_cabinet_to_election_crosswalk(crosswalk_path)
+    valid_labels = Set(String.(valid_election_parties))
+
+    translated = String[]
+    for cabinet_party in String.(cabinet_parties)
+        cabinet_norm = normalize_party(cabinet_party)
+        mask = [
+            crosswalk.election_year[i] == Int(election_year) &&
+            crosswalk.cabinet_party_norm[i] == cabinet_norm
+            for i in eachindex(crosswalk.election_year)
+        ]
+        mapped = sort(unique(String.(crosswalk.election_party[mask])))
+        if !isempty(mapped)
+            append!(translated, mapped)
+            continue
+        end
+        if cabinet_party in valid_labels
+            push!(translated, String(cabinet_party))
+            continue
+        end
+        error(
+            "Partido do gabinete sem crosswalk compatível com a eleição de $(Int(election_year)): " *
+            "'$(String(cabinet_party))'. Edite: $(crosswalk_path)",
+        )
+    end
+
+    return sort(unique(translated))
+end
+
 function coalition_metrics(
     df::DataFrame,
     parties;
@@ -752,21 +842,38 @@ function cabinet_coalition_metrics_for_year(
     seat_differentials::DataFrame;
     coalition_year::Integer,
     mandate_id,
+    election_year::Union{Nothing,Integer} = nothing,
     path::AbstractString = get_coalition_path(),
+    crosswalk_path::AbstractString = _cabinet_to_election_crosswalk_path(),
     vote_col::Symbol = :valid_total,
     seat_col::Symbol = :total_seats,
     party_col::Symbol = :SG_PARTIDO,
 )::DataFrame
+    mandate_election_year = election_year_for_mandate_id(String(mandate_id))
+    if election_year !== nothing && Int(election_year) != mandate_election_year
+        error(
+            "cabinet_coalition_metrics_for_year: election_year=$(Int(election_year)) " *
+            "incompatível com mandate_id=$(String(mandate_id)) (esperado=$(mandate_election_year)).",
+        )
+    end
+    election_year_resolved = election_year === nothing ? mandate_election_year : Int(election_year)
     periods_raw = coalitions_by_period_raw(; path = path)
     periods_year = coalitions_by_year(periods_raw, Int(coalition_year); path = path)
     keys_sorted = sort(collect(keys(periods_year)); by = period_sort_key)
+    valid_election_parties = String.(seat_differentials[!, party_col])
 
     rows = NamedTuple[]
     for period in keys_sorted
-        canonicals = canonicalize_parties(periods_year[period]; year = Int(coalition_year), strict = true)
+        cabinet_canonicals = canonicalize_parties(periods_year[period]; year = Int(coalition_year), strict = true)
+        join_parties = cabinet_parties_in_election_space(
+            cabinet_canonicals;
+            election_year = election_year_resolved,
+            valid_election_parties = valid_election_parties,
+            crosswalk_path = crosswalk_path,
+        )
         metrics = coalition_metrics(
             seat_differentials,
-            canonicals;
+            join_parties;
             vote_col = vote_col,
             seat_col = seat_col,
             party_col = party_col,
@@ -784,7 +891,9 @@ function cabinet_inversion_table_for_year(
     seat_differentials::DataFrame;
     coalition_year::Integer,
     mandate_id,
+    election_year::Union{Nothing,Integer} = nothing,
     path::AbstractString = get_coalition_path(),
+    crosswalk_path::AbstractString = _cabinet_to_election_crosswalk_path(),
     vote_col::Symbol = :valid_total,
     seat_col::Symbol = :total_seats,
     party_col::Symbol = :SG_PARTIDO,
@@ -793,7 +902,9 @@ function cabinet_inversion_table_for_year(
         seat_differentials;
         coalition_year = coalition_year,
         mandate_id = mandate_id,
+        election_year = election_year,
         path = path,
+        crosswalk_path = crosswalk_path,
         vote_col = vote_col,
         seat_col = seat_col,
         party_col = party_col,

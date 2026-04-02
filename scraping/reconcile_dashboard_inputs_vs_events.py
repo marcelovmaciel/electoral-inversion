@@ -621,6 +621,11 @@ def compare_party_turnover(
             near_boundary = distance is not None and distance <= NEAR_BOUNDARY_DAYS
 
             if previous_codes and current_codes:
+                period_parties = set(current_period["parties"])
+                previous_in_coalition = bool(previous_codes.intersection(period_parties))
+                current_in_coalition = bool(current_codes.intersection(period_parties))
+                if previous_in_coalition == current_in_coalition:
+                    continue
                 issue_type = "date_boundary_problem" if near_boundary else "coalition_period_too_coarse"
                 severity = "likely_over_coarsening"
                 reason = (
@@ -628,6 +633,10 @@ def compare_party_turnover(
                     f"{current_period['start'].isoformat()} to {current_period['end'].isoformat()}, but the event timeline shows "
                     f"`{ministry}` moving from {previous.get('party') or 'unknown party'} to {current.get('party') or 'unknown party'} on "
                     f"{change_date.isoformat()}."
+                )
+                reason += (
+                    f" Relative to the stored party set, the handoff crosses coalition membership "
+                    f"({previous_in_coalition} -> {current_in_coalition})."
                 )
                 if near_boundary and boundary is not None:
                     reason += f" The handoff is {distance} day(s) away from old boundary {boundary.isoformat()}, which suggests the period cut may be too coarse."

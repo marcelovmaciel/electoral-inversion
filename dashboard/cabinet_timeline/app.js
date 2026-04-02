@@ -3,6 +3,7 @@ const DATA_URL = "../../scraping/output/cabinet_timeline_dashboard.json";
 const state = {
   data: null,
   selected: null,
+  appointmentPartyIndex: new Map(),
   filters: {
     government: "all",
     ministry: "all",
@@ -39,6 +40,7 @@ async function init() {
       throw new Error(`HTTP ${response.status}`);
     }
     state.data = await response.json();
+    state.appointmentPartyIndex = buildAppointmentPartyIndex(state.data.appointments || []);
     elements.metaLine.textContent = `Generated ${state.data.generated_at} from ${state.data.source_pages.length} Wikipedia parses.`;
     setupControls();
     render();
@@ -144,7 +146,7 @@ function filterEvents(events) {
     if (state.filters.ministry !== "all" && event.ministerio_canonical !== state.filters.ministry) {
       return false;
     }
-    if (state.filters.party !== "all" && !extractEventPartyCodes(event.party).includes(state.filters.party)) {
+    if (state.filters.party !== "all" && !eventPartySummary(event).filterCodes.includes(state.filters.party)) {
       return false;
     }
     if (!passesReviewFilter(event.needs_review)) {
@@ -329,11 +331,20 @@ function renderDetails(selection) {
         ${detailRow("Window interval", `${appointment.start} -> ${appointment.end || "present"}`)}
         ${detailRow("Actual interval", `${appointment.actual_start || "unknown"} -> ${appointment.actual_end || "present"}`)}
         ${detailRow("Government", appointment.government_id)}
-        ${detailRow("Party", appointment.party || "—")}
+        ${detailRow("Party", appointmentPartySummary(appointment).display)}
+        ${detailRow("Party status", appointmentPartySummary(appointment).statusLabel)}
         ${detailRow("Type", appointment.appointment_type)}
         ${detailRow("Confidence", appointment.confidence)}
         ${detailRow("Needs review", appointment.needs_review ? "yes" : "no")}
         ${detailRow("Source section", appointment.source_section || "—")}
+      </div>
+      <div class="details-block">
+        <span class="detail-label">Source party field</span>
+        <span class="detail-value">${escapeHtml(appointment.party || "—")}</span>
+      </div>
+      <div class="details-block">
+        <span class="detail-label">Party evidence</span>
+        <span class="detail-value">${escapeHtml((appointment.party_resolution || {}).evidence || "—")}</span>
       </div>
       <div class="details-block">
         <span class="detail-label">Source snippet</span>
@@ -341,7 +352,7 @@ function renderDetails(selection) {
       </div>
       <div class="details-block">
         <span class="detail-label">Coalition matches</span>
-        <span class="detail-value">${renderCoalitionMatches(appointment.coalition_matches)}</span>
+        <span class="detail-value">${renderCoalitionMatches(appointment.coalition_matches, appointmentPartySummary(appointment))}</span>
       </div>
       <div class="details-block">
         <span class="detail-label">Notes</span>
@@ -356,6 +367,7 @@ function renderDetails(selection) {
   }
 
   const event = selection.item;
+  const partySummary = eventPartySummary(event);
   elements.detailsPanel.innerHTML = `
     <div class="details-block">
       <span class="detail-label">Event</span>
@@ -366,7 +378,8 @@ function renderDetails(selection) {
       ${detailRow("Date", event.event_date_start || event.event_date_display || "unknown")}
       ${detailRow("Government", event.government_id || "—")}
       ${detailRow("Person", event.person_name_canonical || event.person_name_raw || "—")}
-      ${detailRow("Party", event.party || "—")}
+      ${detailRow("Party", partySummary.display)}
+      ${detailRow("Party status", partySummary.statusLabel)}
       ${detailRow("Role classification", event.role_classification || "—")}
       ${detailRow("Confidence", event.confidence)}
       ${detailRow("Needs review", event.needs_review ? "yes" : "no")}
@@ -375,6 +388,14 @@ function renderDetails(selection) {
         "Source locator",
         `table ${event.source_locator.table_index}, row ${event.source_locator.row_index}, ${event.source_locator.column_name}`,
       )}
+    </div>
+    <div class="details-block">
+      <span class="detail-label">Source party field</span>
+      <span class="detail-value">${escapeHtml(event.party || "—")}</span>
+    </div>
+    <div class="details-block">
+      <span class="detail-label">Party evidence</span>
+      <span class="detail-value">${escapeHtml(partySummary.evidence)}</span>
     </div>
     <div class="details-block">
       <span class="detail-label">Source snippet</span>
@@ -391,7 +412,13 @@ function renderDetails(selection) {
   `;
 }
 
-function renderCoalitionMatches(matches) {
+function renderCoalitionMatches(matches, partySummary = null) {
+  if (partySummary && partySummary.status === "unresolved") {
+    return "Unresolved party; coalition match intentionally withheld.";
+  }
+  if (partySummary && partySummary.status === "missing") {
+    return "No usable party code; coalition match not attempted.";
+  }
   if (!matches || !matches.length) {
     return "No explicit coalition party match for this interval.";
   }
@@ -412,6 +439,102 @@ function detailRow(label, value) {
 function confidencePill(confidence, needsReview) {
   const reviewPill = needsReview ? '<span class="pill review">review</span>' : "";
   return `<span class="pill ${escapeHtml(confidence || "medium")}">${escapeHtml(confidence || "medium")}</span> ${reviewPill}`;
+}
+
+function buildAppointmentPartyIndex(appointments) {
+  const index = new Map();
+  for (const appointment of appointments) {
+    const person = appointment.person || appointment.person_raw;
+    const ministry = appointment.ministry;
+    const government = appointment.government_id;
+    if (government && ministry && person && appointment.start) {
+      index.set(eventPartyKey(government, ministry, appointment.start, person), appointment);
+    }
+    if (government && ministry && person && appointment.end) {
+      index.set(eventPartyKey(government, ministry, appointment.end, person), appointment);
+    }
+  }
+  return index;
+}
+
+function eventPartyKey(governmentId, ministry, dateValue, person) {
+  return [governmentId || "", ministry || "", dateValue || "", person || ""].join("|");
+}
+
+function appointmentPartySummary(appointment) {
+  const resolution = appointment.party_resolution || {};
+  const candidates = appointment.party_candidates || resolution.candidate_parties || [];
+  if (resolution.status === "resolved" && appointment.resolved_party) {
+    return {
+      status: "resolved",
+      statusLabel: "resolved",
+      display: appointment.resolved_party,
+      filterCodes: appointment.party_codes || [appointment.resolved_party],
+      evidence: resolution.evidence || "Resolved from repository evidence.",
+    };
+  }
+  if (resolution.status === "unresolved") {
+    const label = candidates.length ? candidates.join(" / ") : appointment.party || "unknown";
+    return {
+      status: "unresolved",
+      statusLabel: "unresolved",
+      display: `Unresolved (${label})`,
+      filterCodes: [],
+      evidence: resolution.evidence || "Repository evidence was insufficient to fix one start-date party.",
+    };
+  }
+  if (resolution.status === "missing" || !(appointment.party_codes || []).length) {
+    return {
+      status: "missing",
+      statusLabel: "missing",
+      display: "No party code",
+      filterCodes: [],
+      evidence: resolution.evidence || "Source row does not expose a usable party code.",
+    };
+  }
+  return {
+    status: "raw",
+    statusLabel: "raw",
+    display: appointment.party || "—",
+    filterCodes: appointment.party_codes || [],
+    evidence: resolution.evidence || "Using raw dashboard data.",
+  };
+}
+
+function eventPartySummary(event) {
+  const person = event.person_name_canonical || event.person_name_raw;
+  const linkedAppointment = state.appointmentPartyIndex.get(
+    eventPartyKey(event.government_id, event.ministerio_canonical, event.event_date_start, person),
+  );
+  if (linkedAppointment) {
+    return appointmentPartySummary(linkedAppointment);
+  }
+  const rawCodes = extractEventPartyCodes(event.party);
+  if (rawCodes.length === 1 && !event.needs_review) {
+    return {
+      status: "raw",
+      statusLabel: "raw",
+      display: rawCodes[0],
+      filterCodes: rawCodes,
+      evidence: event.notes || "Using the single raw party token from the event row.",
+    };
+  }
+  if (rawCodes.length > 1 || event.needs_review) {
+    return {
+      status: "unresolved",
+      statusLabel: "unresolved",
+      display: `Unresolved (${event.party || "multiple candidates"})`,
+      filterCodes: [],
+      evidence: event.notes || "Raw event party string is ambiguous and is not treated as settled coalition truth.",
+    };
+  }
+  return {
+    status: "missing",
+    statusLabel: "missing",
+    display: "No party code",
+    filterCodes: [],
+    evidence: event.notes || "Event row does not expose a usable party code.",
+  };
 }
 
 function computeDomain(appointments) {
