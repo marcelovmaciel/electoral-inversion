@@ -9,7 +9,8 @@ Use exactly one identity pipeline: `normalize_party` + `canonical_party` backed 
 
 ## Files removed
 - `processing/Processing/src/party_name_canonicalization.jl`
-- `processing/Processing/src/party_lineage.jl`
+- `processing/Processing/src/party_lineage.jl `
+ 
 - `processing/Processing/src/party_lineage_audit.jl`
 - `processing/Processing/src/explore.jl`
 - `processing/Processing/src/coalition_strict.jl`

@@ -61,6 +61,11 @@ function vote_kwargs_for_year(year::Integer)
     y = validate_supported_year(year)
     if y == 2014
         return (nom_col = "QT_VOTOS_NOMINAIS", leg_col = "QT_VOTOS_LEGENDA")
+    elseif y in (2018, 2022)
+        return (
+            nom_col = "QT_VOTOS_NOMINAIS_VALIDOS",
+            leg_col = "QT_TOTAL_VOTOS_LEG_VALIDOS",
+        )
     end
     return NamedTuple()
 end

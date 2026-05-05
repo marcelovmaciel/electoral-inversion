@@ -123,11 +123,11 @@ end
 
 function first_in_df(df::DataFrame, cands::Vector{String})
     nn = names(df)
-    ss = uppercase.(strip.(String.(nn)))
-    want = Set(uppercase.(strip.(c)) for c in cands)
-    for (i, s) in pairs(ss)
-        if s in want
-            return nn[i]
+    by_name = Dict(uppercase(strip(String(n))) => n for n in nn)
+    for c in cands
+        key = uppercase(strip(String(c)))
+        if haskey(by_name, key)
+            return by_name[key]
         end
     end
     return nothing
@@ -147,6 +147,10 @@ function detect_vote_cols(df::DataFrame;
     leg = pick_col(df, leg_col)
     total = pick_col(df, total_col)
 
+    if total_col !== nothing && total !== nothing && nom === nothing && leg === nothing
+        return (nothing, nothing, total, :total)
+    end
+
     if nom === nothing
         nom = first_in_df(df, ["QT_VOTOS_NOMINAIS_VALIDOS",
                                "QT_VOTOS_NOMINAIS"])
@@ -158,19 +162,16 @@ function detect_vote_cols(df::DataFrame;
                                "QT_VOTOS_LEGENDA"])
     end
 
-    if total === nothing
-        total = first_in_df(df, ["QT_VOTOS",
-                                 "TOTAL_VOTOS",
-                                 "QT_VOTOS_VALIDOS"])
+    if nom !== nothing && leg !== nothing
+        scheme =
+            uppercase(strip(String(nom))) == "QT_VOTOS_NOMINAIS_VALIDOS" &&
+            uppercase(strip(String(leg))) == "QT_TOTAL_VOTOS_LEG_VALIDOS" ?
+            :nominal_valid_plus_total_valid_legend :
+            :nominal_plus_legend_legacy
+        return (nom, leg, total, scheme)
     end
 
-    use_components = (nom !== nothing || leg !== nothing)
-    if use_components && (nom === nothing || leg === nothing) && total !== nothing
-        return (nothing, nothing, total, :total)
-    end
-
-    scheme = use_components ? :components : :total
-    return (nom, leg, total, scheme)
+    error("Could not identify party vote components for party_mun_zone.")
 end
 
 # =============================================================================
@@ -219,8 +220,8 @@ end
 
 function pmz_party_votes(year::Integer;
     cargo::AbstractString = "DEPUTADO FEDERAL",
-    nom_col       = "QT_VOTOS_NOMINAIS_VALIDOS",
-    leg_col       = "QT_TOTAL_VOTOS_LEG_VALIDOS",
+    nom_col       = nothing,
+    leg_col       = nothing,
     total_col     = nothing,
 )
     P = pmz_df(year; cargo=cargo)
@@ -256,8 +257,8 @@ end
 
 function national_party_valid_votes(year::Integer;
     cargo::AbstractString = "DEPUTADO FEDERAL",
-    nom_col       = "QT_VOTOS_NOMINAIS_VALIDOS",
-    leg_col       = "QT_TOTAL_VOTOS_LEG_VALIDOS",
+    nom_col       = nothing,
+    leg_col       = nothing,
     total_col     = nothing,
 )
     pv = pmz_party_votes(year;
