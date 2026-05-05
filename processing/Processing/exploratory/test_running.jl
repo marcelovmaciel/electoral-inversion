@@ -92,6 +92,37 @@ function show_table(df::DataFrame)
     println()
 end
 
+function mandate_coalitions_for_election(coalition_periods_raw, election_year, coalition_json_path)
+    window = ARC.mandate_window(election_year)
+    return Processing.coalition_periods_overlapping_window(
+        coalition_periods_raw,
+        window.start_date,
+        window.end_date;
+        path = coalition_json_path,
+    )
+end
+
+function print_mandate_linkage_diagnostic(election_year, coalition_periods, coalition_windows)
+    window = ARC.mandate_window(election_year)
+    rows = NamedTuple[]
+
+    for period in sort(collect(keys(coalition_periods)); by = Processing.period_sort_key)
+        period_start, period_end = coalition_windows[period]
+        selected_by_date_overlap = period_start <= window.end_date && period_end >= window.start_date
+        push!(rows, (
+            election_year = election_year,
+            mandate_window = string(window.start_date, " to ", window.end_date),
+            period = period,
+            period_start = period_start,
+            period_end = period_end,
+            selected_by_date_overlap = selected_by_date_overlap,
+            raw_parties = join(coalition_periods[period], ", "),
+        ))
+    end
+
+    show_table(DataFrame(rows))
+end
+
 function majority_status(vote_majority::Bool, seat_majority::Bool)
     if vote_majority && seat_majority
         return "votes+seats"
@@ -449,26 +480,19 @@ println("Loading coalition data...")
 coalition_periods_raw = Processing.coalitions_by_period_raw(; path = coalition_json_path)
 coalition_windows = Processing.coalition_period_windows(; path = coalition_json_path)
 
-coalitions_2015 = Processing.coalitions_by_year(coalition_periods_raw, 2015; path = coalition_json_path)
-coalitions_2016 = Processing.coalitions_by_year(coalition_periods_raw, 2016; path = coalition_json_path)
-coalitions_2017 = Processing.coalitions_by_year(coalition_periods_raw, 2017; path = coalition_json_path)
-coalitions_2018_mandate = Processing.coalitions_by_year(coalition_periods_raw, 2018; path = coalition_json_path)
-coalitions_for_2014_election = merge(coalitions_2015, coalitions_2016, coalitions_2017, coalitions_2018_mandate)
-
-coalitions_2019 = Processing.coalitions_by_year(coalition_periods_raw, 2019; path = coalition_json_path)
-coalitions_2020 = Processing.coalitions_by_year(coalition_periods_raw, 2020; path = coalition_json_path)
-coalitions_2021 = Processing.coalitions_by_year(coalition_periods_raw, 2021; path = coalition_json_path)
-coalitions_2022_mandate = Processing.coalitions_by_year(coalition_periods_raw, 2022; path = coalition_json_path)
-coalitions_for_2018_election = merge(coalitions_2019, coalitions_2020, coalitions_2021, coalitions_2022_mandate)
-
-coalitions_2023 = Processing.coalitions_by_year(coalition_periods_raw, 2023; path = coalition_json_path)
-coalitions_2024 = Processing.coalitions_by_year(coalition_periods_raw, 2024; path = coalition_json_path)
-coalitions_2025 = Processing.coalitions_by_year(coalition_periods_raw, 2025; path = coalition_json_path)
-coalitions_for_2022_election = merge(coalitions_2023, coalitions_2024, coalitions_2025)
+coalitions_for_2014_election = mandate_coalitions_for_election(coalition_periods_raw, 2014, coalition_json_path)
+coalitions_for_2018_election = mandate_coalitions_for_election(coalition_periods_raw, 2018, coalition_json_path)
+coalitions_for_2022_election = mandate_coalitions_for_election(coalition_periods_raw, 2022, coalition_json_path)
 
 println("Coalition periods linked to the 2014 election: ", join(sort(collect(keys(coalitions_for_2014_election)); by = Processing.period_sort_key), ", "))
 println("Coalition periods linked to the 2018 election: ", join(sort(collect(keys(coalitions_for_2018_election)); by = Processing.period_sort_key), ", "))
 println("Coalition periods linked to the 2022 election: ", join(sort(collect(keys(coalitions_for_2022_election)); by = Processing.period_sort_key), ", "))
+
+print_block("COALITION PERIOD LINKAGE DIAGNOSTIC")
+println("Mandate linkage uses inclusive date-window overlap, not YYYY label-prefix selection.")
+print_mandate_linkage_diagnostic(2014, coalitions_for_2014_election, coalition_windows)
+print_mandate_linkage_diagnostic(2018, coalitions_for_2018_election, coalition_windows)
+print_mandate_linkage_diagnostic(2022, coalitions_for_2022_election, coalition_windows)
 
 party_summary_2014 = Processing.party_summary(votes_2014, seats_2014; expected_total_seats = expected_total_seats)
 party_summary_2018 = Processing.party_summary(votes_2018, seats_2018; expected_total_seats = expected_total_seats)

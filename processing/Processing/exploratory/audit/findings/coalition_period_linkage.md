@@ -126,3 +126,23 @@ Including mandate-end years in full is a substantive research choice. The script
 - Add a diagnostic print that distinguishes period label year from actual `period_start` / `period_end` overlap years.
 - For the 2022-election analysis, decide whether `2025.1` should be included now even though it begins on `2025-12-24` and extends into `2026-03-19`.
 - Document explicitly why the mandate-end year is included in full for 2014 and 2018, and why the available 2025 portion is included for 2022.
+
+## Resolution
+
+The ambiguous helper was replaced with explicit selectors:
+
+- `coalition_periods_by_label_year(periods, year)` keeps the old direct `YYYY.` prefix semantics only for diagnostics about period labels.
+- `coalition_periods_overlapping_year(periods, year; path=...)` selects all periods active during a calendar year by inclusive date overlap.
+- `coalition_periods_overlapping_window(periods, start_date, end_date; path=...)` selects all periods active during a mandate or other substantive window by inclusive date overlap.
+
+The old `coalitions_by_year` behavior mixed label-year selection with fallback overlap. That made `2025.1` look like "the 2025 coalition" even though `2023.2` runs from `2023-09-13` through `2025-12-23` and covers almost all of 2025. Under the new date-overlap semantics, calendar year 2025 correctly includes both `2023.2` and `2025.1`.
+
+Main mandate linkage now uses mandate-window overlap instead of merging label-year buckets. The configured analysis windows are:
+
+- 2014 election: `2015-01-01` through `2018-12-31`.
+- 2018 election: `2019-01-01` through `2022-12-31`.
+- 2022 election: `2023-01-01` through `2025-12-31`.
+
+The 2022 endpoint remains `2025-12-31` because the available analysis is explicitly covering 2023-2025; the code comments flag that this should not be silently extended through 2026. The election-level 2022 period set remains `2023.1`, `2023.2`, and `2025.1`, but the interpretation is now date-correct: these are the periods overlapping the 2023-2025 mandate window, not simply periods with labels in 2023, 2024, or 2025.
+
+`test_running.jl` now prints a compact linkage diagnostic with election year, mandate window, selected period key, `period_start`, `period_end`, date-overlap selection status, and raw party list before canonicalization. A deterministic test was added in `processing/Processing/test/test_coalition_period_linkage.jl`, and a read-only audit script was added at `processing/Processing/exploratory/audit/check_coalition_period_linkage.jl`, to pin the 2025 calendar-year edge case, the 2022 mandate period set, duplicate-free mandate selection, and start-date/key sorting used in the audit.

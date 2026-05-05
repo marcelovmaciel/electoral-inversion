@@ -7,7 +7,9 @@ using Statistics
 
 using ..Processing: get_coalition_path,
                     get_root,
-                    cabinet_inversion_table_for_year,
+                    cabinet_coalition_metrics_for_periods,
+                    coalitions_by_period_raw,
+                    coalition_periods_overlapping_window,
                     coalition_period_windows,
                     mandate_id_for_election_year,
                     get_agg_party_seats,
@@ -43,6 +45,15 @@ const COALITION_YEARS_BY_ELECTION = Dict(
     2022 => [2023, 2024, 2025],
 )
 
+const MANDATE_WINDOWS_BY_ELECTION = Dict(
+    2014 => (start_date = Date(2015, 1, 1), end_date = Date(2018, 12, 31)),
+    2018 => (start_date = Date(2019, 1, 1), end_date = Date(2022, 12, 31)),
+    # The current analysis intentionally covers the available 2023-2025 portion
+    # of the 2022 mandate. Do not extend this through 2026 without making that
+    # a deliberate analysis configuration.
+    2022 => (start_date = Date(2023, 1, 1), end_date = Date(2025, 12, 31)),
+)
+
 function validate_supported_year(year::Integer)
     if !(year in SUPPORTED_YEARS)
         error("Ano não suportado: $year. Anos válidos: $(join(SUPPORTED_YEARS, ", ")).")
@@ -72,8 +83,11 @@ end
 
 function mandate_window(election_year::Integer)
     y = validate_supported_year(election_year)
-    start_date = Date(y + 1, 1, 1)
-    end_date = Date(y + 4, 12, 31)
+    window = get(MANDATE_WINDOWS_BY_ELECTION, y) do
+        error("Janela de mandato ausente para $y.")
+    end
+    start_date = window.start_date
+    end_date = window.end_date
     total_days = Dates.value(end_date - start_date) + 1
     return (start_date = start_date, end_date = end_date, total_days = total_days)
 end
@@ -166,28 +180,44 @@ function compute_inversion_tables(seat_differentials::DataFrame;
                                   year::Integer,
                                   coalition_years::Union{Nothing,AbstractVector{<:Integer}} = nothing)
     y = validate_supported_year(year)
-    years = coalition_years === nothing ? coalition_years_for_election(y) : Int.(coalition_years)
     mandate_id = mandate_id_for_election_year(y)
+    periods_raw = coalitions_by_period_raw()
 
-    tables = DataFrame[]
-    for coalition_year in years
-        raw_table = cabinet_inversion_table_for_year(
-            seat_differentials;
-            coalition_year = coalition_year,
-            mandate_id = mandate_id,
-            election_year = y,
+    periods = if coalition_years === nothing
+        mandate = mandate_window(y)
+        coalition_periods_overlapping_window(
+            periods_raw,
+            mandate.start_date,
+            mandate.end_date,
         )
-        table = normalize_inversion_table(raw_table)
-        table[!, :election_year] = fill(y, nrow(table))
-        table[!, :coalition_year] = fill(coalition_year, nrow(table))
-        push!(tables, table)
+    else
+        selected = Dict{String,Vector{String}}()
+        for coalition_year in Int.(coalition_years)
+            merge!(
+                selected,
+                coalition_periods_overlapping_window(
+                    periods_raw,
+                    Date(coalition_year, 1, 1),
+                    Date(coalition_year, 12, 31),
+                ),
+            )
+        end
+        selected
     end
 
-    if isempty(tables)
-        return empty_inversion_table()
+    raw_table = cabinet_coalition_metrics_for_periods(
+        seat_differentials,
+        periods;
+        mandate_id = mandate_id,
+        election_year = y,
+    )
+    out = normalize_inversion_table(raw_table)
+    out[!, :election_year] = fill(y, nrow(out))
+    if hasproperty(raw_table, :coalition_year)
+        out[!, :coalition_year] = Int.(raw_table.coalition_year)
+    else
+        out[!, :coalition_year] = Int[]
     end
-
-    out = vcat(tables...)
     sort!(out, [:coalition_year, :coalition_col])
     return out
 end

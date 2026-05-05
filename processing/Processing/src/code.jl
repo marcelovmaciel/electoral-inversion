@@ -493,7 +493,7 @@ function parse_coalition_date(value, period::AbstractString, field::AbstractStri
     s = strip(String(value))
     isempty(s) && return nothing
     d = tryparse(Date, s)
-    d === nothing && error("coalitions_by_year: data inválida em $period.$field: '$s'")
+    d === nothing && error("parse_coalition_date: data inválida em $period.$field: '$s'")
     return d
 end
 
@@ -509,17 +509,57 @@ function coalition_period_windows(; path::AbstractString = get_coalition_path())
     return windows
 end
 
-function coalitions_by_year(periods::Dict{String,Vector{String}}, year::Integer;
-                            path::AbstractString = get_coalition_path())
-    prefix = string(year) * "."
-    direct = Dict(k => v for (k, v) in periods if startswith(k, prefix))
-    !isempty(direct) && return direct
+"""
+    coalition_periods_by_label_year(periods, year)
 
-    year_start = Date(year, 1, 1)
-    year_end = Date(year, 12, 31)
+Seleciona períodos cuja chave começa com `YYYY.`. Esta é uma semântica de
+rótulo, útil para diagnósticos sobre a nomenclatura do JSON, mas não significa
+que os períodos selecionados sejam todos os períodos ativos durante o ano civil.
+
+Exemplo importante: `2025.1` começa em 2025-12-24, enquanto `2023.2` vai até
+2025-12-23. Logo, a seleção por rótulo para 2025 retorna `2025.1`, mas não a
+coalizão que cobriu quase todo o ano de 2025.
+"""
+function coalition_periods_by_label_year(periods::Dict{String,Vector{String}}, year::Integer)
+    prefix = string(year) * "."
+    period_keys = sort([k for k in keys(periods) if startswith(k, prefix)]; by = period_sort_key)
+    return Dict(k => periods[k] for k in period_keys)
+end
+
+"""
+    overlaps_window(period_start, period_end, window_start, window_end)
+
+Retorna `true` quando dois intervalos fechados de datas se sobrepõem. A
+semântica é inclusiva: um período se sobrepõe a uma janela se
+`period_start <= window_end && period_end >= window_start`.
+"""
+function overlaps_window(period_start::Date, period_end::Date, window_start::Date, window_end::Date)
+    return period_start <= window_end && period_end >= window_start
+end
+
+"""
+    coalition_periods_overlapping_window(periods, window_start, window_end; path=get_coalition_path())
+
+Seleciona os períodos de coalizão ativos em qualquer parte da janela fechada
+`window_start` a `window_end`, usando `data_inicio` e `data_fim` do JSON. Esta
+é a semântica correta para análises de mandato ou de ano civil, porque o rótulo
+do período (`YYYY.k`) indica quando o período começou, não todos os anos em que
+ele esteve ativo.
+
+No caso de 2025, esta seleção inclui `2023.2` e `2025.1`: `2023.2` cobre quase
+todo 2025, e `2025.1` começa apenas em 2025-12-24.
+"""
+function coalition_periods_overlapping_window(periods::Dict{String,Vector{String}},
+                                              window_start::Date,
+                                              window_end::Date;
+                                              path::AbstractString = get_coalition_path())
+    window_end < window_start && error(
+        "coalition_periods_overlapping_window: intervalo inválido ($window_start > $window_end).",
+    )
+
     windows = coalition_period_windows(; path=path)
 
-    overlap = Dict{String,Vector{String}}()
+    selected = Pair{String,Vector{String}}[]
     bounds = Tuple{Date,Date}[]
     missing_dates = String[]
 
@@ -534,33 +574,50 @@ function coalitions_by_year(periods::Dict{String,Vector{String}}, year::Integer;
             push!(missing_dates, period)
             continue
         end
-        end_date < start_date && error("coalitions_by_year: intervalo inválido em $period ($start_date > $end_date).")
+        end_date < start_date && error("coalition_periods_overlapping_window: intervalo inválido em $period ($start_date > $end_date).")
 
         push!(bounds, (start_date, end_date))
-        if start_date <= year_end && end_date >= year_start
-            overlap[period] = parties
+        if overlaps_window(start_date, end_date, window_start, window_end)
+            push!(selected, period => parties)
         end
-    end
-
-    if !isempty(overlap)
-        @info "coalitions_by_year: ano $year sem chave YYYY.k; retornando período(s) de continuidade que atravessam o ano."
-        return overlap
     end
 
     if isempty(bounds) || !isempty(missing_dates)
         sample_vec = sort(unique(missing_dates))
         sample = isempty(sample_vec) ? "nenhum período com datas válidas" :
                  join(sample_vec[1:min(length(sample_vec), 5)], ", ")
-        error("coalitions_by_year: dados insuficientes para filtrar o ano $year (faltam datas em: $sample).")
+        error("coalition_periods_overlapping_window: dados insuficientes para filtrar a janela $window_start a $window_end (faltam datas em: $sample).")
     end
 
     min_year = Dates.year(minimum(first.(bounds)))
     max_year = Dates.year(maximum(last.(bounds)))
-    if min_year <= year <= max_year
-        error("coalitions_by_year: nenhum período cobre $year, mas a série cobre $min_year-$max_year; verifique o parser/dados.")
+    if min_year <= Dates.year(window_end) && Dates.year(window_start) <= max_year && isempty(selected)
+        error("coalition_periods_overlapping_window: nenhum período cobre a janela $window_start a $window_end, mas a série cobre $min_year-$max_year; verifique o parser/dados.")
     end
 
-    return Dict{String,Vector{String}}()
+    sort!(selected, by = p -> begin
+        start_date, _ = windows[p.first]
+        (start_date::Date, period_sort_key(p.first))
+    end)
+    return Dict(selected)
+end
+
+"""
+    coalition_periods_overlapping_year(periods, year; path=get_coalition_path())
+
+Seleciona, por sobreposição inclusiva de datas, todos os períodos ativos em
+qualquer parte do ano civil `year`. Use esta função para análises por ano civil;
+use `coalition_periods_by_label_year` apenas quando a pergunta for sobre o ano
+codificado no rótulo da chave.
+"""
+function coalition_periods_overlapping_year(periods::Dict{String,Vector{String}}, year::Integer;
+                                            path::AbstractString = get_coalition_path())
+    return coalition_periods_overlapping_window(
+        periods,
+        Date(year, 1, 1),
+        Date(year, 12, 31);
+        path = path,
+    )
 end
 
 
@@ -642,7 +699,7 @@ function coalition_table_periods(df::DataFrame;
 
     periods = coalitions_by_period(; path=path)
     if year !== nothing
-        periods = coalitions_by_year(periods, year; path=path)
+        periods = coalition_periods_overlapping_year(periods, year; path=path)
     end
 
     period_keys = sort(collect(Base.keys(periods)); by=period_sort_key)
@@ -850,22 +907,50 @@ function cabinet_coalition_metrics_for_year(
     seat_col::Symbol = :total_seats,
     party_col::Symbol = :SG_PARTIDO,
 )::DataFrame
+    periods_raw = coalitions_by_period_raw(; path = path)
+    periods_year = coalition_periods_overlapping_year(periods_raw, Int(coalition_year); path = path)
+    return cabinet_coalition_metrics_for_periods(
+        seat_differentials,
+        periods_year;
+        mandate_id = mandate_id,
+        election_year = election_year,
+        path = path,
+        crosswalk_path = crosswalk_path,
+        vote_col = vote_col,
+        seat_col = seat_col,
+        party_col = party_col,
+    )
+end
+
+function cabinet_coalition_metrics_for_periods(
+    seat_differentials::DataFrame,
+    periods::Dict{String,Vector{String}};
+    mandate_id,
+    election_year::Union{Nothing,Integer} = nothing,
+    path::AbstractString = get_coalition_path(),
+    crosswalk_path::AbstractString = _cabinet_to_election_crosswalk_path(),
+    vote_col::Symbol = :valid_total,
+    seat_col::Symbol = :total_seats,
+    party_col::Symbol = :SG_PARTIDO,
+)::DataFrame
     mandate_election_year = election_year_for_mandate_id(String(mandate_id))
     if election_year !== nothing && Int(election_year) != mandate_election_year
         error(
-            "cabinet_coalition_metrics_for_year: election_year=$(Int(election_year)) " *
+            "cabinet_coalition_metrics_for_periods: election_year=$(Int(election_year)) " *
             "incompatível com mandate_id=$(String(mandate_id)) (esperado=$(mandate_election_year)).",
         )
     end
     election_year_resolved = election_year === nothing ? mandate_election_year : Int(election_year)
-    periods_raw = coalitions_by_period_raw(; path = path)
-    periods_year = coalitions_by_year(periods_raw, Int(coalition_year); path = path)
-    keys_sorted = sort(collect(keys(periods_year)); by = period_sort_key)
+    keys_sorted = sort(collect(keys(periods)); by = period_sort_key)
     valid_election_parties = String.(seat_differentials[!, party_col])
 
     rows = NamedTuple[]
     for period in keys_sorted
-        cabinet_canonicals = canonicalize_parties(periods_year[period]; year = Int(coalition_year), strict = true)
+        period_year = tryparse(Int, first(split(period, ".")))
+        period_year === nothing && error(
+            "cabinet_coalition_metrics_for_periods: não foi possível inferir ano do período $period.",
+        )
+        cabinet_canonicals = canonicalize_parties(periods[period]; year = period_year, strict = true)
         join_parties = cabinet_parties_in_election_space(
             cabinet_canonicals;
             election_year = election_year_resolved,
@@ -882,7 +967,7 @@ function cabinet_coalition_metrics_for_year(
             mandate_id = mandate_id,
             coalition_source = :cabinet,
         )
-        push!(rows, merge(metrics, (coalition_year = Int(coalition_year), coalition_col = String(period))))
+        push!(rows, merge(metrics, (coalition_year = period_year, coalition_col = String(period))))
     end
 
     return DataFrame(rows)
