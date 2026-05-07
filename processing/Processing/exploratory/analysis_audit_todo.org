@@ -144,13 +144,13 @@ These questions are worth answering before treating the output as a substantive 
 * Refactor candidates / next code changes
 Several risks visible in the script come from local overrides and repeated logic. Even if the current run succeeds, those are prime targets for cleanup.
 
-- [ ] Move durable identity fixes out of =test_running.jl= and into shared alias or crosswalk data where possible.
-- [ ] Add a preflight check that all required files exist before any heavy analysis begins.
-- [ ] Add diagnostics that print raw -> normalized -> canonical party mappings for votes, seats, coalitions, and ideology inputs.
-- [ ] Add a consistency check comparing component votes against total votes when both are available.
-- [ ] Make the cabinet-to-election translation step report expansions and passthroughs explicitly.
-- [ ] Consider making =expected_total_seats= configurable or validated from metadata instead of hard-coding 513.
-- [ ] Reduce repeated year-specific print blocks by iterating through years and emitting the same diagnostics systematically.
+- [x] Move durable identity fixes out of =test_running.jl= and into shared alias or crosswalk data where possible.
+- [x] Add a preflight check that all required files exist before any heavy analysis begins.
+- [x] Add diagnostics that print raw -> normalized -> canonical party mappings for votes, seats, coalitions, and ideology inputs.
+- [x] Add a consistency check comparing component votes against total votes when both are available.
+- [x] Make the cabinet-to-election translation step report expansions and passthroughs explicitly.
+- [x] Consider making =expected_total_seats= configurable or validated from metadata instead of hard-coding 513.
+- [x] Reduce repeated year-specific print blocks by iterating through years and emitting the same diagnostics systematically.
 
 * Likely failure modes to investigate first
 These are the most plausible substantive problems visible from the script design. Investigate them before spending time on fine-grained interpretation of any inversion result.

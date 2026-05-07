@@ -25,3 +25,14 @@
 :org-remark-original-text: problem found.
 :CATEGORY: concept
 :END:
+
+** problem found for interpretation, not arithmetic
+:PROPERTIES:
+:org-remark-id: edef7abe
+:org-remark-label: red
+:CATEGORY: concept
+:org-remark-beg: 15405
+:org-remark-end: 15453
+:org-remark-link: [[file:AUDIT.md::128]]
+:org-remark-original-text: problem found for interpretation, not arithmetic
+:END:

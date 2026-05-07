@@ -1,5 +1,7 @@
 alias_norm,canonical,valid_from_year,valid_to_year,notes
 AVANTE,AVANTE,"","",Alias observado nas fontes-alvo.
+AGIR,AGIR,2022,"",Alias observado em fonte eleitoral/ideológica de 2022.
+CDD,CIDADANIA,2022,"",Abreviação observada na fonte de classificação ideológica de 2025 usada para a eleição de 2022.
 CIDADANIA,CIDADANIA,"","",Alias observado nas fontes-alvo.
 CIDADANIA,CIDADANIA,2018,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
 CIDADANIA,CIDADANIA,2022,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
@@ -48,7 +50,8 @@ PARTIDO TRABALHISTA DO BRASIL,PT DO B,2014,2014,Nome extenso (NM_PARTIDO) mapead
 PARTIDO TRABALHISTA NACIONAL,PTN,2014,2014,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
 PARTIDO VERDE,PV,2014,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
 PATRI,PATRIOTA,"","",Alias observado nas fontes-alvo.
-PATRIOTA,PATRIOTA,"","",Alias observado nas fontes-alvo.
+PATRIOTA,PATRIOTA,2017,"",Alias observado nas fontes-alvo após rename histórico de PEN.
+PATRIOTA,PEN,2014,2014,Forma observada em arquivo eleitoral de 2014 que precisa entrar no espaço eleitoral histórico PEN.
 PATRIOTA,PATRIOTA,2018,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
 PC DO B,PCdoB,"","",Alias observado nas fontes-alvo.
 PCB,PCB,"","",Auto: canônico também aparece como alias.
@@ -76,6 +79,7 @@ PRB,PRB,"",2018,Regra histórica condicionada por ano; não aplicar merge global
 PRB,REPUBLICANOS,2019,"",Regra histórica condicionada por ano; não aplicar merge global sem year.
 PROGRESSISTAS,PP,"","",Alias observado nas fontes-alvo.
 PROGRESSISTAS,PP,2018,2022,Nome extenso (NM_PARTIDO) mapeado para sigla/canônico.
+PROGRE,PP,2022,"",Abreviação observada na fonte de classificação ideológica de 2025 usada para a eleição de 2022.
 PROS,PROS,"","",Alias observado nas fontes-alvo.
 PRP,PRP,"","",Auto: canônico também aparece como alias.
 PRTB,PRTB,"","",Auto: canônico também aparece como alias.
