@@ -446,6 +446,163 @@ function party_summary(votes::DataFrame,
     return df
 end
 
+function _majority_status(vote_majority::Bool, seat_majority::Bool)
+    if vote_majority && seat_majority
+        return "votes+seats"
+    elseif seat_majority
+        return "seats_only"
+    elseif vote_majority
+        return "votes_only"
+    else
+        return "neither"
+    end
+end
+
+function _require_columns(df::DataFrame, cols::Vector{Symbol}, df_name::AbstractString)
+    missing_cols = [col for col in cols if !(col in propertynames(df))]
+    isempty(missing_cols) || error(
+        "$(df_name) is missing required column(s): $(join(String.(missing_cols), ", ")).",
+    )
+    return nothing
+end
+
+function _duplicate_values(df::DataFrame, col::Symbol)
+    counts = combine(groupby(DataFrame(value = String.(df[!, col])), :value), nrow => :n)
+    return String.(counts.value[counts.n .> 1])
+end
+
+"""
+    ideological_interval_coalitions(summary_df::DataFrame, ideology_df::DataFrame; tie_policy::Symbol = :error)
+
+Enumerate every no-gap ideologically contiguous coalition implied by
+`ideology_df.ordinal_position`, using `summary_df.valid_total` and
+`summary_df.total_seats` for arithmetic.
+"""
+function ideological_interval_coalitions(
+    summary_df::DataFrame,
+    ideology_df::DataFrame;
+    tie_policy::Symbol = :error,
+)
+    tie_policy == :error || error("Unsupported tie_policy $(tie_policy). Only :error is implemented.")
+
+    _require_columns(summary_df, [:SG_PARTIDO, :valid_total, :total_seats], "summary_df")
+    _require_columns(ideology_df, [:SG_PARTIDO, :ordinal_position], "ideology_df")
+
+    summary_dupes = _duplicate_values(summary_df, :SG_PARTIDO)
+    isempty(summary_dupes) || error("summary_df has duplicate SG_PARTIDO values: $(join(summary_dupes, ", ")).")
+
+    ideology_dupes = _duplicate_values(ideology_df, :SG_PARTIDO)
+    isempty(ideology_dupes) || error("ideology_df has duplicate SG_PARTIDO values: $(join(ideology_dupes, ", ")).")
+
+    ordered = innerjoin(
+        select(ideology_df, :SG_PARTIDO, :ordinal_position),
+        select(summary_df, :SG_PARTIDO, :valid_total, :total_seats),
+        on = :SG_PARTIDO,
+    )
+
+    summary_parties = sort(String.(summary_df.SG_PARTIDO))
+    ordered_parties = sort(String.(ordered.SG_PARTIDO))
+    summary_parties == ordered_parties || error(
+        "Every party in summary_df must appear exactly once in ideology_df before interval coalitions are meaningful. " *
+        "Missing ideology coverage for: $(join(setdiff(summary_parties, ordered_parties), ", ")).",
+    )
+
+    ordinal_counts = combine(groupby(ordered, :ordinal_position), nrow => :n)
+    if any(ordinal_counts.n .> 1)
+        duplicated_positions = ordinal_counts.ordinal_position[ordinal_counts.n .> 1]
+        error(
+            "Duplicate ideology ordinal_position value(s) found: $(join(string.(duplicated_positions), ", ")). " *
+            "Resolve tied ideological positions before interval coalitions are meaningful; tied positions cannot be " *
+            "silently sorted by party name.",
+        )
+    end
+
+    sort!(ordered, :ordinal_position)
+
+    votes = Int.(round.(ordered.valid_total))
+    seats_raw = ordered.total_seats
+    seats = Int.(round.(seats_raw))
+    all(Float64.(seats_raw) .== Float64.(seats)) || error("total_seats must be integer-valued for every party.")
+
+    total_votes = sum(votes)
+    total_seats_raw = sum(seats_raw)
+    total_seats = sum(seats)
+    total_votes > 0 || error("Total votes must be positive.")
+    total_seats > 0 || error("Total seats must be positive.")
+    Float64(total_seats_raw) == Float64(total_seats) || error("total_seats must be integer-valued after summing.")
+
+    parties = String.(ordered.SG_PARTIDO)
+    n = nrow(ordered)
+    vote_prefix = vcat(0, cumsum(votes))
+    seat_prefix = vcat(0, cumsum(seats))
+    first_majority_end = fill(0, n)
+
+    for i in 1:n
+        for j in i:n
+            coalition_seats = seat_prefix[j + 1] - seat_prefix[i]
+            if coalition_seats > total_seats / 2
+                first_majority_end[i] = j
+                break
+            end
+        end
+    end
+
+    rows = NamedTuple[]
+    for i in 1:n
+        for j in i:n
+            coalition_votes = vote_prefix[j + 1] - vote_prefix[i]
+            coalition_seats = seat_prefix[j + 1] - seat_prefix[i]
+            vote_share = coalition_votes / total_votes
+            seat_share = coalition_seats / total_seats
+            quota = vote_share * total_seats
+            seat_diff = coalition_seats - quota
+            vote_majority = vote_share > 0.5
+            seat_majority = coalition_seats > total_seats / 2
+            weak_inversion = seat_majority && !vote_majority
+            strict_inversion = seat_majority && coalition_votes < total_votes / 2
+            vote_tie_seat_majority = seat_majority && coalition_votes == total_votes / 2
+            minimal_seat_majority =
+                seat_majority &&
+                (i == j || coalition_seats - seats[i] <= total_seats / 2) &&
+                (i == j || coalition_seats - seats[j] <= total_seats / 2)
+            complement_votes = total_votes - coalition_votes
+            complement_seats = total_seats - coalition_seats
+
+            push!(rows, (
+                start_index = Int(i),
+                end_index = Int(j),
+                start_party = parties[i],
+                end_party = parties[j],
+                n_parties = Int(j - i + 1),
+                parties = join(parties[i:j], ", "),
+                votes = Int(coalition_votes),
+                vote_share = Float64(vote_share),
+                seats = Int(coalition_seats),
+                seat_share = Float64(seat_share),
+                quota = Float64(quota),
+                seat_diff = Float64(seat_diff),
+                vote_majority = Bool(vote_majority),
+                seat_majority = Bool(seat_majority),
+                majority_status = _majority_status(vote_majority, seat_majority),
+                weak_inversion = Bool(weak_inversion),
+                strict_inversion = Bool(strict_inversion),
+                vote_tie_seat_majority = Bool(vote_tie_seat_majority),
+                minimal_seat_majority = Bool(minimal_seat_majority),
+                minimal_inversion = Bool(weak_inversion && minimal_seat_majority),
+                complement_votes = Int(complement_votes),
+                complement_vote_share = Float64(complement_votes / total_votes),
+                complement_seats = Int(complement_seats),
+                complement_seat_share = Float64(complement_seats / total_seats),
+                old_sweep_equivalent = Bool(first_majority_end[i] == j),
+            ))
+        end
+    end
+
+    result = DataFrame(rows)
+    @assert nrow(result) == n * (n + 1) ÷ 2
+    return result
+end
+
 
 # =============================================================================
 # Coalition periods (ministerial base)

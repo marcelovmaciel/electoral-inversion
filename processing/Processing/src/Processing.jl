@@ -7,7 +7,8 @@ export normalize_party,
        canonicalize_parties,
        load_party_classification,
        canonicalize_party_classification!,
-       classification_minimal
+       classification_minimal,
+       ideological_interval_coalitions
 
 include("PartyNames.jl")
 include("party_classification_2023.jl")

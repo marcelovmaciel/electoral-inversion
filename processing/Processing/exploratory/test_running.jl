@@ -668,7 +668,7 @@ function build_ideology_order(year, summary_df, classification_2023, classificat
     return ideology_df
 end
 
-function build_ideology_sweep_table(summary_df::DataFrame, ideology_df::DataFrame)
+function build_ideology_sweep_table_legacy(summary_df::DataFrame, ideology_df::DataFrame)
     ordered = innerjoin(
         ideology_df,
         select(summary_df, :SG_PARTIDO, :valid_total, :total_seats),
@@ -721,6 +721,58 @@ function build_ideology_sweep_table(summary_df::DataFrame, ideology_df::DataFram
             candidate_inversion = candidate_inversion,
             reached_seat_majority = seat_majority,
             note = seat_majority ? "first seat majority" : "never reaches seat majority",
+        ))
+    end
+
+    return DataFrame(rows)
+end
+
+function compare_legacy_sweep_to_intervals(legacy_sweep_table::DataFrame, interval_table::DataFrame)
+    rows = NamedTuple[]
+    reached = legacy_sweep_table[legacy_sweep_table.reached_seat_majority .== true, :]
+
+    for legacy_row in eachrow(reached)
+        matches = interval_table[
+            (interval_table.start_party .== legacy_row.start_party) .&
+            (interval_table.old_sweep_equivalent .== true),
+            :,
+        ]
+
+        matched_exactly = false
+        interval_end_party = missing
+        interval_parties = missing
+        interval_votes = missing
+        interval_seats = missing
+        interval_weak_inversion = missing
+
+        if nrow(matches) == 1
+            match_row = first(eachrow(matches))
+            interval_end_party = match_row.end_party
+            interval_parties = match_row.parties
+            interval_votes = match_row.votes
+            interval_seats = match_row.seats
+            interval_weak_inversion = match_row.weak_inversion
+            matched_exactly =
+                legacy_row.end_party == match_row.end_party &&
+                legacy_row.parties == match_row.parties &&
+                legacy_row.votes == match_row.votes &&
+                legacy_row.seats == match_row.seats &&
+                legacy_row.candidate_inversion == match_row.weak_inversion
+        end
+
+        push!(rows, (
+            start_party = legacy_row.start_party,
+            legacy_end_party = legacy_row.end_party,
+            interval_end_party = interval_end_party,
+            legacy_parties = legacy_row.parties,
+            interval_parties = interval_parties,
+            legacy_votes = legacy_row.votes,
+            interval_votes = interval_votes,
+            legacy_seats = legacy_row.seats,
+            interval_seats = interval_seats,
+            legacy_candidate_inversion = legacy_row.candidate_inversion,
+            interval_weak_inversion = interval_weak_inversion,
+            matched_exactly = matched_exactly,
         ))
     end
 
@@ -821,6 +873,11 @@ party_result_tables = DataFrame[]
 observed_result_tables = DataFrame[]
 ideology_order_result_tables = DataFrame[]
 ideology_sweep_result_tables = DataFrame[]
+ideology_interval_result_tables = DataFrame[]
+ideology_interval_minimal_majority_result_tables = DataFrame[]
+ideology_interval_inversion_result_tables = DataFrame[]
+ideology_interval_minimal_inversion_result_tables = DataFrame[]
+ideology_interval_old_sweep_comparison_tables = DataFrame[]
 
 for year in analysis_years
     summary_df = sort(copy(loaded[year].summary), :seat_diff, rev = true)
@@ -871,7 +928,7 @@ for year in analysis_years
     show_table(observed_display_table)
 
     println()
-    println("C. Minimal ideology-based coalitions, sweeping left to right")
+    println("C. Ideology-contiguous coalitions: all no-gap intervals")
     ideology_df = build_ideology_order(year, summary_df, classification_2023, classification_2025)
     println("Ideology source used for $(year): ", first(ideology_df.ideology_source))
 
@@ -889,12 +946,23 @@ for year in analysis_years
     println("Ordered parties from left to right:")
     show_table(select(ideology_order_table, Not(:election_year)))
 
-    println("Sweep rule used below: start at each party and stop at the first seat majority.")
-    ideology_sweep_table = build_ideology_sweep_table(summary_df, ideology_df)
-    ideology_sweep_table[!, :election_year] = fill(year, nrow(ideology_sweep_table))
-    push!(ideology_sweep_result_tables, ideology_sweep_table)
-    ideology_sweep_display_table = select(
-        ideology_sweep_table,
+    interval_table = Processing.ideological_interval_coalitions(summary_df, ideology_df)
+    interval_table[!, :election_year] = fill(year, nrow(interval_table))
+    push!(ideology_interval_result_tables, interval_table)
+
+    minimal_majority_table = interval_table[interval_table.minimal_seat_majority .== true, :]
+    weak_inversion_table = interval_table[interval_table.weak_inversion .== true, :]
+    minimal_inversion_table = interval_table[interval_table.minimal_inversion .== true, :]
+
+    push!(ideology_interval_minimal_majority_result_tables, minimal_majority_table)
+    push!(ideology_interval_inversion_result_tables, weak_inversion_table)
+    push!(ideology_interval_minimal_inversion_result_tables, minimal_inversion_table)
+
+    println("Minimal seat-majority intervals:")
+    show_table(select(
+        minimal_majority_table,
+        :start_index,
+        :end_index,
         :start_party,
         :end_party,
         :parties,
@@ -906,11 +974,66 @@ for year in analysis_years
         :vote_majority,
         :seat_majority,
         :majority_status,
-        :candidate_inversion,
-        :reached_seat_majority,
-        :note,
-    )
-    show_table(ideology_sweep_display_table)
+        :weak_inversion,
+    ))
+
+    println("Weak inversions:")
+    show_table(select(
+        weak_inversion_table,
+        :start_index,
+        :end_index,
+        :start_party,
+        :end_party,
+        :parties,
+        :votes,
+        :vote_share => ByRow(x -> round(100 * x, digits = 2)) => :vote_share_pct,
+        :seats,
+        :quota => ByRow(x -> round(x, digits = 2)) => :quota,
+        :seat_diff => ByRow(x -> round(x, digits = 2)) => :seat_diff,
+        :minimal_seat_majority,
+        :minimal_inversion,
+    ))
+
+    println("Minimal inversions:")
+    show_table(select(
+        minimal_inversion_table,
+        :start_index,
+        :end_index,
+        :start_party,
+        :end_party,
+        :parties,
+        :votes,
+        :vote_share => ByRow(x -> round(100 * x, digits = 2)) => :vote_share_pct,
+        :seats,
+        :quota => ByRow(x -> round(x, digits = 2)) => :quota,
+        :seat_diff => ByRow(x -> round(x, digits = 2)) => :seat_diff,
+    ))
+
+    ideology_sweep_table = build_ideology_sweep_table_legacy(summary_df, ideology_df)
+    ideology_sweep_table[!, :election_year] = fill(year, nrow(ideology_sweep_table))
+    push!(ideology_sweep_result_tables, ideology_sweep_table)
+
+    old_sweep_comparison_table = compare_legacy_sweep_to_intervals(ideology_sweep_table, interval_table)
+    old_sweep_comparison_table[!, :election_year] = fill(year, nrow(old_sweep_comparison_table))
+    push!(ideology_interval_old_sweep_comparison_tables, old_sweep_comparison_table)
+
+    println("Legacy first-seat-majority sweep comparison:")
+    show_table(select(
+        old_sweep_comparison_table,
+        :election_year,
+        :start_party,
+        :legacy_end_party,
+        :interval_end_party,
+        :legacy_parties,
+        :interval_parties,
+        :legacy_votes,
+        :interval_votes,
+        :legacy_seats,
+        :interval_seats,
+        :legacy_candidate_inversion,
+        :interval_weak_inversion,
+        :matched_exactly,
+    ))
 end
 
 print_block("AUDIT DIAGNOSTIC OUTPUTS")
@@ -938,6 +1061,11 @@ diagnostic_paths = [
     write_audit_csv("observed_coalitions_after_refactor.csv", vcat_or_empty(observed_result_tables)),
     write_audit_csv("ideology_order_after_refactor.csv", vcat_or_empty(ideology_order_result_tables)),
     write_audit_csv("ideology_sweeps_after_refactor.csv", vcat_or_empty(ideology_sweep_result_tables)),
+    write_audit_csv("ideology_interval_coalitions_after_refactor.csv", vcat_or_empty(ideology_interval_result_tables)),
+    write_audit_csv("ideology_interval_minimal_majorities_after_refactor.csv", vcat_or_empty(ideology_interval_minimal_majority_result_tables)),
+    write_audit_csv("ideology_interval_inversions_after_refactor.csv", vcat_or_empty(ideology_interval_inversion_result_tables)),
+    write_audit_csv("ideology_interval_minimal_inversions_after_refactor.csv", vcat_or_empty(ideology_interval_minimal_inversion_result_tables)),
+    write_audit_csv("ideology_interval_old_sweep_comparison_after_refactor.csv", vcat_or_empty(ideology_interval_old_sweep_comparison_tables)),
 ]
 println("Wrote audit diagnostics:")
 for path in diagnostic_paths
