@@ -45,13 +45,13 @@ const COALITION_YEARS_BY_ELECTION = Dict(
     2022 => [2023, 2024, 2025],
 )
 
-const MANDATE_WINDOWS_BY_ELECTION = Dict(
+const OBSERVED_MANDATE_WINDOWS_BY_ELECTION = Dict(
     2014 => (start_date = Date(2015, 1, 1), end_date = Date(2018, 12, 31)),
     2018 => (start_date = Date(2019, 1, 1), end_date = Date(2022, 12, 31)),
-    # The current analysis intentionally covers the available 2023-2025 portion
-    # of the 2022 mandate. Do not extend this through 2026 without making that
-    # a deliberate analysis configuration.
-    2022 => (start_date = Date(2023, 1, 1), end_date = Date(2025, 12, 31)),
+    # The 2022 mandate was ongoing when the cabinet-period data were prepared,
+    # so the paper-facing analysis observes it through the latest reliable
+    # cabinet-period endpoint in the source data.
+    2022 => (start_date = Date(2023, 1, 1), end_date = Date(2026, 3, 19)),
 )
 
 function validate_supported_year(year::Integer)
@@ -83,7 +83,7 @@ end
 
 function mandate_window(election_year::Integer)
     y = validate_supported_year(election_year)
-    window = get(MANDATE_WINDOWS_BY_ELECTION, y) do
+    window = get(OBSERVED_MANDATE_WINDOWS_BY_ELECTION, y) do
         error("Janela de mandato ausente para $y.")
     end
     start_date = window.start_date

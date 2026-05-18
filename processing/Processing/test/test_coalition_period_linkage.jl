@@ -45,7 +45,7 @@ end
         mandate_2022 = Processing.coalition_periods_overlapping_window(
             periods,
             Date(2023, 1, 1),
-            Date(2025, 12, 31);
+            Date(2026, 3, 19);
             path = _COALITION_JSON_LINKAGE,
         )
 
@@ -53,6 +53,7 @@ end
         @test sort(collect(keys(label_2025)); by = Processing.period_sort_key) == ["2025.1"]
         @test _period_keys_sorted_by_window(mandate_2022, windows) == ["2023.1", "2023.2", "2025.1"]
         @test length(keys(mandate_2022)) == length(unique(collect(keys(mandate_2022))))
+        @test windows["2025.1"] == (Date(2025, 12, 24), Date(2026, 3, 19))
         @test _period_keys_sorted_by_window(mandate_2022, windows) ==
               sort(collect(keys(mandate_2022)); by = k -> begin
                   start_date, _ = windows[k]

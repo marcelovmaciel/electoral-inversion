@@ -13,6 +13,7 @@ Pkg.activate(processing_root)
 using CSV
 using DataFrames
 using Dates
+using Printf
 using Statistics
 
 include(joinpath(processing_root, "src", "Processing.jl"))
@@ -39,12 +40,13 @@ raw_dir = joinpath(paper_output_root, "raw")
 diagnostics_dir = joinpath(paper_output_root, "diagnostics")
 tables_dir = joinpath(paper_output_root, "tables")
 figure_data_dir = joinpath(paper_output_root, "figure_data")
+latex_dir = joinpath(paper_output_root, "latex")
 artifact_manifest_path = joinpath(paper_output_root, "artifact_manifest.csv")
 
 analysis_years = [2014, 2018, 2022]
 expected_total_seats = 513
 seat_majority_threshold = 257
-ALLOW_OVERWRITE = false
+ALLOW_OVERWRITE = lowercase(get(ENV, "ALLOW_OVERWRITE", "false")) in ("1", "true", "yes")
 
 party_mun_zone_paths = Dict(
     2014 => joinpath(data_root, "2014", "party_mun_zone.csv"),
@@ -64,6 +66,7 @@ mkpath(raw_dir)
 mkpath(diagnostics_dir)
 mkpath(tables_dir)
 mkpath(figure_data_dir)
+mkpath(latex_dir)
 
 println("data_root: ", data_root)
 println("coalition_json_path: ", coalition_json_path)
@@ -144,6 +147,52 @@ function write_artifact_csv(path, df, artifact_type, description; allow_overwrit
     return path
 end
 
+function write_artifact_text(path, content, artifact_type, description; rows = missing, columns = missing, allow_overwrite = ALLOW_OVERWRITE)
+    if isfile(path) && !allow_overwrite
+        error("Output exists and ALLOW_OVERWRITE is false: $(path)")
+    end
+    mkpath(dirname(path))
+    write(path, content)
+    push!(artifact_records, (
+        path = relpath(path, paper_output_root),
+        artifact_type = String(artifact_type),
+        description = String(description),
+        rows = rows,
+        columns = columns,
+    ))
+    return path
+end
+
+function latex_escape(value)
+    io = IOBuffer()
+    for char in string(value)
+        if char == '\\'
+            print(io, "\\textbackslash{}")
+        elseif char == '&'
+            print(io, "\\&")
+        elseif char == '%'
+            print(io, "\\%")
+        elseif char == '$'
+            print(io, "\\\$")
+        elseif char == '#'
+            print(io, "\\#")
+        elseif char == '_'
+            print(io, "\\_")
+        elseif char == '{'
+            print(io, "\\{")
+        elseif char == '}'
+            print(io, "\\}")
+        elseif char == '~'
+            print(io, "\\textasciitilde{}")
+        elseif char == '^'
+            print(io, "\\textasciicircum{}")
+        else
+            print(io, char)
+        end
+    end
+    return String(take!(io))
+end
+
 function preflight_table()
     rows = NamedTuple[]
     push!(rows, (item = "repo root", path = repo_root, kind = "dir", exists = isdir(repo_root), essential = true))
@@ -186,6 +235,7 @@ end
 
 pct(x; digits = 2) = round(100 * Float64(x), digits = digits)
 display_round(x; digits = 2) = round(Float64(x), digits = digits)
+fmt2(x) = @sprintf("%.2f", Float64(x))
 
 function vcat_or_empty(tables)
     isempty(tables) && return DataFrame()
@@ -719,10 +769,67 @@ function build_ideological_intervals(year, summary_df, ideology_df)
     party_seats = Dict(String(row.SG_PARTIDO) => Int(row.total_seats) for row in eachrow(summary_df))
     raw[!, :left_removed_seats] = [row.seats - party_seats[String(row.start_party)] for row in eachrow(raw)]
     raw[!, :right_removed_seats] = [row.seats - party_seats[String(row.end_party)] for row in eachrow(raw)]
+    raw[!, :endpoint_minimal_connected_winning] = raw.seat_majority .& ((raw.interval_size .== 1) .| ((raw.left_removed_seats .< seat_majority_threshold) .& (raw.right_removed_seats .< seat_majority_threshold)))
     raw[!, :minimal_ideological_interval_inversion] = raw.coalition_inversion .& (raw.left_removed_seats .< seat_majority_threshold) .& (raw.right_removed_seats .< seat_majority_threshold)
-    out = select(raw, :election_year, :start_index, :end_index, :start_party, :end_party, :parties, :interval_size, :votes, :vote_share, :seats, :seat_share, :quota, :seat_diff, :vote_majority, :seat_majority, :majority_status, :coalition_inversion, :left_removed_seats, :right_removed_seats, :minimal_ideological_interval_inversion, :old_sweep_equivalent)
+    out = select(raw, :election_year, :start_index, :end_index, :start_party, :end_party, :parties, :interval_size, :votes, :vote_share, :seats, :seat_share, :quota, :seat_diff, :vote_majority, :seat_majority, :majority_status, :coalition_inversion, :left_removed_seats, :right_removed_seats, :endpoint_minimal_connected_winning, :minimal_ideological_interval_inversion, :old_sweep_equivalent)
     sort!(out, [:election_year, :start_index, :end_index])
     return out
+end
+
+function connected_winning_status(seats, vote_share)
+    seats >= seat_majority_threshold || error("Minimal connected winning table received non-winning interval.")
+    return vote_share > 0.5 ? "votes+seats" : "seats only"
+end
+
+function contains_party(parties, party)
+    return party in strip.(split(String(parties), ","))
+end
+
+function appendix_minimal_connected_winning_table(df)
+    minimal_connected = df[df.endpoint_minimal_connected_winning .== true, :]
+    sort!(minimal_connected, [:election_year, :start_index, :end_index])
+    result = select(minimal_connected,
+        :election_year,
+        :start_party,
+        :end_party,
+        :interval_size => :n_parties,
+        :vote_share,
+        :vote_share => ByRow(pct) => :vote_share_pct,
+        :seats,
+        :quota,
+        :seat_diff,
+        [:seats, :vote_share] => ByRow(connected_winning_status) => :status,
+        :parties => ByRow(x -> contains_party(x, "PT")) => :contains_PT,
+        :coalition_inversion,
+        :parties,
+    )
+    return result
+end
+
+function minimal_connected_winning_latex(df)
+    io = IOBuffer()
+    println(io, "\\begin{landscape}")
+    println(io, "\\scriptsize")
+    println(io, "\\setlength{\\tabcolsep}{2pt}")
+    println(io, "\\renewcommand{\\arraystretch}{1.08}")
+    println(io, "\\begin{longtable}{|l|l|l|r|r|r|r|l|l|L{0.42\\linewidth}|}")
+    println(io, "\\caption{Minimal connected winning ideological intervals}\\label{tab:minimal-connected-winning-intervals}\\\\")
+    println(io, "\\hline")
+    println(io, "Election & Start & End & Parties & Vote \\% & Seats & Seat diff. & Status & Contains PT & Interval \\\\")
+    println(io, "\\hline")
+    println(io, "\\endfirsthead")
+    println(io, "\\hline")
+    println(io, "Election & Start & End & Parties & Vote \\% & Seats & Seat diff. & Status & Contains PT & Interval \\\\")
+    println(io, "\\hline")
+    println(io, "\\endhead")
+    for row in eachrow(df)
+        contains_pt = row.contains_PT ? "Yes" : "No"
+        println(io, "$(row.election_year) & $(latex_escape(row.start_party)) & $(latex_escape(row.end_party)) & $(row.n_parties) & $(fmt2(row.vote_share_pct)) & $(row.seats) & $(fmt2(row.seat_diff)) & $(latex_escape(row.status)) & $(contains_pt) & $(latex_escape(row.parties)) \\\\")
+        println(io, "\\hline")
+    end
+    println(io, "\\end{longtable}")
+    println(io, "\\end{landscape}")
+    return String(take!(io))
 end
 
 function build_legacy_first_majority_sweep(year, summary_df, ideology_df)
@@ -778,8 +885,29 @@ end
 
 table_05_ideological_interval_summary_by_election = interval_summary_table(ideological_intervals_all_years)
 table_06_minimal_ideological_interval_inversions = select(minimal_ideological_interval_inversions, :election_year, :start_party, :end_party, :parties, :interval_size, :votes, :vote_share => ByRow(pct) => :vote_share_pct, :seats, :seat_share => ByRow(pct) => :seat_share_pct, :quota => ByRow(display_round) => :quota_display, :seat_diff => ByRow(display_round) => :seat_diff_display, :majority_status)
+table_appendix_minimal_connected_winning_intervals = appendix_minimal_connected_winning_table(ideological_intervals_all_years)
 write_artifact_csv(joinpath(tables_dir, "table_05_ideological_interval_summary_by_election.csv"), table_05_ideological_interval_summary_by_election, "table", "Ideological interval counts and inversion counts by election.")
 write_artifact_csv(joinpath(tables_dir, "table_06_minimal_ideological_interval_inversions.csv"), table_06_minimal_ideological_interval_inversions, "table", "Endpoint-minimal ideological interval inversions with rounded display columns.")
+minimal_connected_winning_csv_path = write_artifact_csv(joinpath(tables_dir, "table_appendix_minimal_connected_winning_intervals.csv"), table_appendix_minimal_connected_winning_intervals, "table", "Endpoint-minimal connected winning ideological intervals.")
+minimal_connected_winning_latex_path = write_artifact_text(joinpath(latex_dir, "table_appendix_minimal_connected_winning_intervals.tex"), minimal_connected_winning_latex(table_appendix_minimal_connected_winning_intervals), "latex", "Landscape longtable for endpoint-minimal connected winning ideological intervals."; rows = nrow(table_appendix_minimal_connected_winning_intervals), columns = 10)
+
+minimal_connected_diagnostic = combine(groupby(table_appendix_minimal_connected_winning_intervals, :election_year),
+    nrow => :endpoint_minimal_connected_winning_intervals,
+    :contains_PT => (x -> sum(Int.(x))) => :containing_PT,
+    :coalition_inversion => (x -> sum(Int.(x))) => :also_inversions)
+sort!(minimal_connected_diagnostic, :election_year)
+println("Endpoint-minimal connected winning interval diagnostic:")
+show_table(minimal_connected_diagnostic)
+println("Endpoint-minimal connected winning CSV written: ", minimal_connected_winning_csv_path)
+println("Endpoint-minimal connected winning LaTeX written: ", minimal_connected_winning_latex_path)
+minimal_connected_with_pt = table_appendix_minimal_connected_winning_intervals[table_appendix_minimal_connected_winning_intervals.contains_PT .== true, :]
+minimal_connected_inversion_with_pt = minimal_connected_with_pt[minimal_connected_with_pt.coalition_inversion .== true, :]
+println("PT is part of endpoint-minimal connected winning intervals: ", nrow(minimal_connected_with_pt) > 0 ? "YES" : "NO")
+println("PT is part of endpoint-minimal connected winning inversion intervals: ", nrow(minimal_connected_inversion_with_pt) > 0 ? "YES" : "NO")
+if nrow(minimal_connected_with_pt) > 0
+    println("Endpoint-minimal connected winning intervals containing PT:")
+    show_table(select(minimal_connected_with_pt, :election_year, :start_party, :end_party, :n_parties, :vote_share_pct, :seats, :seat_diff, :status, :coalition_inversion, :parties))
+end
 for (year, expected_minimal) in [(2014, 4), (2018, 0), (2022, 2)]
     interval_df = ideological_intervals_all_years[ideological_intervals_all_years.election_year .== year, :]
     inversion_count = sum(Int.(interval_df.coalition_inversion))
@@ -791,6 +919,464 @@ end
 pp_pl_2022 = minimal_ideological_interval_inversions[(minimal_ideological_interval_inversions.election_year .== 2022) .& (minimal_ideological_interval_inversions.start_party .== "PP") .& (minimal_ideological_interval_inversions.end_party .== "PL"), :]
 println("2022 PP-PL minimal ideological inversion present: ", nrow(pp_pl_2022) > 0)
 show_table(table_05_ideological_interval_summary_by_election)
+
+# =============================================================================
+# BLOCK 11B. CABINET-TO-IDEOLOGICAL-INTERVAL BRIDGE
+# =============================================================================
+
+print_block("BLOCK 11B. CABINET-TO-IDEOLOGICAL-INTERVAL BRIDGE")
+
+function bridge_status(vote_share, seats)
+    vote_majority = Float64(vote_share) > 0.5
+    seat_majority = Int(seats) >= seat_majority_threshold
+    if vote_majority && seat_majority
+        return "votes+seats"
+    elseif seat_majority
+        return "seats only"
+    elseif vote_majority
+        return "votes only"
+    end
+    return "neither"
+end
+
+function split_parties(parties)
+    text = strip(String(parties))
+    isempty(text) && return String[]
+    return strip.(split(text, ","))
+end
+
+function label_count_suffix(label)
+    mapping = Dict(
+        "extrema-esquerda" => "far_left",
+        "esquerda" => "left",
+        "centro-esquerda" => "center_left",
+        "centro" => "center",
+        "centro-direita" => "center_right",
+        "direita" => "right",
+        "extrema-direita" => "far_right",
+    )
+    return get(mapping, String(label), replace(lowercase(String(label)), r"[^a-z0-9]+" => "_"))
+end
+
+function ideology_label_display(label)
+    mapping = Dict(
+        "extrema-esquerda" => "far left",
+        "esquerda" => "left",
+        "centro-esquerda" => "center-left",
+        "centro" => "center",
+        "centro-direita" => "center-right",
+        "direita" => "right",
+        "extrema-direita" => "far right",
+    )
+    return get(mapping, String(label), String(label))
+end
+
+function weighted_mean_or_missing(values, weights)
+    vals = Float64.(values)
+    wts = Float64.(weights)
+    total_weight = sum(wts)
+    total_weight > 0 || return missing
+    return sum(vals .* wts) / total_weight
+end
+
+function fmt_missing2(value)
+    ismissing(value) && return ""
+    return fmt2(value)
+end
+
+function ideology_summary_for_rows(df)
+    nrow(df) == 0 && return ""
+    counts = combine(groupby(df, :classification_label), nrow => :n)
+    first_index = combine(groupby(df, :classification_label), :ordinal_position => minimum => :first_index)
+    counts = leftjoin(counts, first_index, on = :classification_label)
+    sort!(counts, :first_index)
+    return join(["$(ideology_label_display(row.classification_label)): $(row.n)" for row in eachrow(counts)], "; ")
+end
+
+function ideology_metrics_for_rows(df)
+    if nrow(df) == 0
+        return (
+            mean_unweighted = missing,
+            median_unweighted = missing,
+            mean_seat_weighted = missing,
+            mean_vote_weighted = missing,
+            summary = "",
+        )
+    end
+    values = Float64.(df.ideology_value_numeric)
+    return (
+        mean_unweighted = mean(values),
+        median_unweighted = median(values),
+        mean_seat_weighted = weighted_mean_or_missing(values, df.seats),
+        mean_vote_weighted = weighted_mean_or_missing(values, df.votes),
+        summary = ideology_summary_for_rows(df),
+    )
+end
+
+function append_label_counts!(row, prefix, df, labels)
+    label_counts = nrow(df) == 0 ? Dict{String,Int}() : Dict(String(r.classification_label) => Int(r.n) for r in eachrow(combine(groupby(df, :classification_label), nrow => :n)))
+    for label in labels
+        row[Symbol(prefix, "_", label_count_suffix(label), "_count")] = get(label_counts, String(label), 0)
+    end
+    return row
+end
+
+function ordered_party_rows(ideology_year_df, summary_year_df, parties)
+    party_set = Set(String.(parties))
+    rows = innerjoin(
+        select(ideology_year_df, :ordinal_position, :party, :classification_label, :ideology_value_numeric),
+        select(summary_year_df, :party, :votes, :vote_share, :seats, :seat_share, :quota, :seat_diff),
+        on = :party,
+    )
+    rows = rows[in.(String.(rows.party), Ref(party_set)), :]
+    sort!(rows, :ordinal_position)
+    return rows
+end
+
+function bridge_summarize_parties(summary_year_df, parties)
+    party_set = Set(String.(parties))
+    available = Set(String.(summary_year_df.party))
+    missing_parties = setdiff(sort(collect(party_set)), sort(collect(available)))
+    isempty(missing_parties) || error("Bridge party absent from election summary: $(join(missing_parties, ", "))")
+    mask = in.(String.(summary_year_df.party), Ref(party_set))
+    total_votes = sum(summary_year_df.votes)
+    coalition_votes = sum(summary_year_df.votes[mask])
+    coalition_seats = sum(summary_year_df.seats[mask])
+    vote_share = coalition_votes / total_votes
+    seat_share = coalition_seats / expected_total_seats
+    quota = expected_total_seats * vote_share
+    seat_diff = coalition_seats - quota
+    vote_majority = vote_share > 0.5
+    seat_majority = coalition_seats >= seat_majority_threshold
+    return (
+        votes = Int(coalition_votes),
+        vote_share = Float64(vote_share),
+        seats = Int(coalition_seats),
+        seat_share = Float64(seat_share),
+        quota = Float64(quota),
+        seat_diff = Float64(seat_diff),
+        vote_majority = Bool(vote_majority),
+        seat_majority = Bool(seat_majority),
+        majority_status = bridge_status(vote_share, coalition_seats),
+        coalition_inversion = Bool(seat_majority && !vote_majority),
+    )
+end
+
+function choose_closest_interval(cabinet_parties, candidate_intervals)
+    isempty(candidate_intervals) && return nothing
+    cabinet_set = Set(String.(cabinet_parties))
+    cabinet_n = length(cabinet_set)
+    best = nothing
+    best_key = nothing
+    for interval in eachrow(candidate_intervals)
+        interval_parties = split_parties(interval.parties)
+        interval_set = Set(interval_parties)
+        overlap_n = length(intersect(cabinet_set, interval_set))
+        union_n = length(union(cabinet_set, interval_set))
+        jaccard = union_n == 0 ? 0.0 : overlap_n / union_n
+        cabinet_coverage = cabinet_n == 0 ? 0.0 : overlap_n / cabinet_n
+        interval_extra_n = length(setdiff(interval_set, cabinet_set))
+        interval_size = Int(interval.interval_size)
+        key = (jaccard, cabinet_coverage, overlap_n, -interval_extra_n, -interval_size, -abs(Float64(interval.seat_diff)))
+        if best_key === nothing || key > best_key
+            best_key = key
+            best = (
+                row = interval,
+                overlap_n = overlap_n,
+                jaccard = Float64(jaccard),
+                cabinet_coverage = Float64(cabinet_coverage),
+                interval_extra_n = interval_extra_n,
+                cabinet_missing_n = length(setdiff(cabinet_set, interval_set)),
+            )
+        end
+    end
+    return best
+end
+
+function add_closest_interval_fields!(row, prefix, closest)
+    if closest === nothing
+        for suffix in ["start_party", "end_party", "n_parties", "vote_share_pct", "seats", "seat_diff", "status", "overlap_n", "jaccard", "cabinet_coverage", "parties"]
+            row[Symbol(prefix, "_", suffix)] = suffix in ["start_party", "end_party", "status", "parties"] ? "" : missing
+        end
+        return row
+    end
+    interval = closest.row
+    row[Symbol(prefix, "_start_party")] = String(interval.start_party)
+    row[Symbol(prefix, "_end_party")] = String(interval.end_party)
+    row[Symbol(prefix, "_n_parties")] = Int(interval.interval_size)
+    row[Symbol(prefix, "_vote_share_pct")] = pct(interval.vote_share)
+    row[Symbol(prefix, "_seats")] = Int(interval.seats)
+    row[Symbol(prefix, "_seat_diff")] = Float64(interval.seat_diff)
+    if prefix == "closest_mcw"
+        row[Symbol(prefix, "_status")] = bridge_status(interval.vote_share, interval.seats)
+    end
+    row[Symbol(prefix, "_overlap_n")] = Int(closest.overlap_n)
+    row[Symbol(prefix, "_jaccard")] = Float64(closest.jaccard)
+    row[Symbol(prefix, "_cabinet_coverage")] = Float64(closest.cabinet_coverage)
+    row[Symbol(prefix, "_parties")] = String(interval.parties)
+    return row
+end
+
+function cabinet_bridge_latex(df)
+    io = IOBuffer()
+    println(io, "\\begin{landscape}")
+    println(io, "\\tiny")
+    println(io, "\\setlength{\\tabcolsep}{1pt}")
+    println(io, "\\renewcommand{\\arraystretch}{1.08}")
+    println(io, "\\begin{longtable}{|l|l|L{0.10\\linewidth}|L{0.13\\linewidth}|L{0.10\\linewidth}|L{0.04\\linewidth}|L{0.13\\linewidth}|L{0.13\\linewidth}|L{0.11\\linewidth}|}")
+    println(io, "\\caption{Cabinet coalitions and ideological intervals}\\label{tab:cabinet-interval-bridge}\\\\")
+    println(io, "\\hline")
+    println(io, "Election & Period & Cabinet & Ideology summary & Span & Gaps & Closure summary & Minimal winning & Minimal inversion \\\\")
+    println(io, "\\hline")
+    println(io, "\\endfirsthead")
+    println(io, "\\hline")
+    println(io, "Election & Period & Cabinet & Ideology summary & Span & Gaps & Closure summary & Minimal winning & Minimal inversion \\\\")
+    println(io, "\\hline")
+    println(io, "\\endhead")
+    for row in eachrow(df)
+        span = isempty(String(row.closure_start_party)) ? "" : "$(row.closure_start_party)--$(row.closure_end_party)"
+        gaps = string(row.closure_gap_n)
+        cabinet_cell = "$(row.cabinet_status); $(fmt2(row.cabinet_vote_share_pct))%; $(row.cabinet_seats) seats"
+        mcw = "$(row.closest_mcw_start_party)--$(row.closest_mcw_end_party); $(fmt_missing2(row.closest_mcw_vote_share_pct))%; $(row.closest_mcw_seats) seats; overlap $(row.closest_mcw_overlap_n); J=$(fmt_missing2(row.closest_mcw_jaccard))"
+        mci = isempty(String(row.closest_mci_start_party)) ? "none" : "$(row.closest_mci_start_party)--$(row.closest_mci_end_party); $(fmt_missing2(row.closest_mci_vote_share_pct))%; $(row.closest_mci_seats) seats; overlap $(row.closest_mci_overlap_n); J=$(fmt_missing2(row.closest_mci_jaccard))"
+        println(io, "$(row.election_year) & $(latex_escape(row.cabinet_period)) & $(latex_escape(cabinet_cell)) & $(latex_escape(row.cabinet_ideology_summary)) & $(latex_escape(span)) & $(latex_escape(gaps)) & $(latex_escape(row.closure_ideology_summary)) & $(latex_escape(mcw)) & $(latex_escape(mci)) \\\\")
+        println(io, "\\hline")
+    end
+    println(io, "\\end{longtable}")
+    println(io, "\\end{landscape}")
+    return String(take!(io))
+end
+
+function build_cabinet_interval_bridge(cabinets, party_summary_all, ideology_order_all, intervals_all)
+    labels = sort(unique(String.(ideology_order_all.classification_label)))
+    ideology_joined = innerjoin(
+        select(ideology_order_all, :election_year, :ordinal_position, :party, :classification_label, :ideology_value_numeric),
+        party_summary_all,
+        on = [:election_year, :party],
+    )
+    minimal_winning = intervals_all[intervals_all.endpoint_minimal_connected_winning .== true, :]
+    minimal_inversions = minimal_winning[minimal_winning.coalition_inversion .== true, :]
+    rows = Vector{Dict{Symbol,Any}}()
+    previous_by_year = Dict{Int,Dict{Symbol,Any}}()
+    unmapped_warnings = String[]
+
+    for cab in eachrow(sort(cabinets, [:election_year, :period]))
+        year = Int(cab.election_year)
+        ideology_year = ideology_joined[ideology_joined.election_year .== year, :]
+        summary_year = party_summary_all[party_summary_all.election_year .== year, :]
+        cabinet_parties = split_parties(cab.parties)
+        cabinet_set = Set(cabinet_parties)
+        ideology_party_set = Set(String.(ideology_year.party))
+        unmapped = sort(collect(setdiff(cabinet_set, ideology_party_set)))
+        if !isempty(unmapped)
+            push!(unmapped_warnings, "$(year) $(cab.period): $(join(unmapped, ", "))")
+        end
+        cabinet_rows = ordered_party_rows(ideology_year, summary_year, cabinet_parties)
+        cabinet_metrics = ideology_metrics_for_rows(cabinet_rows)
+
+        if nrow(cabinet_rows) == 0
+            closure_rows = DataFrame()
+            gap_rows = DataFrame()
+            closure_metrics = ideology_metrics_for_rows(closure_rows)
+            gap_summary = ""
+            closure_metrics_vote = bridge_summarize_parties(summary_year, String[])
+            min_index = missing
+            max_index = missing
+            closure_parties = String[]
+            gap_parties = String[]
+            leftmost_party = ""
+            rightmost_party = ""
+        else
+            min_index = minimum(Int.(cabinet_rows.ordinal_position))
+            max_index = maximum(Int.(cabinet_rows.ordinal_position))
+            closure_rows = ideology_year[(ideology_year.ordinal_position .>= min_index) .& (ideology_year.ordinal_position .<= max_index), :]
+            sort!(closure_rows, :ordinal_position)
+            closure_parties = String.(closure_rows.party)
+            gap_parties = String.(closure_rows.party[.!in.(String.(closure_rows.party), Ref(cabinet_set))])
+            gap_rows = closure_rows[in.(String.(closure_rows.party), Ref(Set(gap_parties))), :]
+            closure_metrics = ideology_metrics_for_rows(closure_rows)
+            gap_summary = ideology_summary_for_rows(gap_rows)
+            closure_metrics_vote = bridge_summarize_parties(summary_year, closure_parties)
+            leftmost_party = String(cabinet_rows.party[argmin(Int.(cabinet_rows.ordinal_position))])
+            rightmost_party = String(cabinet_rows.party[argmax(Int.(cabinet_rows.ordinal_position))])
+        end
+
+        winning_candidates = minimal_winning[minimal_winning.election_year .== year, :]
+        inversion_candidates = minimal_inversions[minimal_inversions.election_year .== year, :]
+        closest_mcw = choose_closest_interval(cabinet_parties, winning_candidates)
+        closest_mci = choose_closest_interval(cabinet_parties, inversion_candidates)
+
+        row = Dict{Symbol,Any}()
+        row[:election_year] = year
+        row[:cabinet_period] = String(cab.period)
+        row[:period_start] = cab.period_start
+        row[:period_end] = cab.period_end
+        row[:days] = Int(cab.period_days)
+        row[:cabinet_status] = bridge_status(cab.vote_share, cab.seats)
+        row[:cabinet_vote_share] = Float64(cab.vote_share)
+        row[:cabinet_vote_share_pct] = pct(cab.vote_share)
+        row[:cabinet_seats] = Int(cab.seats)
+        row[:cabinet_seat_diff] = Float64(cab.seat_diff)
+        row[:cabinet_n_parties] = length(cabinet_parties)
+        row[:cabinet_parties] = String(cab.parties)
+        row[:unmapped_cabinet_parties] = join(unmapped, ", ")
+
+        row[:cabinet_min_ideology_index] = min_index
+        row[:cabinet_max_ideology_index] = max_index
+        row[:cabinet_leftmost_party] = leftmost_party
+        row[:cabinet_rightmost_party] = rightmost_party
+        row[:cabinet_span_width] = nrow(cabinet_rows) == 0 ? missing : Int(max_index - min_index + 1)
+        row[:cabinet_mean_ideology_value_unweighted] = cabinet_metrics.mean_unweighted
+        row[:cabinet_median_ideology_value_unweighted] = cabinet_metrics.median_unweighted
+        row[:cabinet_mean_ideology_value_seat_weighted] = cabinet_metrics.mean_seat_weighted
+        row[:cabinet_mean_ideology_value_vote_weighted] = cabinet_metrics.mean_vote_weighted
+        row[:cabinet_ideology_summary] = cabinet_metrics.summary
+        append_label_counts!(row, "cabinet", cabinet_rows, labels)
+
+        row[:closure_start_party] = nrow(closure_rows) == 0 ? "" : String(first(closure_rows.party))
+        row[:closure_end_party] = nrow(closure_rows) == 0 ? "" : String(last(closure_rows.party))
+        row[:closure_n_parties] = length(closure_parties)
+        row[:closure_vote_share] = closure_metrics_vote.vote_share
+        row[:closure_vote_share_pct] = pct(closure_metrics_vote.vote_share)
+        row[:closure_seats] = closure_metrics_vote.seats
+        row[:closure_seat_diff] = closure_metrics_vote.seat_diff
+        row[:closure_status] = bridge_status(closure_metrics_vote.vote_share, closure_metrics_vote.seats)
+        row[:closure_parties] = join(closure_parties, ", ")
+        row[:closure_gap_n] = length(gap_parties)
+        row[:closure_gap_parties] = join(gap_parties, ", ")
+        row[:closure_mean_ideology_value_unweighted] = closure_metrics.mean_unweighted
+        row[:closure_median_ideology_value_unweighted] = closure_metrics.median_unweighted
+        row[:closure_mean_ideology_value_seat_weighted] = closure_metrics.mean_seat_weighted
+        row[:closure_mean_ideology_value_vote_weighted] = closure_metrics.mean_vote_weighted
+        row[:closure_ideology_summary] = closure_metrics.summary
+
+        row[:gap_ideology_summary] = gap_summary
+        append_label_counts!(row, "gap", gap_rows, labels)
+
+        add_closest_interval_fields!(row, "closest_mcw", closest_mcw)
+        add_closest_interval_fields!(row, "closest_mci", closest_mci)
+
+        previous = get(previous_by_year, year, nothing)
+        if previous === nothing
+            row[:delta_cabinet_mean_ideology_value_unweighted] = missing
+            row[:delta_cabinet_mean_ideology_value_seat_weighted] = missing
+            row[:delta_cabinet_span_width] = missing
+            row[:entered_ideology_summary] = ""
+            row[:left_ideology_summary] = ""
+        else
+            row[:delta_cabinet_mean_ideology_value_unweighted] = row[:cabinet_mean_ideology_value_unweighted] - previous[:cabinet_mean_ideology_value_unweighted]
+            row[:delta_cabinet_mean_ideology_value_seat_weighted] = row[:cabinet_mean_ideology_value_seat_weighted] - previous[:cabinet_mean_ideology_value_seat_weighted]
+            row[:delta_cabinet_span_width] = row[:cabinet_span_width] - previous[:cabinet_span_width]
+            entered = sort(collect(setdiff(cabinet_set, previous[:cabinet_party_set])))
+            left = sort(collect(setdiff(previous[:cabinet_party_set], cabinet_set)))
+            row[:entered_ideology_summary] = ideology_summary_for_rows(ordered_party_rows(ideology_year, summary_year, entered))
+            row[:left_ideology_summary] = ideology_summary_for_rows(ordered_party_rows(ideology_year, summary_year, left))
+        end
+        previous_by_year[year] = Dict{Symbol,Any}(
+            :cabinet_party_set => cabinet_set,
+            :cabinet_mean_ideology_value_unweighted => row[:cabinet_mean_ideology_value_unweighted],
+            :cabinet_mean_ideology_value_seat_weighted => row[:cabinet_mean_ideology_value_seat_weighted],
+            :cabinet_span_width => row[:cabinet_span_width],
+        )
+        push!(rows, row)
+    end
+
+    ordered_cols = Symbol[
+        :election_year, :cabinet_period, :period_start, :period_end, :days, :cabinet_status,
+        :cabinet_vote_share, :cabinet_vote_share_pct, :cabinet_seats, :cabinet_seat_diff,
+        :cabinet_n_parties, :cabinet_parties, :unmapped_cabinet_parties,
+        :cabinet_min_ideology_index, :cabinet_max_ideology_index, :cabinet_leftmost_party,
+        :cabinet_rightmost_party, :cabinet_span_width, :cabinet_mean_ideology_value_unweighted,
+        :cabinet_median_ideology_value_unweighted, :cabinet_mean_ideology_value_seat_weighted,
+        :cabinet_mean_ideology_value_vote_weighted, :cabinet_ideology_summary,
+    ]
+    append!(ordered_cols, [Symbol("cabinet_", label_count_suffix(label), "_count") for label in labels])
+    append!(ordered_cols, Symbol[
+        :closure_start_party, :closure_end_party, :closure_n_parties, :closure_vote_share,
+        :closure_vote_share_pct, :closure_seats, :closure_seat_diff, :closure_status,
+        :closure_parties, :closure_gap_n, :closure_gap_parties,
+        :closure_mean_ideology_value_unweighted, :closure_median_ideology_value_unweighted,
+        :closure_mean_ideology_value_seat_weighted, :closure_mean_ideology_value_vote_weighted,
+        :closure_ideology_summary, :gap_ideology_summary,
+    ])
+    append!(ordered_cols, [Symbol("gap_", label_count_suffix(label), "_count") for label in labels])
+    append!(ordered_cols, Symbol[
+        :closest_mcw_start_party, :closest_mcw_end_party, :closest_mcw_n_parties,
+        :closest_mcw_vote_share_pct, :closest_mcw_seats, :closest_mcw_seat_diff,
+        :closest_mcw_status, :closest_mcw_overlap_n, :closest_mcw_jaccard,
+        :closest_mcw_cabinet_coverage, :closest_mcw_parties,
+        :closest_mci_start_party, :closest_mci_end_party, :closest_mci_n_parties,
+        :closest_mci_vote_share_pct, :closest_mci_seats, :closest_mci_seat_diff,
+        :closest_mci_overlap_n, :closest_mci_jaccard, :closest_mci_cabinet_coverage,
+        :closest_mci_parties, :delta_cabinet_mean_ideology_value_unweighted,
+        :delta_cabinet_mean_ideology_value_seat_weighted, :delta_cabinet_span_width,
+        :entered_ideology_summary, :left_ideology_summary,
+    ])
+
+    result = DataFrame()
+    for col in ordered_cols
+        result[!, col] = [get(row, col, missing) for row in rows]
+    end
+    sort!(result, [:election_year, :cabinet_period])
+    return result, unmapped_warnings
+end
+
+party_summary_bridge_all = vcat(
+    select(party_seat_differentials_2014, :election_year, :party, :votes, :vote_share, :seats, :seat_share, :quota, :seat_diff),
+    select(party_seat_differentials_2018, :election_year, :party, :votes, :vote_share, :seats, :seat_share, :quota, :seat_diff),
+    select(party_seat_differentials_2022, :election_year, :party, :votes, :vote_share, :seats, :seat_share, :quota, :seat_diff);
+    cols = :union,
+)
+table_appendix_cabinet_interval_bridge, cabinet_bridge_unmapped_warnings = build_cabinet_interval_bridge(observed_cabinet_coalitions_all_years, party_summary_bridge_all, ideology_order_all_years, ideological_intervals_all_years)
+cabinet_bridge_csv_path = write_artifact_csv(joinpath(tables_dir, "table_appendix_cabinet_interval_bridge.csv"), table_appendix_cabinet_interval_bridge, "table", "Observed cabinet coalitions compared with connected ideological closures and nearest minimal connected intervals.")
+cabinet_bridge_latex_path = write_artifact_text(joinpath(latex_dir, "table_appendix_cabinet_interval_bridge.tex"), cabinet_bridge_latex(table_appendix_cabinet_interval_bridge), "latex", "Landscape longtable comparing observed cabinet coalitions with connected ideological intervals."; rows = nrow(table_appendix_cabinet_interval_bridge), columns = 11)
+
+cabinet_bridge_unmapped_count = sum(table_appendix_cabinet_interval_bridge.unmapped_cabinet_parties .!= "")
+closure_inversion_count = sum((table_appendix_cabinet_interval_bridge.closure_vote_share .<= 0.5) .& (table_appendix_cabinet_interval_bridge.closure_seats .>= seat_majority_threshold))
+println("Cabinet-interval bridge CSV written: ", cabinet_bridge_csv_path)
+println("Cabinet-interval bridge LaTeX written: ", cabinet_bridge_latex_path)
+println("Cabinet periods processed: ", nrow(table_appendix_cabinet_interval_bridge))
+println("Cabinet periods with unmapped ideology parties: ", cabinet_bridge_unmapped_count)
+if !isempty(cabinet_bridge_unmapped_warnings)
+    println("Unmapped cabinet parties in ideology order:")
+    foreach(w -> println("- ", w), cabinet_bridge_unmapped_warnings)
+end
+println("Cabinet periods whose connected closure is itself an inversion: ", closure_inversion_count)
+
+cabinet_bridge_inversions = table_appendix_cabinet_interval_bridge[table_appendix_cabinet_interval_bridge.cabinet_status .== "seats only", :]
+println("Observed cabinet inversion bridge diagnostics:")
+for row in eachrow(cabinet_bridge_inversions)
+    println("- $(row.election_year) $(row.cabinet_period): cabinet=$(row.cabinet_parties); closure=$(row.closure_start_party)--$(row.closure_end_party) ($(row.closure_n_parties) parties, gaps=$(row.closure_gap_n)); closest MCW=$(row.closest_mcw_start_party)--$(row.closest_mcw_end_party); closest MCI=$(isempty(String(row.closest_mci_start_party)) ? "none" : string(row.closest_mci_start_party, "--", row.closest_mci_end_party))")
+end
+
+impeachment_transition = table_appendix_cabinet_interval_bridge[(table_appendix_cabinet_interval_bridge.election_year .== 2014) .& (table_appendix_cabinet_interval_bridge.cabinet_period .== "2016.4"), :]
+if nrow(impeachment_transition) == 1
+    row = only(eachrow(impeachment_transition))
+    prev = only(eachrow(table_appendix_cabinet_interval_bridge[(table_appendix_cabinet_interval_bridge.election_year .== 2014) .& (table_appendix_cabinet_interval_bridge.cabinet_period .== "2016.3"), :]))
+    entering = sort(collect(setdiff(Set(split_parties(row.cabinet_parties)), Set(split_parties(prev.cabinet_parties)))))
+    leaving = sort(collect(setdiff(Set(split_parties(prev.cabinet_parties)), Set(split_parties(row.cabinet_parties)))))
+    println("Impeachment transition 2016.3 -> 2016.4:")
+    println("- parties entering: ", join(entering, ", "))
+    println("- parties leaving: ", join(leaving, ", "))
+    println("- entering ideology labels: ", row.entered_ideology_summary)
+    println("- leaving ideology labels: ", row.left_ideology_summary)
+    println("- change in unweighted ideology mean: ", fmt2(row.delta_cabinet_mean_ideology_value_unweighted))
+    println("- change in seat-weighted ideology mean: ", fmt2(row.delta_cabinet_mean_ideology_value_seat_weighted))
+    println("- change in span width: ", row.delta_cabinet_span_width)
+end
+
+pre_temer = table_appendix_cabinet_interval_bridge[(table_appendix_cabinet_interval_bridge.election_year .== 2014) .& in.(table_appendix_cabinet_interval_bridge.cabinet_period, Ref(["2015.1", "2016.1", "2016.2", "2016.3"])), :]
+post_impeachment_temer = table_appendix_cabinet_interval_bridge[(table_appendix_cabinet_interval_bridge.election_year .== 2014) .& in.(table_appendix_cabinet_interval_bridge.cabinet_period, Ref(["2016.4", "2017.1", "2018.1", "2018.2"])), :]
+pre_mean = mean(skipmissing(pre_temer.cabinet_mean_ideology_value_unweighted))
+post_mean = mean(skipmissing(post_impeachment_temer.cabinet_mean_ideology_value_unweighted))
+pre_seat_mean = mean(skipmissing(pre_temer.cabinet_mean_ideology_value_seat_weighted))
+post_seat_mean = mean(skipmissing(post_impeachment_temer.cabinet_mean_ideology_value_seat_weighted))
+transition_row = only(eachrow(table_appendix_cabinet_interval_bridge[(table_appendix_cabinet_interval_bridge.election_year .== 2014) .& (table_appendix_cabinet_interval_bridge.cabinet_period .== "2016.4"), :]))
+println("Ideological-location checks:")
+println("- pre-Temer cabinets have lower unweighted ideology means than post-impeachment Temer cabinets: ", pre_mean < post_mean ? "YES" : "NO", " (", fmt2(pre_mean), " vs ", fmt2(post_mean), ")")
+println("- pre-Temer cabinets have lower seat-weighted ideology means than post-impeachment Temer cabinets: ", pre_seat_mean < post_seat_mean ? "YES" : "NO", " (", fmt2(pre_seat_mean), " vs ", fmt2(post_seat_mean), ")")
+println("- 2016.3 to 2016.4 shifts rightward by unweighted mean: ", transition_row.delta_cabinet_mean_ideology_value_unweighted > 0 ? "YES" : "NO")
+println("- 2016.3 to 2016.4 shifts rightward by seat-weighted mean: ", transition_row.delta_cabinet_mean_ideology_value_seat_weighted > 0 ? "YES" : "NO")
 
 # =============================================================================
 # BLOCK 12. PAPER TABLES

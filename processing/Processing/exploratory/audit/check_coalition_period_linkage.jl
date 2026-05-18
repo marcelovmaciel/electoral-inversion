@@ -34,7 +34,7 @@ label_2025 = Processing.coalition_periods_by_label_year(periods, 2025)
 mandate_2022 = Processing.coalition_periods_overlapping_window(
     periods,
     Date(2023, 1, 1),
-    Date(2025, 12, 31);
+    Date(2026, 3, 19);
     path = coalition_json_path,
 )
 
