@@ -143,17 +143,20 @@ intervals, 6 inversions, and 2 minimal connected interval inversions. The most s
 case is the 2022 PP--PL interval: it contains 8 parties, obtains only 45.35
 percent of the vote, and nevertheless holds 258 seats.
 
-The rest of the article proceeds as follows. Section \ref{sec:theory} situates coalition
-inversions in relation to proportional representation, apportionment, and the
-literature on election inversions. Section \ref{sec:mea} defines the main quantities used
-in the analysis, including coalition vote share, seat share, quota, seat
-differential, and the inversion criterion. Section \ref{sec:data} describes the election,
-cabinet, party-translation, and ideology data. Section \ref{sec:cabinets} presents the observed
-cabinet-period results for the mandates following the 2014, 2018, and 2022
-elections. Section \ref{sec:ideology} turns to ideologically contiguous party intervals and
-identifies minimal connected winning inversions. The conclusion discusses what
-these findings imply for the evaluation of proportional representation in
-fragmented federal party systems.
+The rest of the article proceeds as follows. Section \ref{sec:theory}
+situates coalition inversions in relation to proportional representation,
+apportionment, and the literature on election inversions. Section
+\ref{sec:mea} defines the main quantities used in the analysis, including
+coalition vote share, seat share, quota, seat differential, and the inversion
+criterion. Section \ref{sec:data} describes the election, cabinet,
+party-translation, and ideology data. Section \ref{sec:party} presents the
+party-level seat differentials that enter the coalition analysis. Section
+\ref{sec:cabinets} presents the observed cabinet-period results for the
+mandates following the 2014, 2018, and 2022 elections. Section
+\ref{sec:ideology} turns to ideologically contiguous party intervals and
+identifies minimal connected winning inversions. Section \ref{sec:disc}
+discusses the implications and limitations of the results. The conclusion
+summarizes the article's contribution and identifies the main extensions.
 
 
 
@@ -321,6 +324,7 @@ therefore reports the full party order, classification label, numeric ideology
 value, source year, and source-party label used for each election.
 
 \section{Party-level disproportionality}
+\label{sec:party}
 
 The coalition analysis begins with party-level seat differentials. Table
 \ref{tab:party-diffs} reports the largest positive and negative differentials by
@@ -399,7 +403,7 @@ relevant during a specific period of government formation or support.
 Table \ref{tab:cabinet-inversions} reports the observed cabinet-period
 inversions\footnote{Because coalition membership changes over short periods, the
   composition history should be visible rather than left implicit and is shown
-  in Appendix \ref{sec:composition} reports every cabinet period, its party
+  in Appendix \ref{app:composition} reports every cabinet period, its party
   composition, and the parties that enter or leave relative to the previous
   period in the same mandate. These transitions are calculated after translating
   cabinet labels back into the party labels that existed at the relevant
@@ -652,7 +656,7 @@ compact seat-majority bloc. By contrast, in 2022 the right does form such a
 core: the PP--PL interval shows that a relatively narrow right/far-right bloc can
 cross the majority threshold without a corresponding vote majority.
 
-The appendix table reinforces this reading and adds an important political
+The Appendix \ref{app:cabinet-interval-bridge} table reinforces this reading and adds an important political
 qualification. PT held the presidency during part of the mandate associated with
 the 2014 election, through Dilma Rousseff's second administration, and again in
 the mandate associated with the 2022 election, through Lula's third
@@ -704,6 +708,7 @@ governing coalitions, while the interval analysis shows where seat-efficient
 connected blocs are located in the ideological order.
 
 \section{Discussion}
+\label{sec:disc}
 
 The analysis identifies a narrow but politically significant form of
 representational inversion. A coalition inversion does not mean that proportional
@@ -827,189 +832,7 @@ to explaining their institutional source.
 \appendix
 
 
-\section{Cabinet periods and composition}
-\label{sec:composition}
-
-\begin{landscape}
-\scriptsize
-\setlength{\tabcolsep}{2pt}
-\renewcommand{\arraystretch}{1.08}
-
-\begin{longtable}{|l|l|l|r|r|r|r|l|L{0.30\linewidth}|L{0.13\linewidth}|L{0.13\linewidth}|}
-\caption{Cabinet-period composition and transitions}\label{tab:full-cabinet-composition}\\
-\hline
-Election & Period & Dates & Days & Vote \% & Seats & Seat diff. & Status & Composition & Entered & Left \\
-\hline
-\endfirsthead
-
-\hline
-Election & Period & Dates & Days & Vote \% & Seats & Seat diff. & Status & Composition & Entered & Left \\
-\hline
-\endhead
-
-2014 & 2015.1 & 2015-01-01--2016-03-23 & 448 & 57.69 & 318 & 22.07 & votes+seats & PCdoB, PDT, PMDB, PP, PR, PRB, PSD, PT, PTB &  &  \\
-\hline
-2014 & 2016.1 & 2016-03-24--2016-04-13 & 21 & 53.14 & 297 & 24.39 & votes+seats & PCdoB, PDT, PMDB, PP, PR, PSD, PT, PTB &  & PRB \\
-\hline
-2014 & 2016.2 & 2016-04-14--2016-04-15 & 2 & 46.54 & 259 & 20.27 & seats only & PCdoB, PDT, PMDB, PR, PSD, PT, PTB &  & PP \\
-\hline
-2014 & 2016.3 & 2016-04-16--2016-05-11 & 26 & 40.41 & 223 & 15.72 & neither & PCdoB, PDT, PMDB, PR, PT, PTB &  & PSD \\
-\hline
-2014 & 2016.4 & 2016-05-12--2017-12-27 & 595 & 53.93 & 291 & 14.33 & votes+seats & DEM, PMDB, PP, PPS, PSB, PSD, PSDB, PTB, PV & DEM, PP, PPS, PSB, PSD, PSDB, PV & PCdoB, PDT, PR, PT \\
-\hline
-2014 & 2017.1 & 2017-12-28--2018-04-06 & 100 & 49.91 & 266 & 9.95 & seats only & DEM, PMDB, PP, PPS, PSB, PSD, PSDB, PV &  & PTB \\
-\hline
-2014 & 2018.1 & 2018-04-07--2018-05-27 & 51 & 37.22 & 203 & 12.07 & neither & PMDB, PP, PPS, PSD, PSDB &  & DEM, PSB, PV \\
-\hline
-2014 & 2018.2 & 2018-05-28--2018-12-31 & 218 & 37.96 & 207 & 12.26 & neither & PMDB, PP, PPS, PSD, PSDB, PTN & PTN &  \\
-\hline
-
-2018 & 2019.1 & 2019-01-01--2020-02-10 & 406 & 36.48 & 190 & 2.86 & neither & DEM, MDB, NOVO, PATRIOTA, PR, PRB, PSL &  &  \\
-\hline
-2018 & 2020.1 & 2020-02-11--2020-02-14 & 4 & 42.47 & 220 & 2.11 & neither & DEM, MDB, NOVO, PATRIOTA, PR, PRB, PSDB, PSL & PSDB &  \\
-\hline
-2018 & 2020.2 & 2020-02-15--2020-06-16 & 123 & 36.94 & 186 & -3.50 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSDB, PSL &  & MDB \\
-\hline
-2018 & 2020.3 & 2020-06-17--2020-12-09 & 176 & 42.79 & 221 & 1.49 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSD, PSDB, PSL & PSD &  \\
-\hline
-2018 & 2020.4 & 2020-12-10--2021-03-28 & 109 & 31.15 & 169 & 9.19 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSD, PSDB &  & PSL \\
-\hline
-2018 & 2021.1 & 2021-03-29--2021-06-23 & 87 & 42.79 & 221 & 1.49 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSD, PSDB, PSL & PSL &  \\
-\hline
-2018 & 2021.2 & 2021-06-24--2021-08-03 & 41 & 39.99 & 213 & 7.84 & neither & DEM, PATRIOTA, PR, PRB, PSD, PSDB, PSL &  & NOVO \\
-\hline
-2018 & 2021.3 & 2021-08-04--2022-03-30 & 239 & 45.50 & 250 & 16.60 & neither & DEM, PATRIOTA, PP, PR, PRB, PSD, PSDB, PSL & PP &  \\
-\hline
-2018 & 2022.1 & 2022-03-31--2022-03-31 & 1 & 40.83 & 221 & 11.52 & neither & PATRIOTA, PP, PR, PRB, PSD, PSDB, PSL &  & DEM \\
-\hline
-2018 & 2022.2 & 2022-04-01--2022-04-01 & 1 & 34.84 & 191 & 12.28 & neither & PATRIOTA, PP, PR, PRB, PSD, PSL &  & PSDB \\
-\hline
-2018 & 2022.3 & 2022-04-02--2022-12-31 & 274 & 29.52 & 158 & 6.55 & neither & PATRIOTA, PP, PRB, PSD, PSL &  & PR \\
-\hline
-
-2022 & 2023.1 & 2023-01-01--2023-09-12 & 255 & 48.89 & 263 & 12.20 & seats only & MDB, PCdoB, PDT, PSB, PSD, PSOL, PT, REDE, UNIÃO &  &  \\
-\hline
-2022 & 2023.2 & 2023-09-13--2025-12-23 & 833 & 63.79 & 350 & 22.76 & votes+seats & MDB, PCdoB, PDT, PP, PSB, PSD, PSOL, PT, REDE, REPUBLICANOS, UNIÃO & PP, REPUBLICANOS &  \\
-\hline
-2022 & 2025.1 & 2025-12-24--2026-03-19 & 86 & 54.45 & 291 & 11.66 & votes+seats & MDB, PCdoB, PDT, PP, PSB, PSD, PSOL, PT, REDE, REPUBLICANOS &  & UNIÃO \\
-\hline
-
-\end{longtable}
-\end{landscape}
-
-
-\section{Cabinet coalitions and ideological intervals}
-\label{app:cabinet-interval-bridge}
-
-Table \ref{tab:cabinet-interval-bridge} compares observed cabinet coalitions
-with the contiguous ideological intervals that contain or approximate them.
-The connected closure of a cabinet is the smallest no-gap ideological interval
-containing all cabinet parties. Gaps are parties inside that closure that are
-not members of the cabinet coalition. The final columns report the closest
-minimal connected winning interval and, where one exists, the closest minimal
-connected inversion. This table links the observed coalition analysis to the
-interval analysis by showing whether realized cabinet coalitions are compact
-ideological blocs or sparse selections from a wider ideological span.
-
-\input{\ArtifactRoot/latex/table_appendix_cabinet_interval_bridge.tex}
-
-The first result is that no observed cabinet coalition is itself a contiguous
-ideological interval. Every cabinet period has gaps inside its connected closure.
-The smallest number of gaps is nine, and several cabinet periods have more than
-fifteen. This means that Brazilian cabinet coalitions are not simply connected
-ideological blocs translated into government. They are selective coalitions: party
-sets assembled from a wider ideological span while omitting many parties that
-lie between their leftmost and rightmost members.
-
-This matters for the interpretation of cabinet inversions. The observed cabinet
-inversions are sparse coalitions, but their connected closures are not inversions.
-All connected closures in Table \ref{tab:cabinet-interval-bridge} are
-vote-and-seat majorities. The 2016.2 cabinet, for example, has 46.54 percent of
-the vote and 259 seats, but its connected closure runs from PCdoB to PR and
-contains 20 parties. That closure has 77.61 percent of the vote and 408 seats.
-The inversion therefore does not come from a compact left-to-right ideological
-bloc. It comes from a selective cabinet coalition that retains a seat majority
-while omitting thirteen parties inside its ideological span.
-
-The same logic applies to the more durable Temer-period inversion. The 2017.1
-cabinet contains DEM, PMDB, PP, PPS, PSB, PSD, PSDB, and PV. Its connected
-closure runs from PSB to DEM, contains 25 parties, and has seventeen gaps. The
-observed cabinet has 49.91 percent of the vote and 266 seats, while the full
-PSB--DEM closure has 78.42 percent of the vote and 409 seats. The cabinet
-inversion is therefore not a connected ideological majority. It is a sparse
-center-to-right cabinet coalition located near the connected inversion region
-identified in the interval analysis. Its closest minimal connected winning
-interval is PSB--PTN, which is itself an inversion with 48.92 percent of the vote
-and 260 seats.
-
-The Dilma coalitions have a different ideological profile from the later
-Temer coalitions. They are also sparse, but they are left-anchored. The cabinet
-sets before Temer include PT, PCdoB, and PDT while extending to parties such
-as PMDB, PSD, PR, PP, and PTB. Their closures run from PCdoB to either PR or
-PP, and their gap structure contains many center, center-right, and right parties
-that are not cabinet members. The impeachment transition changes this structure.
-From 2016.3 to 2016.4, PCdoB, PDT, PT, and PR leave, while PSB, PPS, PV, PSD,
-PSDB, PP, and DEM enter. In the ideology classification, the parties leaving are
-concentrated on the left and center-left, with one right party, while the parties
-entering are concentrated in the center, right, and far right. The cabinet remains
-punctured, but its ideological anchor shifts rightward.
-
-The ideology diagnostics in the table confirm this transition. On the project's
-ideology scale, the average unweighted cabinet ideology rises from the
-pre-Temer sequence to the post-impeachment Temer sequence. The transition from
-2016.3 to 2016.4 alone increases the unweighted cabinet ideology mean by 1.53
-points and the seat-weighted mean by 1.49 points. This is the substantive
-difference between the two sparse coalition types. The pre-Temer coalitions are
-left-anchored and broad. The Temer coalitions are center-to-right and broad.
-Both are non-contiguous, but they occupy different regions of the ideological
-order.
-
-The Bolsonaro-period cabinets provide the opposite kind of case. They are more
-ideologically concentrated on the right and far right, and their connected
-closures are narrower than the 2014 and 2022 closures. Yet the observed
-Bolsonaro cabinets do not become seat majorities. The closest case, 2021.3, has
-45.50 percent of the vote and 250 seats, still below the Chamber majority
-threshold. Its connected closure, PSD--DEM, has 57.37 percent of the vote and
-292 seats, and the closest minimal connected winning interval is PSDB--DEM,
-which has 51.52 percent of the vote and 257 seats. The 2018 mandate is
-therefore negative in both senses: no observed cabinet inversion appears, and no
-minimal connected inversion exists in the ideological interval analysis.
-
-The 2023.1 Lula cabinet returns to a left-anchored structure, but it is not a
-compact left coalition. It contains PSOL, PCdoB, PT, PDT, PSB, REDE, MDB,
-PSD, and UNIÃO. Its connected closure runs from PSOL to UNIÃO, contains 26
-parties, and has seventeen gaps. The observed cabinet is an inversion, with
-48.89 percent of the vote and 263 seats, but its connected closure has 80.64
-percent of the vote and 407 seats. The closest minimal connected winning
-interval is PT--PP, a broad vote-and-seat majority with 57.86 percent of the
-vote and 284 seats. The closest minimal connected inversion is MDB--UNIÃO,
-which lies to the right of the cabinet's left anchor.
-
-This comparison is crucial for interpreting the 2022 result. The Lula cabinet is
-a realized inversion, but it is not the compact connected inversion revealed by
-the interval search. The compact connected inversion is PP--PL: an eight-party
-right/far-right interval with 45.35 percent of the vote and 258 seats. The
-observed Lula coalition reaches a seat majority through a broad and sparse
-cross-ideological cabinet arrangement. The connected interval analysis shows
-that the most compact vote-minority seat-majority bloc in the same Chamber is
-located on the right.
-
-The two analyses therefore meet at a specific structural point. Cabinet
-coalitions identify realized governing party sets. Connected intervals identify
-the seat-vote geometry of ideological blocs. The cabinet-to-interval comparison
-shows that realized cabinets may draw on seat asymmetries without being
-connected blocs themselves. In 2014, the pre-Temer coalitions are sparse and
-left-anchored, while the Temer coalitions are sparse and shifted rightward. In
-2018, right-side cabinets remain below the seat-majority threshold. In 2022, the
-Lula cabinet is a broad realized inversion, while the compact connected
-inversion lies on the right. The gap between cabinet coalitions and connected
-intervals is therefore not a nuisance. It shows how Brazil's coalition
-presidentialism combines sparse cabinet construction with an ideological
-distribution in which seat-efficient connected blocs are often located elsewhere.
-\input{\ArtifactRoot/latex/table_appendix_cabinet_interval_bridge.tex}
-
-
-\section{Ideology source-year and label rules}\label{app:ideology-rules}
+\section{Party ideology classifications used for interval construction}\label{app:ideology-order}
 
 The interval analysis uses the following source-year rule: 2014 uses the 2023
 classification, 2018 uses the 2023 classification, and 2022 uses the 2025
@@ -1024,37 +847,6 @@ PTN. Three source-year labels are dropped before the 2014 join because they do
 not belong to the 2014 election-party space used in the vote-seat data: NOVO,
 PMB, and REDE. No label overrides or source-year drops are applied to the 2018
 or 2022 ideology joins in the current runner output.
-
-
-
-\section{Cabinet-party translation rules}\label{app:cabinet-crosswalk}
-
-Table \ref{tab:cabinet-crosswalk} reports the non-trivial cabinet-label
-translations observed in the generated cabinet translation report. Rows not
-shown are label passthroughs.
-
-\begin{longtable}{lll p{0.18\linewidth} p{0.44\linewidth}}
-\caption{Non-trivial cabinet-label translations into election-party space}\label{tab:cabinet-crosswalk}\\
-\toprule
-Election & Cabinet label & Election label & Mapping type & Notes \\
-\midrule
-\endfirsthead
-\toprule
-Election & Cabinet label & Election label & Mapping type & Notes \\
-\midrule
-\endhead
-2014 & MDB & PMDB & rename & Reverts the post-2018 party rename so the cabinet base can be compared with the 2014 election-party space. \\
-2014 & PL & PR & rename & Reverts the post-2019 party rename so the cabinet base can be compared with the 2014 election-party space. \\
-2014 & PODE & PTN & rename & Reverts the post-2017 party rename so the cabinet base can be compared with the 2014 election-party space. \\
-2014 & Republicanos & PRB & rename & Reverts the post-2019 party rename so the cabinet base can be compared with the 2014 election-party space. \\
-2018 & PL & PR & rename & Reverts the post-2019 party rename so the cabinet base can be compared with the 2018 election-party space. \\
-2018 & Republicanos & PRB & rename & Reverts the post-2019 party rename so the cabinet base can be compared with the 2018 election-party space. \\
-2022 & UNIÃO & UNIÃO & passthrough & In 2022 the join already occurs in the União Brasil election-party space; before that point, the rule fails closed. \\
-\bottomrule
-\end{longtable}
-
-
-\section{Party ideology classifications used for interval construction}\label{app:ideology-order}
 
 Table \ref{tab:ideology-order-full} reports the full party order used to build
 contiguous ideological intervals. The order is generated from the source-year
@@ -1176,6 +968,77 @@ Election & Pos. & Party & Classification & Score & Source & Source party \\
 \bottomrule
 \end{longtable}
 
+\section{Cabinet periods and composition}
+\label{app:composition}
+
+\begin{landscape}
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\renewcommand{\arraystretch}{1.08}
+
+\begin{longtable}{|l|l|l|r|r|r|r|l|L{0.30\linewidth}|L{0.13\linewidth}|L{0.13\linewidth}|}
+\caption{Cabinet-period composition and transitions}\label{tab:full-cabinet-composition}\\
+\hline
+Election & Period & Dates & Days & Vote \% & Seats & Seat diff. & Status & Composition & Entered & Left \\
+\hline
+\endfirsthead
+
+\hline
+Election & Period & Dates & Days & Vote \% & Seats & Seat diff. & Status & Composition & Entered & Left \\
+\hline
+\endhead
+
+2014 & 2015.1 & 2015-01-01--2016-03-23 & 448 & 57.69 & 318 & 22.07 & votes+seats & PCdoB, PDT, PMDB, PP, PR, PRB, PSD, PT, PTB &  &  \\
+\hline
+2014 & 2016.1 & 2016-03-24--2016-04-13 & 21 & 53.14 & 297 & 24.39 & votes+seats & PCdoB, PDT, PMDB, PP, PR, PSD, PT, PTB &  & PRB \\
+\hline
+2014 & 2016.2 & 2016-04-14--2016-04-15 & 2 & 46.54 & 259 & 20.27 & seats only & PCdoB, PDT, PMDB, PR, PSD, PT, PTB &  & PP \\
+\hline
+2014 & 2016.3 & 2016-04-16--2016-05-11 & 26 & 40.41 & 223 & 15.72 & neither & PCdoB, PDT, PMDB, PR, PT, PTB &  & PSD \\
+\hline
+2014 & 2016.4 & 2016-05-12--2017-12-27 & 595 & 53.93 & 291 & 14.33 & votes+seats & DEM, PMDB, PP, PPS, PSB, PSD, PSDB, PTB, PV & DEM, PP, PPS, PSB, PSD, PSDB, PV & PCdoB, PDT, PR, PT \\
+\hline
+2014 & 2017.1 & 2017-12-28--2018-04-06 & 100 & 49.91 & 266 & 9.95 & seats only & DEM, PMDB, PP, PPS, PSB, PSD, PSDB, PV &  & PTB \\
+\hline
+2014 & 2018.1 & 2018-04-07--2018-05-27 & 51 & 37.22 & 203 & 12.07 & neither & PMDB, PP, PPS, PSD, PSDB &  & DEM, PSB, PV \\
+\hline
+2014 & 2018.2 & 2018-05-28--2018-12-31 & 218 & 37.96 & 207 & 12.26 & neither & PMDB, PP, PPS, PSD, PSDB, PTN & PTN &  \\
+\hline
+
+2018 & 2019.1 & 2019-01-01--2020-02-10 & 406 & 36.48 & 190 & 2.86 & neither & DEM, MDB, NOVO, PATRIOTA, PR, PRB, PSL &  &  \\
+\hline
+2018 & 2020.1 & 2020-02-11--2020-02-14 & 4 & 42.47 & 220 & 2.11 & neither & DEM, MDB, NOVO, PATRIOTA, PR, PRB, PSDB, PSL & PSDB &  \\
+\hline
+2018 & 2020.2 & 2020-02-15--2020-06-16 & 123 & 36.94 & 186 & -3.50 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSDB, PSL &  & MDB \\
+\hline
+2018 & 2020.3 & 2020-06-17--2020-12-09 & 176 & 42.79 & 221 & 1.49 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSD, PSDB, PSL & PSD &  \\
+\hline
+2018 & 2020.4 & 2020-12-10--2021-03-28 & 109 & 31.15 & 169 & 9.19 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSD, PSDB &  & PSL \\
+\hline
+2018 & 2021.1 & 2021-03-29--2021-06-23 & 87 & 42.79 & 221 & 1.49 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSD, PSDB, PSL & PSL &  \\
+\hline
+2018 & 2021.2 & 2021-06-24--2021-08-03 & 41 & 39.99 & 213 & 7.84 & neither & DEM, PATRIOTA, PR, PRB, PSD, PSDB, PSL &  & NOVO \\
+\hline
+2018 & 2021.3 & 2021-08-04--2022-03-30 & 239 & 45.50 & 250 & 16.60 & neither & DEM, PATRIOTA, PP, PR, PRB, PSD, PSDB, PSL & PP &  \\
+\hline
+2018 & 2022.1 & 2022-03-31--2022-03-31 & 1 & 40.83 & 221 & 11.52 & neither & PATRIOTA, PP, PR, PRB, PSD, PSDB, PSL &  & DEM \\
+\hline
+2018 & 2022.2 & 2022-04-01--2022-04-01 & 1 & 34.84 & 191 & 12.28 & neither & PATRIOTA, PP, PR, PRB, PSD, PSL &  & PSDB \\
+\hline
+2018 & 2022.3 & 2022-04-02--2022-12-31 & 274 & 29.52 & 158 & 6.55 & neither & PATRIOTA, PP, PRB, PSD, PSL &  & PR \\
+\hline
+
+2022 & 2023.1 & 2023-01-01--2023-09-12 & 255 & 48.89 & 263 & 12.20 & seats only & MDB, PCdoB, PDT, PSB, PSD, PSOL, PT, REDE, UNIÃO &  &  \\
+\hline
+2022 & 2023.2 & 2023-09-13--2025-12-23 & 833 & 63.79 & 350 & 22.76 & votes+seats & MDB, PCdoB, PDT, PP, PSB, PSD, PSOL, PT, REDE, REPUBLICANOS, UNIÃO & PP, REPUBLICANOS &  \\
+\hline
+2022 & 2025.1 & 2025-12-24--2026-03-19 & 86 & 54.45 & 291 & 11.66 & votes+seats & MDB, PCdoB, PDT, PP, PSB, PSD, PSOL, PT, REDE, REPUBLICANOS &  & UNIÃO \\
+\hline
+
+\end{longtable}
+\end{landscape}
+
+
 \section{Minimal connected winning ideological intervals}
 \label{app:minimal-connected-winning}
 
@@ -1189,6 +1052,153 @@ may have both a vote majority and a seat majority, while an interval inversion
 has a seat majority without a vote majority.
 
 \input{\ArtifactRoot/latex/table_appendix_minimal_connected_winning_intervals.tex}
+
+
+\section{Cabinet coalitions and ideological intervals}
+\label{app:cabinet-interval-bridge}
+
+Table \ref{tab:cabinet-interval-bridge} compares observed cabinet coalitions
+with the contiguous ideological intervals that contain or approximate them.
+The connected closure of a cabinet is the smallest no-gap ideological interval
+containing all cabinet parties. Gaps are parties inside that closure that are
+not members of the cabinet coalition. The final columns report the closest
+minimal connected winning interval and, where one exists, the closest minimal
+connected inversion. This table links the observed coalition analysis to the
+interval analysis by showing whether realized cabinet coalitions are compact
+ideological blocs or sparse selections from a wider ideological span.
+
+\input{\ArtifactRoot/latex/table_appendix_cabinet_interval_bridge.tex}
+
+The first result is that no observed cabinet coalition is itself a contiguous
+ideological interval. Every cabinet period has gaps inside its connected closure.
+The smallest number of gaps is nine, and several cabinet periods have more than
+fifteen. This means that Brazilian cabinet coalitions are not simply connected
+ideological blocs translated into government. They are selective coalitions: party
+sets assembled from a wider ideological span while omitting many parties that
+lie between their leftmost and rightmost members.
+
+This matters for the interpretation of cabinet inversions. The observed cabinet
+inversions are sparse coalitions, but their connected closures are not inversions.
+All connected closures in Table \ref{tab:cabinet-interval-bridge} are
+vote-and-seat majorities. The 2016.2 cabinet, for example, has 46.54 percent of
+the vote and 259 seats, but its connected closure runs from PCdoB to PR and
+contains 20 parties. That closure has 77.61 percent of the vote and 408 seats.
+The inversion therefore does not come from a compact left-to-right ideological
+bloc. It comes from a selective cabinet coalition that retains a seat majority
+while omitting thirteen parties inside its ideological span.
+
+The same logic applies to the more durable Temer-period inversion. The 2017.1
+cabinet contains DEM, PMDB, PP, PPS, PSB, PSD, PSDB, and PV. Its connected
+closure runs from PSB to DEM, contains 25 parties, and has seventeen gaps. The
+observed cabinet has 49.91 percent of the vote and 266 seats, while the full
+PSB--DEM closure has 78.42 percent of the vote and 409 seats. The cabinet
+inversion is therefore not a connected ideological majority. It is a sparse
+center-to-right cabinet coalition located near the connected inversion region
+identified in the interval analysis. Its closest minimal connected winning
+interval is PSB--PTN, which is itself an inversion with 48.92 percent of the vote
+and 260 seats.
+
+The Dilma coalitions have a different ideological profile from the later
+Temer coalitions. They are also sparse, but they are left-anchored. The cabinet
+sets before Temer include PT, PCdoB, and PDT while extending to parties such
+as PMDB, PSD, PR, PP, and PTB. Their closures run from PCdoB to either PR or
+PP, and their gap structure contains many center, center-right, and right parties
+that are not cabinet members. The impeachment transition changes this structure.
+From 2016.3 to 2016.4, PCdoB, PDT, PT, and PR leave, while PSB, PPS, PV, PSD,
+PSDB, PP, and DEM enter. In the ideology classification, the parties leaving are
+concentrated on the left and center-left, with one right party, while the parties
+entering are concentrated in the center, right, and far right. The cabinet remains
+punctured, but its ideological anchor shifts rightward.
+
+The ideology diagnostics in the table confirm this transition. On the project's
+ideology scale, the average unweighted cabinet ideology rises from the
+pre-Temer sequence to the post-impeachment Temer sequence. The transition from
+2016.3 to 2016.4 alone increases the unweighted cabinet ideology mean by 1.53
+points and the seat-weighted mean by 1.49 points. This is the substantive
+difference between the two sparse coalition types. The pre-Temer coalitions are
+left-anchored and broad. The Temer coalitions are center-to-right and broad.
+Both are non-contiguous, but they occupy different regions of the ideological
+order.
+
+The Bolsonaro-period cabinets provide the opposite kind of case. They are more
+ideologically concentrated on the right and far right, and their connected
+closures are narrower than the 2014 and 2022 closures. Yet the observed
+Bolsonaro cabinets do not become seat majorities. The closest case, 2021.3, has
+45.50 percent of the vote and 250 seats, still below the Chamber majority
+threshold. Its connected closure, PSD--DEM, has 57.37 percent of the vote and
+292 seats, and the closest minimal connected winning interval is PSDB--DEM,
+which has 51.52 percent of the vote and 257 seats. The 2018 mandate is
+therefore negative in both senses: no observed cabinet inversion appears, and no
+minimal connected inversion exists in the ideological interval analysis.
+
+The 2023.1 Lula cabinet returns to a left-anchored structure, but it is not a
+compact left coalition. It contains PSOL, PCdoB, PT, PDT, PSB, REDE, MDB,
+PSD, and UNIÃO. Its connected closure runs from PSOL to UNIÃO, contains 26
+parties, and has seventeen gaps. The observed cabinet is an inversion, with
+48.89 percent of the vote and 263 seats, but its connected closure has 80.64
+percent of the vote and 407 seats. The closest minimal connected winning
+interval is PT--PP, a broad vote-and-seat majority with 57.86 percent of the
+vote and 284 seats. The closest minimal connected inversion is MDB--UNIÃO,
+which lies to the right of the cabinet's left anchor.
+
+This comparison is crucial for interpreting the 2022 result. The Lula cabinet is
+a realized inversion, but it is not the compact connected inversion revealed by
+the interval search. The compact connected inversion is PP--PL: an eight-party
+right/far-right interval with 45.35 percent of the vote and 258 seats. The
+observed Lula coalition reaches a seat majority through a broad and sparse
+cross-ideological cabinet arrangement. The connected interval analysis shows
+that the most compact vote-minority seat-majority bloc in the same Chamber is
+located on the right.
+
+The two analyses therefore meet at a specific structural point. Cabinet
+coalitions identify realized governing party sets. Connected intervals identify
+the seat-vote geometry of ideological blocs. The cabinet-to-interval comparison
+shows that realized cabinets may draw on seat asymmetries without being
+connected blocs themselves. In 2014, the pre-Temer coalitions are sparse and
+left-anchored, while the Temer coalitions are sparse and shifted rightward. In
+2018, right-side cabinets remain below the seat-majority threshold. In 2022, the
+Lula cabinet is a broad realized inversion, while the compact connected
+inversion lies on the right. The gap between cabinet coalitions and connected
+intervals is therefore not a nuisance. It shows how Brazil's coalition
+presidentialism combines sparse cabinet construction with an ideological
+distribution in which seat-efficient connected blocs are often located elsewhere.
+
+
+
+
+
+
+
+% \section{Cabinet-party translation rules}\label{app:cabinet-crosswalk}
+
+% Table \ref{tab:cabinet-crosswalk} reports the non-trivial cabinet-label
+% translations observed in the generated cabinet translation report.
+
+% Table \ref{tab:cabinet-crosswalk} reports the non-trivial cabinet-label
+% translations observed in the generated cabinet translation report. Rows not
+% shown are label passthroughs.
+
+% \begin{longtable}{lll p{0.52\linewidth}}
+% \caption{Non-trivial cabinet-label translations into election-party space}\label{tab:cabinet-crosswalk}\\
+% \toprule
+% Election & Cabinet label & Election label & Notes \\
+% \midrule
+% \endfirsthead
+% \toprule
+% Election & Cabinet label & Election label & Notes \\
+% \midrule
+% \endhead
+% 2014 & MDB & PMDB & Reverts the post-2018 party rename so the cabinet base can be compared with the 2014 election-party space. \\
+% 2014 & PL & PR & Reverts the post-2019 party rename so the cabinet base can be compared with the 2014 election-party space. \\
+% 2014 & PODE & PTN & Reverts the post-2017 party rename so the cabinet base can be compared with the 2014 election-party space. \\
+% 2014 & Republicanos & PRB & Reverts the post-2019 party rename so the cabinet base can be compared with the 2014 election-party space. \\
+% 2018 & PL & PR & Reverts the post-2019 party rename so the cabinet base can be compared with the 2018 election-party space. \\
+% 2018 & Republicanos & PRB & Reverts the post-2019 party rename so the cabinet base can be compared with the 2018 election-party space. \\
+% 2022 & UNIÃO & UNIÃO & In 2022 the join already occurs in the União Brasil election-party space; before that point, the rule fails closed. \\
+% \bottomrule
+% \end{longtable}
+
+
 
 
 
