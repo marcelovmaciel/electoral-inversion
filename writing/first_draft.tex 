@@ -143,7 +143,17 @@ intervals, 6 inversions, and 2 minimal connected interval inversions. The most s
 case is the 2022 PP--PL interval: it contains 8 parties, obtains only 45.35
 percent of the vote, and nevertheless holds 258 seats.
 
-The rest of the article proceeds as follows. Section \ref{sec:theory} situates coalition inversions in relation to proportional representation, apportionment, and the literature on election inversions. Section \ref{sec:mea} defines the main quantities used in the analysis, including coalition vote share, seat share, quota, seat differential, and the inversion criterion. Section \ref{sec:data} describes the election, cabinet, party-translation, and ideology data. Section \ref{sec:cabinets} presents the observed cabinet-period results for the mandates following the 2014, 2018, and 2022 elections. Section \ref{sec:ideology} turns to ideologically contiguous party intervals and identifies minimal connected winning inversions. The conclusion discusses what these findings imply for the evaluation of proportional representation in fragmented federal party systems.
+The rest of the article proceeds as follows. Section \ref{sec:theory} situates coalition
+inversions in relation to proportional representation, apportionment, and the
+literature on election inversions. Section \ref{sec:mea} defines the main quantities used
+in the analysis, including coalition vote share, seat share, quota, seat
+differential, and the inversion criterion. Section \ref{sec:data} describes the election,
+cabinet, party-translation, and ideology data. Section \ref{sec:cabinets} presents the observed
+cabinet-period results for the mandates following the 2014, 2018, and 2022
+elections. Section \ref{sec:ideology} turns to ideologically contiguous party intervals and
+identifies minimal connected winning inversions. The conclusion discusses what
+these findings imply for the evaluation of proportional representation in
+fragmented federal party systems.
 
 
 
@@ -305,7 +315,7 @@ The ideology analysis uses external party classifications to order parties on a
 left-right scale. The 2014 and 2018 orders use \textcite{bolognesi2023nova}. The 2022 order
 uses the later 2018--2022 update, operationalized through the 2025 data release
 and associated article \parencite{bolognesi2025dataverse,bolognesi2026desaparecimento}.
-This creates a scope condition: the 2014 ordering retrojects later expert
+This creates a methodological caveat: the 2014 ordering retrojects later expert
 classifications onto an earlier party system. Appendix \ref{app:ideology-order}
 therefore reports the full party order, classification label, numeric ideology
 value, source year, and source-party label used for each election.
@@ -345,7 +355,7 @@ Election & Party & Vote share & Seats & Quota & Seat diff. \\
 \bottomrule
 \end{tabular}
 \begin{flushleft}
-\footnotesize Notes: Positive values indicate that the party received more seats than its national vote quota. The table reports selected large positive and negative differentials from \path{\ArtifactRoot/tables/table_02_party_over_underrepresentation.csv}.
+\footnotesize Notes: Positive values indicate that the party received more seats than its national vote quota. The table reports selected large positive and negative differentials from 
 \end{flushleft}
 \end{table}
 
@@ -518,7 +528,7 @@ majority. This is minimality under contiguous endpoint deletion. It is precisely
 subsets and less restrictive than a search over observed cabinets only. It rules
 out cherry picked non-contiguous collections, but it does not require that the
 party set ever formed a cabinet. It shows whether there are seat-vote inversions
-embedded in the ideological arrangement of party delegations.
+embedded in the ideological arrangement of parties.
 
 \begin{table}[htbp]
 \centering
@@ -535,7 +545,7 @@ Election & All intervals & Seat-majority intervals & Inversions & Minimal invers
 \bottomrule
 \end{tabular}
 \begin{flushleft}
-\footnotesize Notes: Intervals are contiguous no-gap blocks in the party ideology order. Source artifact: \path{\ArtifactRoot/tables/table_05_ideological_interval_summary_by_election.csv}.
+\footnotesize Notes: Intervals are contiguous no-gap blocks in the party ideology order. 
 \end{flushleft}
 \end{table}
 
@@ -612,17 +622,16 @@ Appendix \ref{app:minimal-connected-winning} reports the minimal
 connected winning intervals: the intervals that reach a seat majority but cease
 to do so when either endpoint is removed.
 
-The main pattern is not simply that inversions appear in 2014 and 2022. It is
-that their ideological location and compactness change. In 2014, the inversion
-intervals are broad and cross the center. One minimal connected coalitional inversion begins
-with PSB, a center-left party in the ideology classification, and runs through
-PPS and PV before accumulating a sequence of center-right and right parties.
-The other minimal connected coalitional inversions begin farther to the right, but they still
-belong to an extended center-to-right region rather than to a compact bloc at
-the right edge of the party system. The 2014 pattern therefore suggests a
-diffuse form of coalitional seat efficiency: inversions are produced by broad
-intervals that gather enough parties across the middle and right of the
-ideological order.
+The main pattern is that the ideological location and compactness of inversions
+change. In 2014, the inversion intervals are broad and cross the center. One
+minimal connected coalitional inversion begins with PSB, a center-left party in
+the ideology classification, and runs through PPS and PV before accumulating a
+sequence of center-right and right parties. The other minimal connected
+coalitional inversions begin farther to the right, but they still belong to an
+extended center-to-right region rather than to a compact bloc at the right edge
+of the party system. The 2014 pattern therefore suggests a diffuse form of
+coalitional seat efficiency: inversions are produced by broad intervals that
+gather enough parties across the middle and right of the ideological order.
 
 The 2022 panel is different. The seat-majority intervals are more compressed,
 and the inversion cells are displaced sharply to the right. The broad
@@ -654,7 +663,7 @@ minimal connected winning intervals: two in 2014, one in 2018, and one
 in 2022. All four are vote-and-seat majorities, not inversions. They are also
 broad intervals. The two PT-containing intervals in 2014 contain 12 parties, the
 2018 interval contains 15 parties, and the 2022 interval contains 19 parties.
-This is the relevant contrast: minimal connected majorities that include the
+This is a relevant contrast: minimal connected majorities that include the
 presidential party require wide ideological spans and vote majorities, while the
 vote-minority seat-majority intervals are located farther to the right. The
 compact 2022 PP--PL interval is therefore not just another minimal winning
@@ -684,7 +693,7 @@ vote-majority coalitions.
 The connection between the cabinet results and the interval results is developed
 in Appendix \ref{app:cabinet-interval-bridge}. The key point is that observed
 cabinets are not usually contiguous ideological blocs. They are sparse selections
-from wider ideological spans. The pre-Temer coalitions are left-anchored but
+from wider ideological spans. The Dilma coalitions are left-anchored but
 punctured: they include PT, PCdoB, and PDT while extending into PMDB, PSD,
 PR, PP, and PTB. The post-impeachment Temer coalitions remain punctured but
 shift rightward, replacing the left anchor with a center-to-right configuration.
@@ -796,14 +805,11 @@ interval analysis adds a second result: connected vote-minority seat-majorities
 exist in 2014 and 2022, and the strongest 2022 case is the compact PP--PL
 right-side interval.
 
-These findings do not show that Brazilian proportional representation is
-generally non-proportional. They show something narrower and more relevant for a
-fragmented legislature: party-level proportionality does not settle the
-coalitional problem. Seat differentials are not politically inert. Once parties
-are grouped into cabinets or connected ideological intervals, those differentials
-can accumulate enough to change majority status. In some configurations, a party
-set that falls short of half of the national federal-deputy vote nevertheless
-controls a majority of Chamber seats.
+These findings show, in the Brazilian context, that seat differentials are not politically
+inert. Once parties are grouped into cabinets or connected ideological
+intervals, those differentials can accumulate enough to change majority status.
+In some configurations, a party set that falls short of half of the national
+federal-deputy vote nevertheless controls a majority of Chamber seats.
 
 The main next step is to identify where this effect is produced. The present
 analysis establishes the inversion at the national coalition level; it does not
@@ -936,7 +942,7 @@ identified in the interval analysis. Its closest minimal connected winning
 interval is PSB--PTN, which is itself an inversion with 48.92 percent of the vote
 and 260 seats.
 
-The pre-Temer coalitions have a different ideological profile from the later
+The Dilma coalitions have a different ideological profile from the later
 Temer coalitions. They are also sparse, but they are left-anchored. The cabinet
 sets before Temer include PT, PCdoB, and PDT while extending to parties such
 as PMDB, PSD, PR, PP, and PTB. Their closures run from PCdoB to either PR or
@@ -1056,7 +1062,7 @@ classification file listed in the Source column, after the party-label
 translations described in the main text. The Source-party column preserves the
 party label in the source classification before translation into the election
 space. The classification labels in the table have been translated into English
-from the Portuguese labels stored in the generated source artifacts.
+from the Portuguese labels given by the experts.
 
 \begin{longtable}{rrlllrl}
 \caption{Party ideology order by election}\label{tab:ideology-order-full}\\
