@@ -930,11 +930,15 @@ function load_cabinet_to_election_crosswalk(
     if !hasproperty(df, :notes)
         df[!, :notes] = fill("", nrow(df))
     end
+    if !hasproperty(df, :mapping_type)
+        df[!, :mapping_type] = fill("", nrow(df))
+    end
 
     df[!, :election_year] = Int.(df.election_year)
     df[!, :cabinet_party] = strip.(String.(coalesce.(df.cabinet_party, "")))
     df[!, :election_party] = strip.(String.(coalesce.(df.election_party, "")))
     df[!, :notes] = String.(coalesce.(df.notes, ""))
+    df[!, :mapping_type] = strip.(String.(coalesce.(df.mapping_type, "")))
     df[!, :cabinet_party_norm] = normalize_party.(df.cabinet_party)
     df[!, :election_party] = [
         canonical_party(row.election_party; year = row.election_year, strict = true)

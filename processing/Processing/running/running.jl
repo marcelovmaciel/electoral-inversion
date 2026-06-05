@@ -33,11 +33,14 @@ data_root = joinpath(repo_root, "data", "raw", "electionsBR")
 coalition_json_path = joinpath(repo_root, "scraping", "output", "partidos_por_periodo.json")
 classification_root_dir = joinpath(repo_root, "scrape_classification", "output")
 party_alias_path = joinpath(processing_root, "data", "party_aliases.csv")
+party_lineage_path = joinpath(processing_root, "data", "party_lineage_events.csv")
 cabinet_crosswalk_path = joinpath(processing_root, "data", "cabinet_to_election_party_crosswalk.csv")
 
 paper_output_root = joinpath(processing_root, "output", "paper")
 raw_dir = joinpath(paper_output_root, "raw")
 diagnostics_dir = joinpath(paper_output_root, "diagnostics")
+cabinet_period_source_spells_path = joinpath(diagnostics_dir, "cabinet_period_source_spells.csv")
+cabinet_period_party_set_changes_path = joinpath(diagnostics_dir, "cabinet_period_party_set_changes.csv")
 tables_dir = joinpath(paper_output_root, "tables")
 figure_data_dir = joinpath(paper_output_root, "figure_data")
 latex_dir = joinpath(paper_output_root, "latex")
@@ -201,7 +204,10 @@ function preflight_table()
     push!(rows, (item = "coalition JSON", path = coalition_json_path, kind = "file", exists = isfile(coalition_json_path), essential = true))
     push!(rows, (item = "classification root", path = classification_root_dir, kind = "dir", exists = isdir(classification_root_dir), essential = true))
     push!(rows, (item = "party aliases", path = party_alias_path, kind = "file", exists = isfile(party_alias_path), essential = true))
+    push!(rows, (item = "party lineage events", path = party_lineage_path, kind = "file", exists = isfile(party_lineage_path), essential = true))
     push!(rows, (item = "cabinet crosswalk", path = cabinet_crosswalk_path, kind = "file", exists = isfile(cabinet_crosswalk_path), essential = true))
+    push!(rows, (item = "cabinet period source spells", path = cabinet_period_source_spells_path, kind = "file", exists = isfile(cabinet_period_source_spells_path), essential = false))
+    push!(rows, (item = "cabinet period party-set changes", path = cabinet_period_party_set_changes_path, kind = "file", exists = isfile(cabinet_period_party_set_changes_path), essential = false))
     for year in analysis_years
         push!(rows, (item = "$(year) party_mun_zone.csv", path = party_mun_zone_paths[year], kind = "file", exists = isfile(party_mun_zone_paths[year]), essential = true))
         push!(rows, (item = "$(year) candidate.csv", path = candidate_paths[year], kind = "file", exists = isfile(candidate_paths[year]), essential = true))
@@ -338,6 +344,12 @@ print_block("BLOCK 3. PREFLIGHT CHECKS")
 preflight_checks = preflight_table()
 show_table(preflight_checks)
 write_artifact_csv(joinpath(diagnostics_dir, "preflight_checks.csv"), preflight_checks, "diagnostic", "Required input files and directories for the paper runner.")
+for path in [cabinet_period_source_spells_path, cabinet_period_party_set_changes_path]
+    if isfile(path)
+        df = CSV.read(path, DataFrame)
+        record_artifact!(path, "diagnostic", basename(path) == "cabinet_period_source_spells.csv" ? "Appointment spells used to build contemporaneous cabinet periods." : "Contemporaneous cabinet party-set changes and their triggers.", df)
+    end
+end
 missing_essential = preflight_checks[(preflight_checks.essential .== true) .& (preflight_checks.exists .== false), :]
 nrow(missing_essential) == 0 || error("Preflight failed; missing required input(s): $(join(String.(missing_essential.path), ", "))")
 
@@ -510,6 +522,22 @@ print_loaded_year(2022, votes_2022, seats_2022, party_summary_2022)
 print_block("BLOCK 7. COALITION PERIOD LINKAGE")
 coalition_periods_raw = Processing.coalitions_by_period_raw(; path = coalition_json_path)
 coalition_windows = Processing.coalition_period_windows(; path = coalition_json_path)
+
+function validate_post_fusion_cabinet_sets!(coalition_periods, coalition_windows)
+    fusion_date = Date(2022, 2, 8)
+    forbidden = Set(["DEM", "PSL"])
+    for period in sort(collect(keys(coalition_periods)); by = Processing.period_sort_key)
+        period_start, _ = coalition_windows[period]
+        period_start === nothing && continue
+        period_start >= fusion_date || continue
+        parties = Set(String.(coalition_periods[period]))
+        bad = sort(collect(intersect(parties, forbidden)))
+        isempty(bad) || error("Post-fusion contemporaneous cabinet period $(period) contains predecessor parties: $(join(bad, ", ")).")
+    end
+    return true
+end
+
+validate_post_fusion_cabinet_sets!(coalition_periods_raw, coalition_windows)
 mandate_2014 = ARC.mandate_window(2014)
 mandate_2018 = ARC.mandate_window(2018)
 mandate_2022 = ARC.mandate_window(2022)
@@ -602,8 +630,11 @@ function cabinet_translation_report_for_period(raw_parties; election_year, coali
         mask = [crosswalk.election_year[i] == Int(election_year) && crosswalk.cabinet_party_norm[i] == cabinet_norm for i in eachindex(crosswalk.election_year)]
         mapped = sort(unique(String.(crosswalk.election_party[mask])))
         notes = join(sort(unique(String.(crosswalk.notes[mask]))), " | ")
+        crosswalk_mapping_types = sort(unique(String.(crosswalk.mapping_type[mask])))
+        filter!(!isempty, crosswalk_mapping_types)
         mapping_type = if !isempty(mapped)
-            length(mapped) > 1 ? "crosswalk_expansion" : only(mapped) == cabinet_party ? "crosswalk_passthrough" : "crosswalk_rename"
+            length(crosswalk_mapping_types) == 1 ? only(crosswalk_mapping_types) :
+                length(mapped) > 1 ? "crosswalk_expansion" : only(mapped) == cabinet_party ? "crosswalk_passthrough" : "crosswalk_rename"
         elseif cabinet_party in valid_labels
             mapped = [cabinet_party]
             "label_passthrough"
@@ -635,6 +666,14 @@ function build_observed_coalition_table(summary_df, election_year, coalition_per
         nrow(unmapped) == 0 || error("Cabinet party without election-space mapping for $(election_year) $(period): " * join(String.(unmapped.cabinet_party_canonical), ", "))
         election_space_parties = sort(unique(String.(translation_report.election_party[translation_report.election_party .!= ""])))
         isempty(election_space_parties) && error("No election-space parties after cabinet translation for $(election_year) $(period).")
+        if Int(election_year) == 2018 && any(translation_report.cabinet_party_canonical .== "UNIÃO")
+            required = Set(["DEM", "PSL"])
+            translated = Set(election_space_parties)
+            required ⊆ translated || error("2018 $(period): contemporaneous UNIÃO must translate to DEM + PSL.")
+            !("UNIÃO" in translated) || error("2018 $(period): UNIÃO cannot appear in 2018 election-space parties.")
+            uniao_rows = translation_report[translation_report.cabinet_party_canonical .== "UNIÃO", :]
+            all(uniao_rows.mapping_type .== "crosswalk_fusion_expansion") || error("2018 $(period): UNIÃO must use crosswalk_fusion_expansion, not same-label fallback.")
+        end
         metrics = summarize_coalition(summary_df, election_space_parties)
         period_start, period_end = coalition_windows[period]
         period_start === nothing && error("Missing start date for coalition period $(period).")
@@ -675,6 +714,8 @@ for expected_key in [(2014, "2016.2"), (2014, "2017.1"), (2022, "2023.1")]
     expected_key in observed_keys || error("Missing expected observed cabinet inversion: $(expected_key)")
 end
 nrow(observed_cabinet_inversions_only[observed_cabinet_inversions_only.election_year .== 2018, :]) == 0 || error("2018 should have no observed cabinet inversion.")
+closest_2018_case = first(sort(observed_cabinet_coalitions_2018, [:seats, :vote_share], rev = [true, true]), 1)
+println("Closest 2018 observed cabinet case after fusion fix: ", only(closest_2018_case.period), " with seats=", only(closest_2018_case.seats), ", vote_share=", fmt2(100 * only(closest_2018_case.vote_share)), "%, seat_majority=", only(closest_2018_case.seat_majority), ", vote_majority=", only(closest_2018_case.vote_majority))
 row_2016_2 = only(eachrow(observed_cabinet_inversions_only[(observed_cabinet_inversions_only.election_year .== 2014) .& (observed_cabinet_inversions_only.period .== "2016.2"), :]))
 row_2016_2.period_days <= 2 || error("2014 period 2016.2 should be ultra-short, found $(row_2016_2.period_days) days.")
 println("Observed cabinet pattern validated: 2014/2016.2, 2014/2017.1, 2022/2023.1 inversions; no 2018 observed inversion.")

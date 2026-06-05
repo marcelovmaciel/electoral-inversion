@@ -43,6 +43,14 @@ PAGES = [
 TARGET_START_YEAR = 2015
 TARGET_END_YEAR = date.today().year
 
+FUSION_EVENTS = [
+    {
+        "effective_start": date(2022, 2, 8),
+        "predecessors": {"DEM", "PSL"},
+        "successor": "UNIÃO",
+    },
+]
+
 START_TERMS = ("posse", "inicio", "tomou posse", "entrada")
 END_TERMS = ("saida", "fim", "ate o dia", "ate")
 
@@ -66,6 +74,33 @@ def normalize_header(value):
     value = strip_accents(value).lower()
     value = re.sub(r"[^a-z0-9 ]", " ", value)
     return normalize_space(value)
+
+
+def normalize_party_token(value):
+    value = strip_accents(value).upper()
+    value = value.replace("_", " ")
+    value = re.sub(r"[^A-Z0-9 ]", " ", value)
+    return normalize_space(value)
+
+
+def canonical_party_at_date(raw_party, current_date):
+    party = clean_text(raw_party)
+    norm = normalize_party_token(party)
+    if norm in {"", "SEM PARTIDO", "INDEPENDENTE"}:
+        return ""
+    source_aliases = {
+        "REP": "Republicanos",
+        "REPU": "Republicanos",
+        "REPUBLICANOS": "Republicanos",
+        "UNIAO": "UNIÃO",
+        "UNIAO BRASIL": "UNIÃO",
+    }
+    party = source_aliases.get(norm, party)
+    norm = normalize_party_token(party)
+    for event in FUSION_EVENTS:
+        if current_date >= event["effective_start"] and norm in event["predecessors"]:
+            return event["successor"]
+    return party
 
 
 def clean_text(value):
@@ -334,6 +369,9 @@ def build_periods(entries, start_year, end_year):
     boundary_dates = set(events.keys())
     boundary_dates.add(start_range)
     boundary_dates.add(end_range)
+    for event in FUSION_EVENTS:
+        if start_range <= event["effective_start"] < end_range:
+            boundary_dates.add(event["effective_start"])
     sorted_dates = sorted(boundary_dates)
     counts = Counter()
     periods = []
@@ -353,14 +391,23 @@ def build_periods(entries, start_year, end_year):
         interval_end = min(next_date, end_range)
         if interval_start >= interval_end:
             continue
-        parties = sorted(counts.keys())
-        periods.append(
+        parties = sorted(
             {
-                "start": interval_start,
-                "end": interval_end,
-                "parties": parties,
+                canonical_party_at_date(party, interval_start)
+                for party in counts.keys()
             }
+            - {""}
         )
+        if periods and periods[-1]["parties"] == parties and periods[-1]["end"] == interval_start:
+            periods[-1]["end"] = interval_end
+        else:
+            periods.append(
+                {
+                    "start": interval_start,
+                    "end": interval_end,
+                    "parties": parties,
+                }
+            )
     return periods
 
 

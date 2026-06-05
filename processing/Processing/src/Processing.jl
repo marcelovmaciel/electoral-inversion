@@ -4,7 +4,9 @@ using CSV, DataFrames, Statistics, Glob, JSON, JSON3, Dates, Unicode
 
 export normalize_party,
        canonical_party,
+       canonical_party_at_date,
        canonicalize_parties,
+       load_party_lineage_events,
        load_party_classification,
        canonicalize_party_classification!,
        classification_minimal,

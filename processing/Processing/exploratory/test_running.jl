@@ -500,9 +500,12 @@ function cabinet_translation_report_for_period(
         ]
         mapped = sort(unique(String.(crosswalk.election_party[mask])))
         notes = join(sort(unique(String.(crosswalk.notes[mask]))), " | ")
+        crosswalk_mapping_types = sort(unique(String.(crosswalk.mapping_type[mask])))
+        filter!(!isempty, crosswalk_mapping_types)
 
         mapping_type = if !isempty(mapped)
-            length(mapped) > 1 ? "crosswalk_expansion" :
+            length(crosswalk_mapping_types) == 1 ? only(crosswalk_mapping_types) :
+                length(mapped) > 1 ? "crosswalk_expansion" :
                 only(mapped) == cabinet_party ? "crosswalk_passthrough" : "crosswalk_rename"
         elseif cabinet_party in valid_labels
             mapped = [cabinet_party]
