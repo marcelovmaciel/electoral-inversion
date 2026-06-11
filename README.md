@@ -133,7 +133,7 @@ Python dependencies are not locked in a top-level environment file. The cabinet 
 
 The figure script also imports `numpy`, `pandas`, and `matplotlib`. The ideology extraction tools optionally use PDF/text extraction libraries and command-line tools, including `PyMuPDF`, `pdfplumber`, `pdftotext`, and `pdfinfo`.
 
-The workflow was inspected on Linux. Several files contain local absolute paths, especially `writing/main.tex` and the default paths in `writing/make_coalition_figures.py`. The commands below pass explicit paths where needed. If the repository is moved, check the `\RepoRoot` definition in `writing/main.tex` before compiling the manuscript.
+The workflow was inspected on Linux. The commands below assume they are run from the repository root unless otherwise noted.
 
 ## Replication Workflow
 
@@ -142,7 +142,7 @@ Run commands from the repository root unless a command changes directory explici
 ### 1. Environment setup
 
 ```bash
-cd /home/marcelovmaciel/Sync/Projects/electoral_inversions
+cd electoral_inversions
 julia --project=processing/Processing -e 'using Pkg; Pkg.instantiate()'
 ```
 
