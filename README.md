@@ -67,7 +67,7 @@ The inspected workspace contains the following major directories and files:
 
 `test_scripts/downloading_data.R` is another downloader script. It is configured to download the listed election years from 1998 through 2022 for `legends`, `party_mun_zone`, `candidate`, and `seats`.
 
-`scraping/` reconstructs cabinet composition and cabinet-period party sets from Portuguese Wikipedia cabinet-member pages. Its main stored outputs are in `scraping/output/`, especially `partidos_por_periodo.json`, `partidos_por_periodo.csv`, `ministerios_eventos.json`, `ministerios_nomeacoes_intervalos.csv`, and review/audit reports.
+`scraping/` reconstructs cabinet composition and cabinet-period party sets from Brazilian Wikipedia cabinet-member pages. Its main stored outputs are in `scraping/output/`, especially `partidos_por_periodo.json`, `partidos_por_periodo.csv`, `ministerios_eventos.json`, `ministerios_nomeacoes_intervalos.csv`, and review/audit reports.
 
 `dashboard/cabinet_timeline/` is a static audit dashboard for inspecting the cabinet timeline. It is not a manuscript output, but it documents the cabinet reconstruction logic and loads the generated cabinet JSON files.
 
@@ -90,7 +90,7 @@ The inspected workspace contains the following major directories and files:
 | Source | Origin | Years covered in repository | Role in analysis | Stored or downloaded |
 |---|---|---:|---|---|
 | Federal-deputy election returns | Tribunal Superior Eleitoral, accessed with the R package `electionsBR` | Raw files for 1998, 2002, 2006, 2010, 2014, 2018, and 2022 | Party federal-deputy vote totals and elected-seat counts; the paper runner uses 2014, 2018, and 2022 | Stored under `data/raw/electionsBR/`; can be downloaded with the R scripts |
-| Cabinet composition | Portuguese Wikipedia cabinet-member pages for Dilma Rousseff, Michel Temer, Jair Bolsonaro, and Lula III, accessed through the MediaWiki API | Cabinet periods used for mandates beginning in 2015, 2019, and 2023; current data run through 2026-03-19 | Defines observed cabinet-period party sets | Stored under `scraping/output/`; can be regenerated with `scraping/*.py` using network access |
+| Cabinet composition | Brazilian Wikipedia cabinet-member pages for Dilma Rousseff, Michel Temer, Jair Bolsonaro, and Lula III, accessed through the MediaWiki API | Cabinet periods used for mandates beginning in 2015, 2019, and 2023; current data run through 2026-03-19 | Defines observed cabinet-period party sets | Stored under `scraping/output/`; can be regenerated with `scraping/*.py` using network access |
 | Party ideology classifications | PDFs and extracted classification tables associated with Bolognesi, Ribeiro, Codato, and related 2025 update | 2023 classification source for 2014 and 2018 analyses; 2025 classification source for 2022 analysis | Orders parties for contiguous ideological interval analysis | Source PDFs are in `pdfs/classificacao/`; extracted tables are in `scrape_classification/output/` |
 | Party-name aliases and lineage metadata | Repository harmonization files | Election and cabinet labels for 2014, 2018, and 2022 analysis | Canonicalizes party names, handles renames, and handles fusion/translation cases such as DEM/PSL/UNIÃO | Stored under `processing/Processing/data/` |
 | TSE documentation PDFs | Readme PDFs downloaded with `electionsBR` | 1998 through 2022 readmes present | Documentation for raw TSE schemas | Stored under `readmes/` and `r_scripts/readmes/`; not read by the paper runner |
@@ -388,7 +388,7 @@ No runtime benchmark or memory log was found in the repository. The following op
 - `data/raw/electionsBR/` is large because it includes historical raw TSE files and multi-gigabyte `vote_mun_zone.csv` files. The paper runner does not read the large `vote_mun_zone.csv` files.
 - The main Julia runner reads the 2014, 2018, and 2022 `party_mun_zone.csv` and `candidate.csv` files, plus cabinet and ideology metadata.
 - The full TSE download step depends on network access and the `electionsBR` service.
-- The cabinet scraping step depends on network access to the Portuguese Wikipedia API.
+- The cabinet scraping step depends on network access to the Brazilian Wikipedia API.
 - The paper runner does not silently cache or overwrite paper outputs. If outputs already exist, it stops unless `ALLOW_OVERWRITE=true` is set.
 - Older or auxiliary outputs exist under `processing/Processing/output/running/`, but the manuscript replication path uses `processing/Processing/output/paper/`.
 
