@@ -8,12 +8,22 @@
 \usepackage{graphicx}
 \usepackage{enumitem}
 \usepackage{xcolor}
-\usepackage{hyperref}
 \usepackage{microtype}
 \usepackage{csquotes}
 \usepackage{pdflscape}
-\usepackage{array}
+
+\usepackage[
+  style=authoryear,
+  backend=biber,
+  maxcitenames=2,
+  maxbibnames=99
+]{biblatex}
+
+
+\usepackage{hyperref}
+
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
 \hypersetup{
   colorlinks=true,
   linkcolor=blue!50!black,
@@ -49,11 +59,11 @@
 \author{Marcelo Veloso Maciel}
 \date{First draft}
 
-\usepackage[style=authoryear,backend=biber,maxcitenames=2,maxbibnames=99]{biblatex}
+
 % Main local bibliography path. A local fallback file is included with this draft
 % so the PDF can be compiled outside the project repository.
-\IfFileExists{/home/marcelo/Sync/org-roam-mvm/bib/refs.bib}{\addbibresource{/home/marcelo/Sync/org-roam-mvm/bib/refs.bib}}{}
-\addbibresource{references.bib}
+\addbibresource{~/Sync/org-roam-mvm/bib/refs.bib}
+
 
 \begin{document}
 \maketitle
@@ -90,7 +100,7 @@ This raises a precise question: can party sets that fall short of a national
 vote majority nevertheless command a seat majority in the Chamber of Deputies?
 The concern is not exact proportionality. In any finite legislature, vote shares
 must be converted into whole seats, so some deviation from quota is unavoidable.
-Rater, what matters is whether those deviations accumulate across parties in
+Rather, what matters is whether those deviations accumulate across parties in
 ways that change the majority status of coalitions.
 
 Most evaluations of proportionality stop before the point at which parliamentary
@@ -176,18 +186,11 @@ summarizes the article's contribution and identifies the main extensions.
 
 \section{Coalition inversions under Brazilian proportional representation}
 \label{sec:theory}
+The literature on proportional representation identifies several ways in which seat allocations can depart from democratic and proportional intuitions. These departures include voting paradoxes in list PR, threshold effects, apportionment effects, spoiler effects, manipulation, unequal representation, and allocation problems internal to party lists or coalitions \parencite{nurmi1999voting,Saari_2001,van1993paradoxes,balinski2010fair,kaminski2002parties,kaminski18_spoil_effec_propor_repres_system,flis19_pot_ladle,wada24_unified_approac_to_measur_unequal_repres}. The present analysis isolates one object within that broader family: coalition-level election inversions. The point is not that PR generally fails, but that proportionality evaluated at the party level does not settle how seats behave once parties are recombined into politically relevant sets.
 
-The literature on proportional representation identifies several ways in which
-seat allocations can depart from simple majoritarian intuitions. Kurrild-Klitgaard
-shows, using Danish election data, that proportional representation can generate
-rank-order discrepancies between seat allocations and majority comparisons over
-parties \parencite{kurrild2008voting}. His later work shifts the problem toward
-government formation by showing that a party set may form or support a government
-even when the corresponding coalition does not represent a vote majority
-\parencite{kurrild-klitgaard13_elect_inver_coalit_propor_repres}. Along this line, \textcite{miller14_elect_inver_under_propor_repres}, the main
-technical predecessor for the present analysis, argues that, in
-proportional systems, the relevant inversion is usually coalitionwise rather than
-partywise, since single parties rarely win majorities of both votes and seats.
+The direct inversion literature begins from the observation that PR can conflict with ordinary majority intuitions. Kurrild-Klitgaard shows, using Danish election data, that proportional representation can generate rank-order discrepancies between seat allocations and majority comparisons over parties \parencite{kurrild2008voting}. His later work shifts the problem toward government formation by showing that a party set may form or support a government even when the corresponding coalition does not represent a vote majority \parencite{kurrild-klitgaard13_elect_inver_coalit_propor_repres}. Along this line, \textcite{miller14_elect_inver_under_propor_repres}, the main technical predecessor for the present analysis, argues that, in proportional systems, the relevant inversion is usually coalitionwise rather than partywise, since single parties rarely win majorities of both votes and seats. \textcite{felsenthal15_what_to_do_about_elect} then ask what institutional devices might reduce or eliminate such inversions once they are recognized.
+
+This article therefore treats coalition inversions as one PR pathology among others, not as the whole problem of proportional representation. This placement also connects the article to the recent Public Choice agenda on electoral-system pathologies, particularly the special issue on mixed systems. Mixed systems are often designed to combine proportional and majoritarian virtues, but they also generate paradoxes, hacking opportunities, overhang-seat problems, compensation failures, and contamination effects \parencite{FlisGrofmanKaminski2025Introduction,moon25_parad_mixed_semi_compen_system_south_korea,tanacs-mandak25_hackin_mixed_elect_system,Behnke2025SpectacularEnlargement,flis25_cancel_overh_seats,vucicevic25_legac_past}. The present paper makes the parallel move for Brazilian PR: it asks how a system defended by party-level proportionality can still generate majority-status distortions after parties are grouped into cabinets or ideological blocs.
 
 The conceptual point requires care in the Brazilian case because the word
 ``coalition'' can refer to different institutional objects. In the abstract PR
@@ -221,6 +224,10 @@ through different district contests and, in some years, through different
 electoral coalitions or federations. A party set can therefore cross the
 seat-majority threshold even if the same set falls short of a national vote
 majority.
+
+Spoiler effects provide a second bridge between coalition inversions and the broader literature on PR pathologies. In PR systems, spoilers need not operate only by changing which party wins a plurality. They can operate by removing votes from the seat-allocation stage. When parties fail to cross legal or effective thresholds, their votes do not translate into seats, and the seat shares of the remaining parties are inflated. \textcite{kaminski18_spoil_effec_propor_repres_system} analysis of Polish parliamentary elections shows that these effects can be large under D'Hondt PR. In the 2015 election, for example, PiS won 37.58 percent of the vote and 51.09 percent of the seats, a seat majority produced in part by votes lost by parties outside the seat distribution. The Brazilian cases analyzed here are different because the object is not a single-party manufactured majority but a post-electoral party set. The mechanism is nevertheless related. Spoilers and wasted votes change the distribution of effective seats across parties, while coalition formation recombines those party-level differentials after the election.
+
+
 
 Brazilian proportional representation is not a national list system. Federal
 deputies are elected in the states and the Federal District, each of which forms
@@ -788,6 +795,10 @@ contrast, can form a narrower connected bloc with majority seat status. Thus,
 Brazil's open-list PR institutional matrix can allocate seats in such a way that
 coalitional recombination creates Chamber majorities not backed by national vote
 majorities.
+
+
+This is why the Brazilian case belongs in the broader discussion of the dark side of proportional representation. The analysis does not show that PR is generally inferior to majoritarian systems, nor that Brazilian representation is simply disproportional. It shows a more specific institutional pathology. A system may be evaluated as proportional at the party level while still producing majority-status distortions at the level where legislative authority is exercised. In that sense, coalition inversions are parallel to spoilers, threshold effects, apportionment effects, mixed-system paradoxes, and manipulation problems: each identifies a point at which the electoral rule translates votes into politically consequential seats in a way that is not visible from simple party vote shares alone \parencite{van1993paradoxes,kurrild2008voting,kaminski18_spoil_effec_propor_repres_system,FlisGrofmanKaminski2025Introduction}.
+
 
 The current design identifies inversions but does not yet decompose their source.
 This matters because Brazil is not a single national PR district. Seats are
