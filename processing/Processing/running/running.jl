@@ -721,6 +721,117 @@ row_2016_2.period_days <= 2 || error("2014 period 2016.2 should be ultra-short, 
 println("Observed cabinet pattern validated: 2014/2016.2, 2014/2017.1, 2022/2023.1 inversions; no 2018 observed inversion.")
 
 # =============================================================================
+# BLOCK 9B. ELECTORAL-UNIT AND EFFECTIVE-VOTE ROBUSTNESS
+# =============================================================================
+
+print_block("BLOCK 9B. ELECTORAL-UNIT AND EFFECTIVE-VOTE ROBUSTNESS")
+
+function load_uf_votes_for_robustness(year, path; overrides = Dict{String,String}())
+    needed = Set(["DS_CARGO", "SG_UF", "SG_PARTIDO", "QT_VOTOS_NOMINAIS_VALIDOS", "QT_VOTOS_NOMINAIS", "QT_TOTAL_VOTOS_LEG_VALIDOS", "QT_VOTOS_LEGENDA_VALIDOS", "QT_VOTOS_LEGENDA", "QT_VOTOS_NOMINAIS_CONVR_LEG", "QT_VOTOS_NOM_CONVR_LEG_VALIDOS", "QT_VOTOS", "TOTAL_VOTOS", "QT_VOTOS_VALIDOS"])
+    pmz = CSV.read(path, DataFrame; select = (index, name) -> String(name) in needed)
+    Processing.upper_strip!(pmz, :DS_CARGO)
+    filter!(row -> row.DS_CARGO == "DEPUTADO FEDERAL", pmz)
+    Processing.stringify!(pmz, :SG_UF)
+    Processing.stringify!(pmz, :SG_PARTIDO)
+    canonicalize_party_column!(pmz, year; col = :SG_PARTIDO, overrides = overrides)
+    nom_col, leg_col, total_col, scheme = Processing.detect_vote_cols(pmz; ARC.vote_kwargs_for_year(year)...)
+    votes = if scheme == :total
+        Processing.to_int.(pmz[!, total_col])
+    else
+        Processing.to_int.(pmz[!, nom_col]) .+ Processing.to_int.(pmz[!, leg_col])
+    end
+    return combine(
+        groupby(DataFrame(SG_UF = pmz.SG_UF, SG_PARTIDO = pmz.SG_PARTIDO, votes = votes), [:SG_UF, :SG_PARTIDO]),
+        :votes => sum => :votes,
+    )
+end
+
+function usable_list_label(value)
+    value === missing && return nothing
+    label = strip(String(value))
+    normalized = uppercase(label)
+    normalized in ("", "#NULO", "#NE", "N/A", "NA", "NÃO SE APLICA", "NAO SE APLICA", "PARTIDO ISOLADO") && return nothing
+    return label
+end
+
+function load_uf_seats_and_list_map(year, path; overrides = Dict{String,String}())
+    required = Set(["DS_CARGO", "SG_UF", "SG_PARTIDO", "DS_SIT_TOT_TURNO"])
+    optional_labels = ["NM_FEDERACAO", "NM_COLIGACAO", "DS_COMPOSICAO_FEDERACAO", "DS_COMPOSICAO_COLIGACAO"]
+    selected = union(required, Set(optional_labels))
+    candidates = CSV.read(path, DataFrame; select = (index, name) -> String(name) in selected, normalizenames = true)
+    Processing.upper_strip!(candidates, :DS_CARGO)
+    filter!(row -> row.DS_CARGO == "DEPUTADO FEDERAL", candidates)
+    Processing.stringify!(candidates, :SG_UF)
+    Processing.stringify!(candidates, :SG_PARTIDO)
+    canonicalize_party_column!(candidates, year; col = :SG_PARTIDO, overrides = overrides)
+    status = uppercase.(strip.(String.(candidates.DS_SIT_TOT_TURNO)))
+    candidates[!, :WINNER] = in.(status, Ref(Processing.WINNER_STATUSES))
+    seats = combine(groupby(candidates, [:SG_UF, :SG_PARTIDO]), :WINNER => (x -> sum(Int.(x))) => :seats)
+
+    label_columns = [Symbol(col) for col in optional_labels if Symbol(col) in propertynames(candidates)]
+    labels = String[]
+    for row in eachrow(candidates)
+        label = nothing
+        for col in label_columns
+            label = usable_list_label(row[col])
+            label === nothing || break
+        end
+        push!(labels, label === nothing ? String(row.SG_PARTIDO) : String(label))
+    end
+    raw_map = DataFrame(SG_UF = candidates.SG_UF, SG_PARTIDO = candidates.SG_PARTIDO, LISTA = labels)
+    list_map = unique(raw_map)
+    duplicates = combine(groupby(list_map, [:SG_UF, :SG_PARTIDO]), nrow => :n)
+    bad = duplicates[duplicates.n .> 1, :]
+    nrow(bad) == 0 || error("Candidate data assign a state-party unit to multiple proportional lists in $(year).")
+    return (seats = seats, list_map = list_map)
+end
+
+function observed_sets(df)
+    return Dict(String(row.period) => split(String(row.parties), ", ") for row in eachrow(df))
+end
+
+robustness_parts = DataFrame[]
+for (year, path_votes, path_candidates, observed) in [
+    (2014, party_mun_zone_paths[2014], candidate_paths[2014], observed_cabinet_coalitions_2014),
+    (2018, party_mun_zone_paths[2018], candidate_paths[2018], observed_cabinet_coalitions_2018),
+    (2022, party_mun_zone_paths[2022], candidate_paths[2022], observed_cabinet_coalitions_2022),
+]
+    votes_uf = load_uf_votes_for_robustness(year, path_votes; overrides = electoral_party_overrides[year])
+    seat_list_inputs = load_uf_seats_and_list_map(year, path_candidates; overrides = electoral_party_overrides[year])
+    robustness = Processing.coalition_effective_vote_robustness(
+        votes_uf,
+        seat_list_inputs.seats,
+        observed_sets(observed);
+        election_year = year,
+        list_map_uf = seat_list_inputs.list_map,
+    )
+    push!(robustness_parts, robustness)
+end
+
+electoral_unit_effective_vote_robustness = vcat(robustness_parts...; cols = :union)
+baseline = electoral_unit_effective_vote_robustness[electoral_unit_effective_vote_robustness.definition .== "all_valid", [:election_year, :period, :coalition_inversion]]
+rename!(baseline, :coalition_inversion => :baseline_inversion)
+electoral_unit_effective_vote_robustness = leftjoin(electoral_unit_effective_vote_robustness, baseline, on = [:election_year, :period])
+electoral_unit_effective_vote_robustness[!, :survives_baseline_inversion] = electoral_unit_effective_vote_robustness.baseline_inversion .& electoral_unit_effective_vote_robustness.coalition_inversion
+
+write_artifact_csv(joinpath(raw_dir, "electoral_unit_effective_vote_robustness.csv"), electoral_unit_effective_vote_robustness, "raw", "Observed cabinet inversions under all-valid, national-party, state-party, and state-list effective-vote denominators.")
+table_appendix_effective_vote_robustness = select(
+    electoral_unit_effective_vote_robustness,
+    :election_year,
+    :period,
+    :definition,
+    :denominator_votes,
+    :vote_share => ByRow(pct) => :vote_share_pct,
+    :coalition_seats,
+    :coalition_inversion,
+    :interpretation,
+    :baseline_inversion,
+    :survives_baseline_inversion,
+)
+write_artifact_csv(joinpath(tables_dir, "table_appendix_effective_vote_robustness.csv"), table_appendix_effective_vote_robustness, "table", "Compact robustness table for electoral-unit and effective-vote definitions.")
+show_table(table_appendix_effective_vote_robustness[table_appendix_effective_vote_robustness.baseline_inversion .== true, :])
+
+# =============================================================================
 # BLOCK 10. IDEOLOGY ORDERING
 # =============================================================================
 

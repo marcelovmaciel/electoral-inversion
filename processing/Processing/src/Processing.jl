@@ -10,7 +10,8 @@ export normalize_party,
        load_party_classification,
        canonicalize_party_classification!,
        classification_minimal,
-       ideological_interval_coalitions
+       ideological_interval_coalitions,
+       coalition_effective_vote_robustness
 
 include("PartyNames.jl")
 include("party_classification_2023.jl")

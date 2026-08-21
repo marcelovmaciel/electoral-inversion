@@ -108,6 +108,18 @@ After running the main analysis, the high-level replication results should be:
 Use the files under `processing/Processing/output/paper/` to inspect the
 generated tables and diagnostics.
 
+The compact electoral-unit robustness layer writes:
+
+```text
+processing/Processing/output/paper/raw/electoral_unit_effective_vote_robustness.csv
+processing/Processing/output/paper/tables/table_appendix_effective_vote_robustness.csv
+```
+
+It compares the all-valid-vote baseline with effective-vote denominators based
+on nationally seat-winning parties, seat-winning state-party units, and
+seat-winning state lists. For 2014 and 2018 the last unit is a proportional
+electoral coalition or solo party; for 2022 it is a federation or solo party.
+
 ## Tests
 
 Run the Julia test suite from the repository root:

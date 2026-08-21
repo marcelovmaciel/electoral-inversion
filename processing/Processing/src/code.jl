@@ -446,6 +446,133 @@ function party_summary(votes::DataFrame,
     return df
 end
 
+"""
+    coalition_effective_vote_robustness(votes_uf, seats_uf, coalition_sets;
+        election_year, list_map_uf=nothing)
+
+Recompute cabinet-coalition vote majorities under compact alternative
+denominators. `votes_uf` and `seats_uf` are party totals by state. The returned
+rows use: all valid votes; votes for nationally seat-winning parties; votes for
+seat-winning state-party units; and, when `list_map_uf` is supplied, votes for
+parties belonging to a seat-winning state list. A list is the proportional
+coalition (2014/2018), federation (2022), or solo party that competed as one
+seat-allocation unit in a state.
+
+The coalition numerator is filtered by the same eligibility rule as the
+denominator. Seats and the 257-seat majority test do not vary across
+definitions. This function deliberately does not reconstruct the allocation
+formula; it tests whether the inversion classification survives defensible
+effective-vote denominators at the units where seats were allocated.
+"""
+function coalition_effective_vote_robustness(
+    votes_uf::DataFrame,
+    seats_uf::DataFrame,
+    coalition_sets::AbstractDict;
+    election_year::Integer,
+    list_map_uf::Union{Nothing,DataFrame} = nothing,
+)
+    _require_columns(votes_uf, [:SG_UF, :SG_PARTIDO, :votes], "votes_uf")
+    _require_columns(seats_uf, [:SG_UF, :SG_PARTIDO, :seats], "seats_uf")
+
+    votes = combine(
+        groupby(select(votes_uf, :SG_UF, :SG_PARTIDO, :votes), [:SG_UF, :SG_PARTIDO]),
+        :votes => sum => :votes,
+    )
+    seats = combine(
+        groupby(select(seats_uf, :SG_UF, :SG_PARTIDO, :seats), [:SG_UF, :SG_PARTIDO]),
+        :seats => sum => :seats,
+    )
+    units = outerjoin(votes, seats, on = [:SG_UF, :SG_PARTIDO])
+    units.votes = Int.(coalesce.(units.votes, 0))
+    units.seats = Int.(coalesce.(units.seats, 0))
+    units.SG_UF = String.(units.SG_UF)
+    units.SG_PARTIDO = String.(units.SG_PARTIDO)
+
+    national_seats = Dict{String,Int}()
+    for row in eachrow(units)
+        national_seats[row.SG_PARTIDO] = get(national_seats, row.SG_PARTIDO, 0) + row.seats
+    end
+    units[!, :eligible_all_valid] = trues(nrow(units))
+    units[!, :eligible_national_party] = [national_seats[p] > 0 for p in units.SG_PARTIDO]
+    units[!, :eligible_state_party] = units.seats .> 0
+
+    definitions = [
+        ("all_valid", :eligible_all_valid, "All valid federal-deputy votes"),
+        ("national_party_seat_winning", :eligible_national_party, "Votes for parties winning at least one Chamber seat nationally"),
+        ("state_party_seat_winning", :eligible_state_party, "Votes for state-party units winning at least one seat"),
+    ]
+
+    if list_map_uf !== nothing
+        _require_columns(list_map_uf, [:SG_UF, :SG_PARTIDO, :LISTA], "list_map_uf")
+        mapping = unique(select(list_map_uf, :SG_UF, :SG_PARTIDO, :LISTA))
+        mapping.SG_UF = String.(mapping.SG_UF)
+        mapping.SG_PARTIDO = String.(mapping.SG_PARTIDO)
+        mapping.LISTA = String.(mapping.LISTA)
+        duplicate_keys = combine(groupby(mapping, [:SG_UF, :SG_PARTIDO]), nrow => :n)
+        bad = duplicate_keys[duplicate_keys.n .> 1, :]
+        nrow(bad) == 0 || error("list_map_uf has multiple list labels for the same state-party unit.")
+        units = leftjoin(units, mapping, on = [:SG_UF, :SG_PARTIDO])
+        units.LISTA = coalesce.(units.LISTA, units.SG_PARTIDO)
+        list_seats = combine(groupby(units, [:SG_UF, :LISTA]), :seats => sum => :list_seats)
+        units = leftjoin(units, list_seats, on = [:SG_UF, :LISTA])
+        units[!, :eligible_state_list] = units.list_seats .> 0
+        push!(definitions, ("state_list_seat_winning", :eligible_state_list, "Votes for parties in state lists winning at least one seat"))
+    end
+
+    total_seats = sum(units.seats)
+    rows = NamedTuple[]
+    for period in sort(String.(collect(keys(coalition_sets))))
+        coalition = Set(String.(coalition_sets[period]))
+        coalition_seats = sum(units.seats[in.(units.SG_PARTIDO, Ref(coalition))])
+        seat_majority = coalition_seats > total_seats / 2
+        all_valid_share = NaN
+        definition_results = NamedTuple[]
+        for (definition, eligibility_col, note) in definitions
+            eligible = Bool.(units[!, eligibility_col])
+            denominator = sum(units.votes[eligible])
+            denominator > 0 || error("Effective-vote denominator is zero for $definition.")
+            member = in.(units.SG_PARTIDO, Ref(coalition))
+            coalition_votes = sum(units.votes[eligible .& member])
+            vote_share = coalition_votes / denominator
+            definition == "all_valid" && (all_valid_share = vote_share)
+            push!(definition_results, (
+                definition = definition,
+                denominator_note = note,
+                coalition_votes = coalition_votes,
+                denominator_votes = denominator,
+                vote_share = vote_share,
+            ))
+        end
+        for result in definition_results
+            vote_majority = result.vote_share > 0.5
+            inversion = seat_majority && !vote_majority
+            interpretation = if !seat_majority
+                "no_seat_majority"
+            elseif all_valid_share > 0.5
+                "vote_and_seat_majority"
+            elseif result.definition != "all_valid" && vote_majority
+                "threshold_mediated_majority"
+            else
+                "strict_coalition_inversion"
+            end
+            push!(rows, merge((
+                election_year = Int(election_year),
+                period = period,
+                coalition_parties = join(sort(collect(coalition)), ", "),
+                coalition_seats = coalition_seats,
+                total_seats = total_seats,
+                seat_majority = seat_majority,
+                vote_majority = vote_majority,
+                coalition_inversion = inversion,
+                interpretation = interpretation,
+            ), result))
+        end
+    end
+    out = DataFrame(rows)
+    sort!(out, [:election_year, :period, :definition])
+    return out
+end
+
 function _majority_status(vote_majority::Bool, seat_majority::Bool)
     if vote_majority && seat_majority
         return "votes+seats"

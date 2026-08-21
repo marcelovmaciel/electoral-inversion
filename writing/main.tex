@@ -342,6 +342,19 @@ votes in the TSE aggregation.\footnote{For 2014, the vote measure is
 \texttt{QT\_VOTOS\_NOMINAIS + QT\_VOTOS\_LEGENDA}. For 2018 and 2022, it is
 \texttt{QT\_VOTOS\_NOMINAIS\_VALIDOS + QT\_TOTAL\_VOTOS\_LEG\_VALIDOS}.}
 
+As a compact robustness check, I also recompute cabinet-coalition vote shares
+after excluding votes that did not enter a seat-winning electoral unit. The
+denominator is varied at three levels: parties winning at least one seat
+nationally, state--party units winning at least one seat, and state lists
+winning at least one seat. The last definition treats proportional electoral
+coalitions in 2014 and 2018 and federations in 2022 as the collective
+seat-allocation unit; solo parties remain their own lists. In every definition,
+the coalition numerator is filtered by the same rule as the denominator, while
+the coalition's seat total and the 257-seat threshold remain fixed. This check
+does not replace the all-valid-vote definition. It distinguishes inversions
+that remain below one half of effective votes from cases that become effective
+vote majorities once votes outside the relevant allocation units are removed.
+
 The ideology analysis uses external party classifications to order parties on a
 left-right scale. The 2014 and 2018 orders use \textcite{bolognesi2023nova}. The 2022 order
 uses the later 2018--2022 update, operationalized through the 2025 data release
