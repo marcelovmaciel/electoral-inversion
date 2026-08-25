@@ -48,6 +48,11 @@ artifact_manifest_path = joinpath(paper_output_root, "artifact_manifest.csv")
 
 analysis_years = [2014, 2018, 2022]
 expected_total_seats = 513
+expected_national_vote_totals = Dict(
+    2014 => 97_355_354,
+    2018 => 98_264_190,
+    2022 => 109_413_508,
+)
 seat_majority_threshold = 257
 ALLOW_OVERWRITE = lowercase(get(ENV, "ALLOW_OVERWRITE", "false")) in ("1", "true", "yes")
 
@@ -490,13 +495,17 @@ function load_seats_for_year(year, path; overrides = Dict{String,String}())
 end
 
 function print_loaded_year(year, votes, seats, summary)
+    total_votes = sum(votes.valid_total)
     println()
     println("Election $(year)")
     println("number of vote parties: ", nrow(votes))
     println("number of seat parties: ", nrow(seats))
-    println("total valid votes: ", sum(votes.valid_total))
+    println("total valid votes: ", total_votes)
     println("total seats: ", sum(seats.total_seats))
     println("party list: ", join(sort(String.(summary.SG_PARTIDO)), ", "))
+    total_votes == expected_national_vote_totals[year] || error(
+        "Expected $(expected_national_vote_totals[year]) national votes for $(year), found $(total_votes).",
+    )
     validate_total_seats!(summary, year)
 end
 
