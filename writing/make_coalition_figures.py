@@ -35,6 +35,11 @@ DEFAULT_ARTIFACT_ROOT = DEFAULT_REPO_ROOT / "processing" / "Processing" / "outpu
 DEFAULT_FIGURE_DIR = DEFAULT_REPO_ROOT / "paper" / "figures"
 EXPECTED_SEATS = 513
 SEAT_MAJORITY = 257
+ELECTION_LABELS = {
+    2014: "2014 election",
+    2018: "2018 election",
+    2022: "2022 election",
+}
 
 # Discrete palette for ideological-interval categories.
 INTERVAL_COLORS = [
@@ -98,8 +103,8 @@ def save_observed_coalition_timeline(artifact_root: Path, figure_dir: Path) -> P
 
     for year, df in observed.groupby("election_year"):
         df = df.sort_values("midpoint")
-        ax_vote.plot(df["midpoint"], df["vote_share"] * 100, marker="o", label=str(year))
-        ax_seat.plot(df["midpoint"], df["seat_share"] * 100, marker="s", label=str(year))
+        ax_vote.plot(df["midpoint"], df["vote_share"] * 100, marker="o", label=ELECTION_LABELS[year])
+        ax_seat.plot(df["midpoint"], df["seat_share"] * 100, marker="s", label=ELECTION_LABELS[year])
 
     ax_vote.axhline(50, linestyle="--", linewidth=1)
     ax_seat.axhline(SEAT_MAJORITY / EXPECTED_SEATS * 100, linestyle="--", linewidth=1)

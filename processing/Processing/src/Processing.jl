@@ -10,13 +10,18 @@ export normalize_party,
        load_party_classification,
        canonicalize_party_classification!,
        classification_minimal,
-       ideological_interval_coalitions
+       ideological_interval_coalitions,
+       prepare_representation_profile,
+       plot_representation_profile,
+       representation_profile_summary,
+       make_representation_profile
 
 include("PartyNames.jl")
 include("party_classification_2023.jl")
 include("party_classification.jl")
 include("code.jl")
 include("analysis_runner_core.jl")
+include("representation_profile.jl")
 #include("overengineered_code.jl")
 
 end

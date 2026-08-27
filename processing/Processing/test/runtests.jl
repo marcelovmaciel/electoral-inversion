@@ -7,4 +7,5 @@ using Test
     include("test_coalition_strict.jl")
     include("test_coalition_period_linkage.jl")
     include("test_ideological_interval_coalitions.jl")
+    include("test_representation_profile.jl")
 end
