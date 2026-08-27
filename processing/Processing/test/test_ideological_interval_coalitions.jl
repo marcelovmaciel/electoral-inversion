@@ -95,22 +95,65 @@ end
 
         @testset "arithmetic for votes seats shares quota and seat_diff" begin
             parties = ["A", "B", "C", "D"]
+            toy = _summary(parties, [40, 30, 20, 10], [4, 3, 2, 1])
             df = Processing.ideological_interval_coalitions(
-                _summary(parties, [40, 30, 20, 10], [4, 3, 2, 1]),
+                toy,
                 _ideology(parties),
             )
 
             bc = _interval_row(df, "B", "C")
             @test bc.votes == 50
+            @test bc.national_vote_total == 100
             @test bc.vote_share == 0.5
             @test bc.seats == 5
             @test bc.seat_share == 0.5
             @test bc.quota == 5.0
             @test bc.seat_diff == 0.0
+            @test bc.required_diff == 1.0
+            @test bc.representation_ratio == 1.0
+            @test bc.representation_ratio ≈ bc.seats / bc.quota
+            @test bc.representation_ratio ≈ 1 + bc.seat_diff / bc.quota
 
             b = _interval_row(df, "B", "B")
             @test b.quota == 3.0
             @test b.seat_diff == 0.0
+
+            party_metrics = Processing.party_summary(
+                select(toy, :SG_PARTIDO, :valid_total),
+                select(toy, :SG_PARTIDO, :total_seats);
+                expected_total_seats = 10,
+            )
+            @test all(party_metrics.national_vote_total .== 100)
+            @test all(
+                party_metrics.seat_diff .≈
+                party_metrics.quota .* (Float64.(party_metrics.representation_ratio) .- 1),
+            )
+            member_mask = in.(party_metrics.SG_PARTIDO, Ref(Set(["B", "C"])))
+            weighted_ratio = sum(
+                party_metrics.quota[member_mask] .*
+                Float64.(party_metrics.representation_ratio[member_mask]),
+            ) / bc.quota
+            @test bc.representation_ratio ≈ weighted_ratio
+        end
+
+        @testset "coalition accounting reaches the majority iff differential meets requirement" begin
+            metrics = Processing.coalition_accounting_metrics(
+                49,
+                6;
+                national_vote_total = 100,
+                total_seats = 10,
+                seat_majority_threshold = 6,
+            )
+            @test metrics.vote_majority == false
+            @test metrics.seat_majority == true
+            @test metrics.coalition_inversion == true
+            @test metrics.quota ≈ 4.9
+            @test metrics.seat_diff ≈ 1.1
+            @test metrics.required_diff ≈ 1.1
+            @test metrics.seat_diff >= metrics.required_diff || metrics.seat_diff ≈ metrics.required_diff
+            @test metrics.representation_ratio ≈ metrics.seat_share / metrics.vote_share
+            @test metrics.representation_ratio ≈ 6 / metrics.quota
+            @test metrics.representation_ratio ≈ 1 + metrics.seat_diff / metrics.quota
         end
 
         @testset "majority thresholds are strict greater-than" begin

@@ -321,24 +321,168 @@ function summarize_coalition(summary_df, parties)
     total_votes = sum(summary_df.valid_total)
     coalition_votes = sum(summary_df.valid_total[mask])
     coalition_seats = sum(summary_df.total_seats[mask])
-    vote_share = coalition_votes / total_votes
-    seat_share = coalition_seats / expected_total_seats
-    quota = expected_total_seats * vote_share
-    seat_diff = coalition_seats - quota
-    vote_majority = vote_share > 0.5
-    seat_majority = coalition_seats >= seat_majority_threshold
+    accounting = Processing.coalition_accounting_metrics(
+        coalition_votes,
+        coalition_seats;
+        national_vote_total = total_votes,
+        total_seats = expected_total_seats,
+        seat_majority_threshold = seat_majority_threshold,
+    )
     return (
         votes = Int(coalition_votes),
-        vote_share = Float64(vote_share),
+        national_vote_total = Int(total_votes),
+        vote_share = accounting.vote_share,
         seats = Int(coalition_seats),
-        seat_share = Float64(seat_share),
-        quota = Float64(quota),
-        seat_diff = Float64(seat_diff),
-        vote_majority = Bool(vote_majority),
-        seat_majority = Bool(seat_majority),
-        majority_status = majority_status(vote_majority, seat_majority),
-        coalition_inversion = Bool(seat_majority && !vote_majority),
+        seat_share = accounting.seat_share,
+        quota = accounting.quota,
+        seat_diff = accounting.seat_diff,
+        required_diff = accounting.required_diff,
+        representation_ratio = accounting.representation_ratio,
+        vote_majority = accounting.vote_majority,
+        seat_majority = accounting.seat_majority,
+        majority_status = accounting.majority_status,
+        coalition_inversion = accounting.coalition_inversion,
     )
+end
+
+const ACCOUNTING_ATOL = 1e-9
+const ACCOUNTING_RTOL = 1e-12
+
+function accounting_isapprox(lhs, rhs)
+    return isapprox(Float64(lhs), Float64(rhs); atol = ACCOUNTING_ATOL, rtol = ACCOUNTING_RTOL)
+end
+
+function require_accounting_identity(lhs, rhs, label, identity)
+    accounting_isapprox(lhs, rhs) || error(
+        "Accounting validation failed for $(label): $(identity); lhs=$(lhs), rhs=$(rhs).",
+    )
+    return true
+end
+
+function membership_parties(value)
+    parties = strip.(split(String(value), ","))
+    filter!(!isempty, parties)
+    length(parties) == length(unique(parties)) || error(
+        "Duplicate party in coalition membership: $(String(value)).",
+    )
+    return parties
+end
+
+function validate_party_accounting!(df, year; expected_national_votes)
+    required = (
+        :party, :votes, :national_vote_total, :vote_share, :seats,
+        :seat_share, :quota, :seat_diff, :representation_ratio,
+    )
+    missing_columns = [column for column in required if column ∉ propertynames(df)]
+    isempty(missing_columns) || error(
+        "Party accounting $(year) missing columns: $(join(String.(missing_columns), ", ")).",
+    )
+    nrow(df) > 0 || error("Party accounting $(year) has no rows.")
+    length(unique(String.(df.party))) == nrow(df) || error("Duplicate party rows for $(year).")
+
+    national_votes = sum(Int.(df.votes))
+    national_votes == Int(expected_national_votes) || error(
+        "Party accounting $(year) changed the national vote denominator: $(national_votes) != $(expected_national_votes).",
+    )
+    all(Int.(df.national_vote_total) .== national_votes) || error(
+        "Party accounting $(year) has inconsistent national_vote_total values.",
+    )
+    sum(Int.(df.seats)) == expected_total_seats || error(
+        "Party accounting $(year) does not sum to $(expected_total_seats) seats.",
+    )
+
+    for row in eachrow(df)
+        label = "party $(year)/$(row.party)"
+        expected_vote_share = row.votes / national_votes
+        expected_seat_share = row.seats / expected_total_seats
+        expected_quota = expected_total_seats * expected_vote_share
+        expected_seat_diff = row.seats - expected_quota
+        require_accounting_identity(row.vote_share, expected_vote_share, label, "vote share = v_i / V")
+        require_accounting_identity(row.seat_share, expected_seat_share, label, "seat share = s_i / 513")
+        require_accounting_identity(row.quota, expected_quota, label, "q_i = 513 v_i / V")
+        require_accounting_identity(row.seat_diff, expected_seat_diff, label, "d_i = s_i - q_i")
+        if row.votes > 0
+            row.representation_ratio === missing && error("Missing R_i for positive-vote $(label).")
+            expected_ratio = expected_seat_share / expected_vote_share
+            require_accounting_identity(row.representation_ratio, expected_ratio, label, "R_i = (s_i/513)/(v_i/V)")
+            require_accounting_identity(row.seat_diff, row.quota * (row.representation_ratio - 1), label, "d_i = q_i(R_i - 1)")
+        end
+    end
+
+    validate_seat_diff_sum!(df, year)
+    return true
+end
+
+function validate_coalition_accounting!(metrics_df, party_df; domain, id_columns)
+    required = (
+        :parties, :votes, :national_vote_total, :vote_share, :seats,
+        :seat_share, :quota, :seat_diff, :required_diff,
+        :representation_ratio, :vote_majority, :seat_majority,
+        :majority_status, :coalition_inversion,
+    )
+    missing_columns = [column for column in required if column ∉ propertynames(metrics_df)]
+    isempty(missing_columns) || error(
+        "$(domain) coalition accounting missing columns: $(join(String.(missing_columns), ", ")).",
+    )
+    party_lookup = Dict(String(row.party) => row for row in eachrow(party_df))
+    national_votes = sum(Int.(party_df.votes))
+
+    for row in eachrow(metrics_df)
+        label_values = [string(row[column]) for column in id_columns]
+        label = "$(domain) " * join(label_values, "/")
+        parties = membership_parties(row.parties)
+        missing_parties = [party for party in parties if !haskey(party_lookup, party)]
+        isempty(missing_parties) || error(
+            "$(label) contains parties absent from the election accounting: $(join(missing_parties, ", ")).",
+        )
+        party_rows = [party_lookup[party] for party in parties]
+        member_votes = sum(Int(member.votes) for member in party_rows)
+        member_seats = sum(Int(member.seats) for member in party_rows)
+        member_quota = sum(Float64(member.quota) for member in party_rows)
+
+        Int(row.national_vote_total) == national_votes || error("$(label) uses a changed national vote denominator.")
+        Int(row.votes) == member_votes || error("$(label) coalition vote total does not match its party membership.")
+        Int(row.seats) == member_seats || error("$(label) coalition seat total does not match its party membership.")
+        require_accounting_identity(row.quota, expected_total_seats * row.votes / national_votes, label, "q_C = 513 v_C / V")
+        require_accounting_identity(row.quota, member_quota, label, "q_C = sum(q_i)")
+        require_accounting_identity(row.seat_diff, row.seats - row.quota, label, "d_C = s_C - q_C")
+        require_accounting_identity(row.required_diff, seat_majority_threshold - row.quota, label, "r_C = 257 - q_C")
+        require_accounting_identity(row.vote_share, row.votes / national_votes, label, "vote share = v_C / V")
+        require_accounting_identity(row.seat_share, row.seats / expected_total_seats, label, "seat share = s_C / 513")
+        row.representation_ratio === missing && error("$(label) has undefined R_C.")
+        require_accounting_identity(row.representation_ratio, row.seats / row.quota, label, "R_C = s_C / q_C")
+        require_accounting_identity(row.representation_ratio, 1 + row.seat_diff / row.quota, label, "R_C = 1 + d_C/q_C")
+        require_accounting_identity(row.representation_ratio, row.seat_share / row.vote_share, label, "R_C = (s_C/513)/(v_C/V)")
+        weighted_party_ratio = sum(
+            Float64(member.quota) / Float64(row.quota) * Float64(member.representation_ratio)
+            for member in party_rows if member.quota > 0
+        )
+        require_accounting_identity(row.representation_ratio, weighted_party_ratio, label, "R_C = sum((q_i/q_C)R_i)")
+
+        expected_vote_majority = row.vote_share > 0.5
+        expected_seat_majority = row.seats >= seat_majority_threshold
+        row.vote_majority == expected_vote_majority || error("$(label) has an inconsistent vote-majority flag.")
+        row.seat_majority == expected_seat_majority || error("$(label) has an inconsistent seat-majority flag.")
+        row.majority_status == majority_status(expected_vote_majority, expected_seat_majority) || error("$(label) has an inconsistent majority status.")
+        row.coalition_inversion == (expected_seat_majority && !expected_vote_majority) || error("$(label) has an inconsistent inversion flag.")
+        if !expected_vote_majority
+            differential_reaches_majority = row.seat_diff > row.required_diff || accounting_isapprox(row.seat_diff, row.required_diff)
+            expected_seat_majority == differential_reaches_majority || error(
+                "$(label) violates s_C >= 257 iff d_C >= r_C for a vote-minority coalition.",
+            )
+        end
+    end
+    return true
+end
+
+function add_metric_display_columns(df)
+    out = copy(df)
+    out[!, :vote_share_pct] = round.(100 .* Float64.(out.vote_share); digits = 2)
+    out[!, :quota_display] = round.(Float64.(out.quota); digits = 2)
+    out[!, :seat_diff_display] = round.(Float64.(out.seat_diff); digits = 2)
+    out[!, :required_diff_display] = round.(Float64.(out.required_diff); digits = 2)
+    out[!, :representation_ratio_display] = round.(Float64.(out.representation_ratio); digits = 2)
+    return out
 end
 
 # =============================================================================
@@ -583,7 +727,7 @@ println("2022 election periods: ", join(sort(collect(keys(coalitions_for_2022_el
 print_block("BLOCK 8. PARTY-LEVEL SEAT DIFFERENTIALS")
 
 function party_seat_differentials(year, summary)
-    df = select(summary, :SG_PARTIDO => :party, :valid_total => :votes, :vote_share, :total_seats => :seats, :seat_share, :quota, :seat_diff)
+    df = select(summary, :SG_PARTIDO => :party, :valid_total => :votes, :national_vote_total, :vote_share, :total_seats => :seats, :seat_share, :quota, :seat_diff, :representation_ratio)
     df[!, :election_year] = fill(Int(year), nrow(df))
     sort!(df, [:election_year, :seat_diff], rev = [false, true])
     validate_total_seats!(df, year)
@@ -594,6 +738,9 @@ end
 party_seat_differentials_2014 = party_seat_differentials(2014, party_summary_2014)
 party_seat_differentials_2018 = party_seat_differentials(2018, party_summary_2018)
 party_seat_differentials_2022 = party_seat_differentials(2022, party_summary_2022)
+validate_party_accounting!(party_seat_differentials_2014, 2014; expected_national_votes = expected_national_vote_totals[2014])
+validate_party_accounting!(party_seat_differentials_2018, 2018; expected_national_votes = expected_national_vote_totals[2018])
+validate_party_accounting!(party_seat_differentials_2022, 2022; expected_national_votes = expected_national_vote_totals[2022])
 party_seat_differentials_all_years = vcat(party_seat_differentials_2014, party_seat_differentials_2018, party_seat_differentials_2022; cols = :union)
 for year_df in [party_seat_differentials_2014, party_seat_differentials_2018, party_seat_differentials_2022]
     year = first(year_df.election_year)
@@ -696,17 +843,67 @@ function build_observed_coalition_table(summary_df, election_year, coalition_per
     return result
 end
 
+function build_cabinet_focal_cases(df)
+    inversions = df[df.coalition_inversion .== true, :]
+    inversions[!, :focal_case_type] = fill("observed_inversion", nrow(inversions))
+
+    eligible_negative = df[
+        (df.vote_share .<= 0.5) .& (df.seats .< seat_majority_threshold),
+        :,
+    ]
+    nrow(eligible_negative) > 0 || error("No cabinet non-inversion remains below both majority thresholds.")
+    maximum_negative_seats = maximum(Int.(eligible_negative.seats))
+    closest_negative = eligible_negative[eligible_negative.seats .== maximum_negative_seats, :]
+    closest_negative[!, :focal_case_type] = fill(
+        "closest_non_inversion_below_both_thresholds",
+        nrow(closest_negative),
+    )
+
+    focal = vcat(inversions, closest_negative; cols = :setequal)
+    sort!(focal, [:election_year, :period])
+    focal_keys = collect(zip(focal.election_year, focal.period))
+    length(unique(focal_keys)) == length(focal_keys) || error(
+        "Cabinet focal-case selection collapsed or duplicated period identifiers.",
+    )
+    return add_metric_display_columns(focal)
+end
+
 observed_cabinet_coalitions_2014 = build_observed_coalition_table(party_summary_2014, 2014, coalitions_for_2014_election)
 observed_cabinet_coalitions_2018 = build_observed_coalition_table(party_summary_2018, 2018, coalitions_for_2018_election)
 observed_cabinet_coalitions_2022 = build_observed_coalition_table(party_summary_2022, 2022, coalitions_for_2022_election)
 observed_cabinet_coalitions_all_years = vcat(observed_cabinet_coalitions_2014, observed_cabinet_coalitions_2018, observed_cabinet_coalitions_2022; cols = :union)
+validate_coalition_accounting!(observed_cabinet_coalitions_2014, party_seat_differentials_2014; domain = "cabinet", id_columns = (:election_year, :period))
+validate_coalition_accounting!(observed_cabinet_coalitions_2018, party_seat_differentials_2018; domain = "cabinet", id_columns = (:election_year, :period))
+validate_coalition_accounting!(observed_cabinet_coalitions_2022, party_seat_differentials_2022; domain = "cabinet", id_columns = (:election_year, :period))
+
 observed_cabinet_inversions_only = observed_cabinet_coalitions_all_years[observed_cabinet_coalitions_all_years.coalition_inversion .== true, :]
+cabinet_coalition_focal_cases = build_cabinet_focal_cases(observed_cabinet_coalitions_all_years)
+
+nrow(observed_cabinet_coalitions_all_years) == 22 || error("Cabinet regression failed: expected 22 periods.")
+nrow(observed_cabinet_inversions_only) == 3 || error("Cabinet regression failed: expected 3 inversions.")
+expected_period_counts = Dict(2014 => 8, 2018 => 11, 2022 => 3)
+for (year, expected_count) in expected_period_counts
+    actual_count = nrow(observed_cabinet_coalitions_all_years[observed_cabinet_coalitions_all_years.election_year .== year, :])
+    actual_count == expected_count || error("Cabinet regression failed for $(year): expected $(expected_count) periods, found $(actual_count).")
+end
+
+expected_observed_keys = Set([
+    (2014, "2016.2"),
+    (2014, "2017.1"),
+    (2022, "2023.1"),
+])
+observed_keys = Set(zip(observed_cabinet_inversions_only.election_year, observed_cabinet_inversions_only.period))
+observed_keys == expected_observed_keys || error(
+    "Cabinet regression failed: inversion keys changed from $(expected_observed_keys) to $(observed_keys).",
+)
+
 observed_cabinet_duration_summary = combine(groupby(observed_cabinet_coalitions_all_years, :election_year), :period => length => :n_periods, :coalition_inversion => (x -> sum(Int.(x))) => :n_inversion_periods, :days_overlapping_mandate => sum => :covered_days, [:coalition_inversion, :days_overlapping_mandate] => ((inv, days) -> sum(days[Bool.(inv)])) => :inversion_days, :share_of_mandate => sum => :covered_share_of_mandate)
 show_table(select(observed_cabinet_coalitions_all_years, :election_year, :period, :period_start, :period_end, :period_days, :days_overlapping_mandate, :parties, :vote_share, :seats, :seat_diff, :majority_status, :coalition_inversion))
 write_artifact_csv(joinpath(raw_dir, "observed_cabinet_coalitions_2014.csv"), observed_cabinet_coalitions_2014, "raw", "Observed cabinet-period coalition metrics for the 2014 election.")
 write_artifact_csv(joinpath(raw_dir, "observed_cabinet_coalitions_2018.csv"), observed_cabinet_coalitions_2018, "raw", "Observed cabinet-period coalition metrics for the 2018 election.")
 write_artifact_csv(joinpath(raw_dir, "observed_cabinet_coalitions_2022.csv"), observed_cabinet_coalitions_2022, "raw", "Observed cabinet-period coalition metrics for the 2022 election.")
-write_artifact_csv(joinpath(raw_dir, "observed_cabinet_coalitions_all_years.csv"), observed_cabinet_coalitions_all_years, "raw", "Observed cabinet-period coalition metrics for all elections.")
+write_artifact_csv(joinpath(raw_dir, "cabinet_coalition_metrics.csv"), observed_cabinet_coalitions_all_years, "raw", "Full-precision observed cabinet-period coalition accounting metrics for all elections.")
+write_artifact_csv(joinpath(raw_dir, "cabinet_coalition_focal_cases.csv"), cabinet_coalition_focal_cases, "raw", "All observed cabinet inversions plus every tied closest non-inversion below both majority thresholds, with Julia-generated display values.")
 write_artifact_csv(joinpath(raw_dir, "observed_cabinet_inversions_only.csv"), observed_cabinet_inversions_only, "raw", "Observed cabinet-period coalition inversions only.")
 write_artifact_csv(joinpath(raw_dir, "observed_cabinet_duration_summary.csv"), observed_cabinet_duration_summary, "raw", "Observed cabinet coverage and inversion duration summary.")
 
@@ -718,13 +915,13 @@ table_03_observed_cabinet_coalitions = observed_display_table(observed_cabinet_c
 table_04_observed_cabinet_inversions_only = observed_display_table(observed_cabinet_inversions_only)
 write_artifact_csv(joinpath(tables_dir, "table_03_observed_cabinet_coalitions.csv"), table_03_observed_cabinet_coalitions, "table", "Observed cabinet-period coalitions with rounded display columns.")
 write_artifact_csv(joinpath(tables_dir, "table_04_observed_cabinet_inversions_only.csv"), table_04_observed_cabinet_inversions_only, "table", "Observed cabinet-period coalition inversions only with rounded display columns.")
-observed_keys = Set(zip(observed_cabinet_inversions_only.election_year, observed_cabinet_inversions_only.period))
-for expected_key in [(2014, "2016.2"), (2014, "2017.1"), (2022, "2023.1")]
-    expected_key in observed_keys || error("Missing expected observed cabinet inversion: $(expected_key)")
-end
-nrow(observed_cabinet_inversions_only[observed_cabinet_inversions_only.election_year .== 2018, :]) == 0 || error("2018 should have no observed cabinet inversion.")
-closest_2018_case = first(sort(observed_cabinet_coalitions_2018, [:seats, :vote_share], rev = [true, true]), 1)
-println("Closest 2018 observed cabinet case after fusion fix: ", only(closest_2018_case.period), " with seats=", only(closest_2018_case.seats), ", vote_share=", fmt2(100 * only(closest_2018_case.vote_share)), "%, seat_majority=", only(closest_2018_case.seat_majority), ", vote_majority=", only(closest_2018_case.vote_majority))
+focal_negative_cases = cabinet_coalition_focal_cases[cabinet_coalition_focal_cases.focal_case_type .== "closest_non_inversion_below_both_thresholds", :]
+nrow(cabinet_coalition_focal_cases) == 5 || error("Cabinet focal regression failed: expected three inversions plus two tied negative periods.")
+nrow(focal_negative_cases) == 2 || error("Cabinet focal regression failed: expected two tied closest negative periods.")
+all(focal_negative_cases.vote_share .<= 0.5) || error("Cabinet focal negative cases must remain below the vote-majority threshold.")
+all(focal_negative_cases.seats .< seat_majority_threshold) || error("Cabinet focal negative cases must remain below the seat-majority threshold.")
+length(unique(Int.(focal_negative_cases.seats))) == 1 || error("Cabinet focal negative cases must tie on the maximum submajority seat total.")
+println("Algorithmic closest cabinet negative periods: ", join(String.(focal_negative_cases.period), ", "))
 row_2016_2 = only(eachrow(observed_cabinet_inversions_only[(observed_cabinet_inversions_only.election_year .== 2014) .& (observed_cabinet_inversions_only.period .== "2016.2"), :]))
 row_2016_2.period_days <= 2 || error("2014 period 2016.2 should be ultra-short, found $(row_2016_2.period_days) days.")
 println("Observed cabinet pattern validated: 2014/2016.2, 2014/2017.1, 2022/2023.1 inversions; no 2018 observed inversion.")
@@ -819,9 +1016,13 @@ function build_ideological_intervals(year, summary_df, ideology_df)
     party_seats = Dict(String(row.SG_PARTIDO) => Int(row.total_seats) for row in eachrow(summary_df))
     raw[!, :left_removed_seats] = [row.seats - party_seats[String(row.start_party)] for row in eachrow(raw)]
     raw[!, :right_removed_seats] = [row.seats - party_seats[String(row.end_party)] for row in eachrow(raw)]
-    raw[!, :endpoint_minimal_connected_winning] = raw.seat_majority .& ((raw.interval_size .== 1) .| ((raw.left_removed_seats .< seat_majority_threshold) .& (raw.right_removed_seats .< seat_majority_threshold)))
-    raw[!, :minimal_ideological_interval_inversion] = raw.coalition_inversion .& (raw.left_removed_seats .< seat_majority_threshold) .& (raw.right_removed_seats .< seat_majority_threshold)
-    out = select(raw, :election_year, :start_index, :end_index, :start_party, :end_party, :parties, :interval_size, :votes, :vote_share, :seats, :seat_share, :quota, :seat_diff, :vote_majority, :seat_majority, :majority_status, :coalition_inversion, :left_removed_seats, :right_removed_seats, :endpoint_minimal_connected_winning, :minimal_ideological_interval_inversion, :old_sweep_equivalent)
+    raw[!, :minimal_connected_winning] = raw.seat_majority .& ((raw.interval_size .== 1) .| ((raw.left_removed_seats .< seat_majority_threshold) .& (raw.right_removed_seats .< seat_majority_threshold)))
+    raw[!, :minimal_connected_inversion] = raw.coalition_inversion .& raw.minimal_connected_winning
+    # Preserve the established aliases consumed by the heatmap and bridge while
+    # exposing the clearer status names required by the analytical CSV.
+    raw[!, :endpoint_minimal_connected_winning] = copy(raw.minimal_connected_winning)
+    raw[!, :minimal_ideological_interval_inversion] = copy(raw.minimal_connected_inversion)
+    out = select(raw, :election_year, :start_index, :end_index, :start_party, :end_party, :parties, :interval_size, :votes, :national_vote_total, :vote_share, :seats, :seat_share, :quota, :seat_diff, :required_diff, :representation_ratio, :vote_majority, :seat_majority, :majority_status, :coalition_inversion, :left_removed_seats, :right_removed_seats, :minimal_connected_winning, :minimal_connected_inversion, :endpoint_minimal_connected_winning, :minimal_ideological_interval_inversion, :old_sweep_equivalent)
     sort!(out, [:election_year, :start_index, :end_index])
     return out
 end
@@ -836,7 +1037,7 @@ function contains_party(parties, party)
 end
 
 function appendix_minimal_connected_winning_table(df)
-    minimal_connected = df[df.endpoint_minimal_connected_winning .== true, :]
+    minimal_connected = df[df.minimal_connected_winning .== true, :]
     sort!(minimal_connected, [:election_year, :start_index, :end_index])
     result = select(minimal_connected,
         :election_year,
@@ -916,25 +1117,30 @@ ideological_intervals_2014 = build_ideological_intervals(2014, party_summary_201
 ideological_intervals_2018 = build_ideological_intervals(2018, party_summary_2018, ideology_order_2018_base)
 ideological_intervals_2022 = build_ideological_intervals(2022, party_summary_2022, ideology_order_2022_base)
 ideological_intervals_all_years = vcat(ideological_intervals_2014, ideological_intervals_2018, ideological_intervals_2022; cols = :union)
+validate_coalition_accounting!(ideological_intervals_2014, party_seat_differentials_2014; domain = "ideological_interval", id_columns = (:election_year, :start_party, :end_party))
+validate_coalition_accounting!(ideological_intervals_2018, party_seat_differentials_2018; domain = "ideological_interval", id_columns = (:election_year, :start_party, :end_party))
+validate_coalition_accounting!(ideological_intervals_2022, party_seat_differentials_2022; domain = "ideological_interval", id_columns = (:election_year, :start_party, :end_party))
+
 ideological_interval_inversions_only = ideological_intervals_all_years[ideological_intervals_all_years.coalition_inversion .== true, :]
-minimal_ideological_interval_inversions = ideological_intervals_all_years[ideological_intervals_all_years.minimal_ideological_interval_inversion .== true, :]
+minimal_connected_inversions = ideological_intervals_all_years[ideological_intervals_all_years.minimal_connected_inversion .== true, :]
+minimal_connected_inversion_metrics = add_metric_display_columns(minimal_connected_inversions)
 legacy_first_majority_sweeps = vcat(build_legacy_first_majority_sweep(2014, party_summary_2014, ideology_order_2014_base), build_legacy_first_majority_sweep(2018, party_summary_2018, ideology_order_2018_base), build_legacy_first_majority_sweep(2022, party_summary_2022, ideology_order_2022_base); cols = :union)
 write_artifact_csv(joinpath(raw_dir, "ideological_intervals_2014.csv"), ideological_intervals_2014, "raw", "All contiguous ideological intervals for 2014.")
 write_artifact_csv(joinpath(raw_dir, "ideological_intervals_2018.csv"), ideological_intervals_2018, "raw", "All contiguous ideological intervals for 2018.")
 write_artifact_csv(joinpath(raw_dir, "ideological_intervals_2022.csv"), ideological_intervals_2022, "raw", "All contiguous ideological intervals for 2022.")
-write_artifact_csv(joinpath(raw_dir, "ideological_intervals_all_years.csv"), ideological_intervals_all_years, "raw", "All contiguous ideological intervals for all elections.")
+write_artifact_csv(joinpath(raw_dir, "ideological_interval_metrics.csv"), ideological_intervals_all_years, "raw", "Full-precision metrics and classifications for all contiguous ideological intervals.")
 write_artifact_csv(joinpath(raw_dir, "ideological_interval_inversions_only.csv"), ideological_interval_inversions_only, "raw", "Contiguous ideological interval coalition inversions only.")
-write_artifact_csv(joinpath(raw_dir, "minimal_ideological_interval_inversions.csv"), minimal_ideological_interval_inversions, "raw", "Endpoint-minimal contiguous ideological interval inversions.")
+write_artifact_csv(joinpath(raw_dir, "minimal_connected_inversion_metrics.csv"), minimal_connected_inversion_metrics, "raw", "Julia-filtered minimal connected ideological inversions with full-precision and Julia-generated display metrics.")
 write_artifact_csv(joinpath(raw_dir, "legacy_first_majority_sweeps.csv"), legacy_first_majority_sweeps, "raw", "Legacy first-seat-majority sweep diagnostic, not the main ideological result.")
 
 function interval_summary_table(df)
-    result = combine(groupby(df, :election_year), nrow => :all_intervals, :seat_majority => (x -> sum(Int.(x))) => :seat_majority_intervals, :coalition_inversion => (x -> sum(Int.(x))) => :coalition_inversions, :minimal_ideological_interval_inversion => (x -> sum(Int.(x))) => :minimal_inversions)
+    result = combine(groupby(df, :election_year), nrow => :all_intervals, :seat_majority => (x -> sum(Int.(x))) => :seat_majority_intervals, :coalition_inversion => (x -> sum(Int.(x))) => :coalition_inversions, :minimal_connected_inversion => (x -> sum(Int.(x))) => :minimal_inversions)
     sort!(result, :election_year)
     return result
 end
 
 table_05_ideological_interval_summary_by_election = interval_summary_table(ideological_intervals_all_years)
-table_06_minimal_ideological_interval_inversions = select(minimal_ideological_interval_inversions, :election_year, :start_party, :end_party, :parties, :interval_size, :votes, :vote_share => ByRow(pct) => :vote_share_pct, :seats, :seat_share => ByRow(pct) => :seat_share_pct, :quota => ByRow(display_round) => :quota_display, :seat_diff => ByRow(display_round) => :seat_diff_display, :majority_status)
+table_06_minimal_ideological_interval_inversions = select(minimal_connected_inversions, :election_year, :start_party, :end_party, :parties, :interval_size, :votes, :vote_share => ByRow(pct) => :vote_share_pct, :seats, :seat_share => ByRow(pct) => :seat_share_pct, :quota => ByRow(display_round) => :quota_display, :seat_diff => ByRow(display_round) => :seat_diff_display, :majority_status)
 table_appendix_minimal_connected_winning_intervals = appendix_minimal_connected_winning_table(ideological_intervals_all_years)
 write_artifact_csv(joinpath(tables_dir, "table_05_ideological_interval_summary_by_election.csv"), table_05_ideological_interval_summary_by_election, "table", "Ideological interval counts and inversion counts by election.")
 write_artifact_csv(joinpath(tables_dir, "table_06_minimal_ideological_interval_inversions.csv"), table_06_minimal_ideological_interval_inversions, "table", "Endpoint-minimal ideological interval inversions with rounded display columns.")
@@ -958,15 +1164,18 @@ if nrow(minimal_connected_with_pt) > 0
     println("Endpoint-minimal connected winning intervals containing PT:")
     show_table(select(minimal_connected_with_pt, :election_year, :start_party, :end_party, :n_parties, :vote_share_pct, :seats, :seat_diff, :status, :coalition_inversion, :parties))
 end
-for (year, expected_minimal) in [(2014, 4), (2018, 0), (2022, 2)]
+nrow(ideological_intervals_all_years) == 1686 || error("Ideological regression failed: expected 1686 intervals.")
+nrow(ideological_interval_inversions_only) == 14 || error("Ideological regression failed: expected 14 inversions.")
+nrow(minimal_connected_inversions) == 6 || error("Ideological regression failed: expected 6 minimal connected inversions.")
+for (year, expected_intervals, expected_inversions, expected_minimal) in [(2014, 528, 8, 4), (2018, 630, 0, 0), (2022, 528, 6, 2)]
     interval_df = ideological_intervals_all_years[ideological_intervals_all_years.election_year .== year, :]
     inversion_count = sum(Int.(interval_df.coalition_inversion))
-    minimal_count = sum(Int.(interval_df.minimal_ideological_interval_inversion))
-    year == 2018 && inversion_count != 0 && error("2018 should have no ideological interval inversions.")
-    year in (2014, 2022) && inversion_count == 0 && error("$(year) should have ideological interval inversions.")
+    minimal_count = sum(Int.(interval_df.minimal_connected_inversion))
+    nrow(interval_df) == expected_intervals || error("Ideological regression failed for $(year): expected $(expected_intervals) intervals, found $(nrow(interval_df)).")
+    inversion_count == expected_inversions || error("Ideological regression failed for $(year): expected $(expected_inversions) inversions, found $(inversion_count).")
     minimal_count == expected_minimal || error("Expected $(expected_minimal) minimal ideological interval inversions for $(year), found $(minimal_count).")
 end
-pp_pl_2022 = minimal_ideological_interval_inversions[(minimal_ideological_interval_inversions.election_year .== 2022) .& (minimal_ideological_interval_inversions.start_party .== "PP") .& (minimal_ideological_interval_inversions.end_party .== "PL"), :]
+pp_pl_2022 = minimal_connected_inversions[(minimal_connected_inversions.election_year .== 2022) .& (minimal_connected_inversions.start_party .== "PP") .& (minimal_connected_inversions.end_party .== "PL"), :]
 println("2022 PP-PL minimal ideological inversion present: ", nrow(pp_pl_2022) > 0)
 show_table(table_05_ideological_interval_summary_by_election)
 
@@ -1454,11 +1663,9 @@ write_artifact_csv(joinpath(tables_dir, "table_07_audit_vote_columns_crosswalk.c
 # =============================================================================
 
 print_block("BLOCK 13. FIGURE-INPUT DATA")
-party_vote_share_vs_seat_share = select(party_seat_differentials_all_years, :election_year, :party, :votes, :vote_share, :seats, :seat_share, :quota, :seat_diff)
-observed_coalition_timeline = select(observed_cabinet_coalitions_all_years, :election_year, :period, :period_start, :period_end, :period_days, :days_overlapping_mandate, :share_of_mandate, :vote_share, :seat_share, :seats, :seat_diff, :majority_status, :coalition_inversion)
+party_vote_share_vs_seat_share = select(party_seat_differentials_all_years, :election_year, :party, :votes, :national_vote_total, :vote_share, :seats, :seat_share, :quota, :seat_diff, :representation_ratio)
 ideological_interval_heatmap = select(ideological_intervals_all_years, :election_year, :start_index, :end_index, :start_party, :end_party, :interval_size, :vote_share, :seat_share, :seats, :seat_diff, :majority_status, :coalition_inversion, :minimal_ideological_interval_inversion)
 write_artifact_csv(joinpath(figure_data_dir, "party_vote_share_vs_seat_share.csv"), party_vote_share_vs_seat_share, "figure_data", "Party vote share versus seat share figure input.")
-write_artifact_csv(joinpath(figure_data_dir, "observed_coalition_timeline.csv"), observed_coalition_timeline, "figure_data", "Observed cabinet coalition timeline figure input.")
 write_artifact_csv(joinpath(figure_data_dir, "ideological_interval_heatmap.csv"), ideological_interval_heatmap, "figure_data", "Ideological interval heatmap figure input.")
 
 # =============================================================================

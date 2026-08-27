@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """
-Generate the figures used in coalition_inversions_first_draft.tex.
+Generate the figures used in the coalition-inversions manuscripts.
+
+Figure 2 consumes full-precision cabinet-coalition metrics computed by Julia.
+Python performs presentation-only date and percentage formatting.
 
 Default paths target Marcelo's local electoral-inversion project. Override them
 with --artifact-root and --figure-dir when running elsewhere.
 
 Expected input tree:
   <artifact-root>/figure_data/party_vote_share_vs_seat_share.csv
-  <artifact-root>/figure_data/observed_coalition_timeline.csv
+  <artifact-root>/raw/cabinet_coalition_metrics.csv
   <artifact-root>/figure_data/ideological_interval_heatmap.csv
 
 Outputs:
@@ -62,6 +65,12 @@ def read_csv(path: Path) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
+def require_columns(data: pd.DataFrame, path: Path, columns: set[str]) -> None:
+    missing = sorted(columns.difference(data.columns))
+    if missing:
+        raise ValueError(f"Required columns missing from {path}: {', '.join(missing)}")
+
+
 def save_party_vote_share_vs_seat_share(artifact_root: Path, figure_dir: Path) -> Path:
     party = read_csv(artifact_root / "figure_data" / "party_vote_share_vs_seat_share.csv")
 
@@ -94,39 +103,60 @@ def save_party_vote_share_vs_seat_share(artifact_root: Path, figure_dir: Path) -
 
 
 def save_observed_coalition_timeline(artifact_root: Path, figure_dir: Path) -> Path:
-    observed = read_csv(artifact_root / "figure_data" / "observed_coalition_timeline.csv")
+    input_path = artifact_root / "raw" / "cabinet_coalition_metrics.csv"
+    observed = read_csv(input_path)
+    require_columns(
+        observed,
+        input_path,
+        {
+            "election_year",
+            "period_start",
+            "period_end",
+            "vote_share",
+            "seat_share",
+            "representation_ratio",
+        },
+    )
     observed["period_start"] = pd.to_datetime(observed["period_start"])
     observed["period_end"] = pd.to_datetime(observed["period_end"])
     observed["midpoint"] = observed["period_start"] + (observed["period_end"] - observed["period_start"]) / 2
 
-    fig, (ax_vote, ax_seat) = plt.subplots(1, 2, figsize=(9.4, 4.4), sharex=True)
+    fig, (ax_vote, ax_seat, ax_ratio) = plt.subplots(1, 3, figsize=(10.8, 4.4), sharex=True)
 
     for year, df in observed.groupby("election_year"):
         df = df.sort_values("midpoint")
         ax_vote.plot(df["midpoint"], df["vote_share"] * 100, marker="o", label=ELECTION_LABELS[year])
         ax_seat.plot(df["midpoint"], df["seat_share"] * 100, marker="s", label=ELECTION_LABELS[year])
+        ax_ratio.plot(df["midpoint"], df["representation_ratio"], marker="^", label=ELECTION_LABELS[year])
 
     ax_vote.axhline(50, linestyle="--", linewidth=1)
     ax_seat.axhline(SEAT_MAJORITY / EXPECTED_SEATS * 100, linestyle="--", linewidth=1)
+    ax_ratio.axhline(1, linestyle="--", linewidth=1)
 
     ax_vote.set_title("Vote share")
     ax_seat.set_title("Seat share")
+    ax_ratio.set_title("Representation ratio")
     ax_vote.set_ylabel("Coalition share (%)")
+    ax_ratio.set_ylabel(r"$R_C$")
     ax_vote.set_xlabel("Cabinet period midpoint")
     ax_seat.set_xlabel("Cabinet period midpoint")
+    ax_ratio.set_xlabel("Cabinet period midpoint")
 
-    for ax in (ax_vote, ax_seat):
+    for ax in (ax_vote, ax_seat, ax_ratio):
         ax.xaxis.set_major_formatter(DateFormatter("%Y"))
         ax.grid(True, linewidth=0.35, alpha=0.35)
 
     handles, labels = ax_vote.get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", ncol=3, frameon=False)
-    fig.suptitle("Observed cabinet-period coalition vote shares and seat shares", y=1.04)
+    fig.suptitle(
+        "Observed cabinet-period coalition vote shares, seat shares, and representation ratios",
+        y=1.04,
+    )
 
     output = figure_dir / "observed_coalition_timeline.pdf"
     fig.autofmt_xdate()
     fig.tight_layout()
-    fig.subplots_adjust(top=0.82, wspace=0.18)
+    fig.subplots_adjust(top=0.82, wspace=0.28)
     fig.savefig(output)
     plt.close(fig)
     return output

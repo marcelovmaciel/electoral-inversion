@@ -433,15 +433,23 @@ function party_summary(votes::DataFrame,
     total_votes = sum(df[!, vote_col])
     total_seats = sum(df[!, seat_col])
 
+    total_votes > 0 || error("party_summary: total votes must be positive.")
+    total_seats > 0 || error("party_summary: total seats must be positive.")
+
     if expected_total_seats !== nothing
         @assert total_seats == expected_total_seats "party_summary: expected $expected_total_seats seats, got $total_seats."
     end
 
-    df[!, :vote_share] = df[!, vote_col] ./ max(total_votes, 1)
-    df[!, :seat_share] = df[!, seat_col] ./ max(total_seats, 1)
+    df[!, :national_vote_total] = fill(total_votes, nrow(df))
+    df[!, :vote_share] = df[!, vote_col] ./ total_votes
+    df[!, :seat_share] = df[!, seat_col] ./ total_seats
 
     df[!, :quota]     = df[!, :vote_share] .* total_seats
     df[!, :seat_diff] = df[!, seat_col] .- df[!, :quota]
+    df[!, :representation_ratio] = Union{Missing,Float64}[
+        quota > 0 ? Float64(seat) / Float64(quota) : missing
+        for (seat, quota) in zip(df[!, seat_col], df.quota)
+    ]
 
     return df
 end
@@ -456,6 +464,63 @@ function _majority_status(vote_majority::Bool, seat_majority::Bool)
     else
         return "neither"
     end
+end
+
+"""
+    coalition_accounting_metrics(coalition_votes, coalition_seats;
+                                 national_vote_total,
+                                 total_seats=513,
+                                 seat_majority_threshold=fld(total_seats, 2) + 1)
+
+Return the common full-precision vote/seat accounting used for both observed
+cabinet coalitions and contiguous ideological intervals. `required_diff` is the
+absolute seat differential required for the proportional quota to reach the
+Chamber-majority threshold. A zero-vote coalition has an undefined
+`representation_ratio`, represented by `missing`.
+"""
+function coalition_accounting_metrics(
+    coalition_votes::Real,
+    coalition_seats::Real;
+    national_vote_total::Real,
+    total_seats::Real = 513,
+    seat_majority_threshold::Integer = fld(Int(round(total_seats)), 2) + 1,
+)
+    votes = Float64(coalition_votes)
+    seats = Float64(coalition_seats)
+    national_votes = Float64(national_vote_total)
+    chamber_seats = Float64(total_seats)
+    majority_threshold = Int(seat_majority_threshold)
+
+    national_votes > 0 || error("coalition_accounting_metrics: national_vote_total must be positive.")
+    chamber_seats > 0 || error("coalition_accounting_metrics: total_seats must be positive.")
+    majority_threshold > 0 || error("coalition_accounting_metrics: seat_majority_threshold must be positive.")
+    votes >= 0 || error("coalition_accounting_metrics: coalition_votes must be nonnegative.")
+    seats >= 0 || error("coalition_accounting_metrics: coalition_seats must be nonnegative.")
+    votes <= national_votes || error("coalition_accounting_metrics: coalition votes exceed the national vote total.")
+    seats <= chamber_seats || error("coalition_accounting_metrics: coalition seats exceed total seats.")
+
+    vote_share = votes / national_votes
+    seat_share = seats / chamber_seats
+    quota = chamber_seats * vote_share
+    seat_diff = seats - quota
+    required_diff = majority_threshold - quota
+    representation_ratio = quota > 0 ? seats / quota : missing
+    vote_majority = vote_share > 0.5
+    seat_majority = seats >= majority_threshold
+
+    return (
+        national_vote_total = national_votes,
+        vote_share = Float64(vote_share),
+        seat_share = Float64(seat_share),
+        quota = Float64(quota),
+        seat_diff = Float64(seat_diff),
+        required_diff = Float64(required_diff),
+        representation_ratio = representation_ratio,
+        vote_majority = Bool(vote_majority),
+        seat_majority = Bool(seat_majority),
+        majority_status = _majority_status(vote_majority, seat_majority),
+        coalition_inversion = Bool(seat_majority && !vote_majority),
+    )
 end
 
 function _require_columns(df::DataFrame, cols::Vector{Symbol}, df_name::AbstractString)
@@ -530,6 +595,7 @@ function ideological_interval_coalitions(
     total_votes > 0 || error("Total votes must be positive.")
     total_seats > 0 || error("Total seats must be positive.")
     Float64(total_seats_raw) == Float64(total_seats) || error("total_seats must be integer-valued after summing.")
+    seat_majority_threshold = fld(total_seats, 2) + 1
 
     parties = String.(ordered.SG_PARTIDO)
     n = nrow(ordered)
@@ -540,7 +606,7 @@ function ideological_interval_coalitions(
     for i in 1:n
         for j in i:n
             coalition_seats = seat_prefix[j + 1] - seat_prefix[i]
-            if coalition_seats > total_seats / 2
+            if coalition_seats >= seat_majority_threshold
                 first_majority_end[i] = j
                 break
             end
@@ -552,13 +618,18 @@ function ideological_interval_coalitions(
         for j in i:n
             coalition_votes = vote_prefix[j + 1] - vote_prefix[i]
             coalition_seats = seat_prefix[j + 1] - seat_prefix[i]
-            vote_share = coalition_votes / total_votes
-            seat_share = coalition_seats / total_seats
-            quota = vote_share * total_seats
-            seat_diff = coalition_seats - quota
-            vote_majority = vote_share > 0.5
-            seat_majority = coalition_seats > total_seats / 2
-            weak_inversion = seat_majority && !vote_majority
+            accounting = coalition_accounting_metrics(
+                coalition_votes,
+                coalition_seats;
+                national_vote_total = total_votes,
+                total_seats = total_seats,
+                seat_majority_threshold = seat_majority_threshold,
+            )
+            vote_share = accounting.vote_share
+            seat_share = accounting.seat_share
+            vote_majority = accounting.vote_majority
+            seat_majority = accounting.seat_majority
+            weak_inversion = accounting.coalition_inversion
             strict_inversion = seat_majority && coalition_votes < total_votes / 2
             vote_tie_seat_majority = seat_majority && coalition_votes == total_votes / 2
             minimal_seat_majority =
@@ -576,14 +647,17 @@ function ideological_interval_coalitions(
                 n_parties = Int(j - i + 1),
                 parties = join(parties[i:j], ", "),
                 votes = Int(coalition_votes),
+                national_vote_total = Int(total_votes),
                 vote_share = Float64(vote_share),
                 seats = Int(coalition_seats),
                 seat_share = Float64(seat_share),
-                quota = Float64(quota),
-                seat_diff = Float64(seat_diff),
+                quota = accounting.quota,
+                seat_diff = accounting.seat_diff,
+                required_diff = accounting.required_diff,
+                representation_ratio = accounting.representation_ratio,
                 vote_majority = Bool(vote_majority),
                 seat_majority = Bool(seat_majority),
-                majority_status = _majority_status(vote_majority, seat_majority),
+                majority_status = accounting.majority_status,
                 weak_inversion = Bool(weak_inversion),
                 strict_inversion = Bool(strict_inversion),
                 vote_tie_seat_majority = Bool(vote_tie_seat_majority),

@@ -11,6 +11,7 @@
 \usepackage{microtype}
 \usepackage{csquotes}
 \usepackage{pdflscape}
+\usepackage{placeins}
 
 \usepackage[
   authordate,
@@ -369,36 +370,57 @@ For any coalition $C \subseteq \Parties$, define
   v_C = \sum_{i\in C} v_i, \qquad s_C = \sum_{i\in C} s_i,
 \]
 \[
-  \Quota_C = 513\frac{v_C}{V}, \qquad \Diff_C = s_C - \Quota_C.
+  q_C = 513\frac{v_C}{V}, \qquad d_C = s_C - q_C.
 \]
-A coalition has a vote majority when $v_C/V > .5$ and a seat majority when
-$s_C \geq 257$. A coalition inversion occurs when a party set $C$ has a seat majority but not a vote majority: \(s_C \geq 257 \quad \text{and} \quad \frac{v_C}{V} \leq .5.\)
-Equivalently, $C$ is a Chamber majority without being a national federal-deputy
-vote majority.
+The coalition analogue of the party representation ratio is
+\[
+R_C
+=
+\frac{s_C/513}{v_C/V}
+=
+\frac{s_C}{q_C}
+=
+1+\frac{d_C}{q_C}.
+\]
+It describes the coalition's relative representation compared with exact
+proportionality. Because \(q_C=\sum_{i\in C}q_i\), the same quantity is the
+quota-weighted average of its members' party ratios:
+\[
+R_C
+=
+\sum_{i\in C}\frac{q_i}{q_C}R_i.
+\]
+This identity links the party representation profile to the coalition-level
+accounting.
 
-For a coalition without a vote majority, define the additional seat differential
-required to reach a Chamber majority as
+A coalition has a vote majority when $v_C/V > .5$ and a seat majority when
+$s_C \geq 257$. A coalition inversion occurs when a party set $C$ has a seat
+majority but not a vote majority:
+\[
+s_C \geq 257
+\qquad\text{and}\qquad
+\frac{v_C}{V}\leq .5.
+\]
+Equivalently, $C$ is a Chamber majority without being a national
+federal-deputy vote majority.
+
+For a coalition without a vote majority, define the additional absolute seat
+differential required to reach a Chamber majority as
 \[
 r_C = 257-q_C.
 \]
-Since
-\[
-s_C=q_C+d_C,
-\]
-the inversion condition can equivalently be written as
+Since \(s_C=q_C+d_C\), the inversion condition can equivalently be written as
 \[
 \frac{v_C}{V}\leq .5
 \qquad\text{and}\qquad
 d_C\geq r_C.
 \]
-This formulation separates ordinary coalition overrepresentation from
-majority-changing overrepresentation. A positive value of $d_C$ is not
-sufficient for an inversion. The coalition's accumulated differential must be
-at least as large as the differential required to reach the majority threshold.
-The quantity $r_C$ therefore provides a common benchmark for comparing
-inversions with overrepresented coalition configurations that nevertheless
-remain seat minorities.
-
+This formulation separates relative coalition representation from the
+absolute surplus needed to change majority status. In particular, \(R_C>1\)
+(equivalently, \(d_C>0\) when \(q_C>0\)) means that a coalition is
+overrepresented, but it is not sufficient for inversion. Its accumulated
+differential must be at least as large as the differential required to reach
+257 seats.
 
 \section{Data}
 \label{sec:data}
@@ -592,7 +614,9 @@ available data window; the coalition remains a vote-and-seat majority.
 \caption{Observed cabinet-period coalition inversions}
 \label{tab:cabinet-inversions}
 \small
-\begin{tabularx}{\textwidth}{llrrrrX}
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.06}
+\begin{tabularx}{\textwidth}{@{}llrrrr>{\raggedright\arraybackslash}X@{}}
 \toprule
 Election & Period & Days & Vote share & Seats & Seat diff. & Parties \\
 \midrule
@@ -612,7 +636,18 @@ in cabinet. The cabinet-period comparison therefore isolates how successive
 realized recombinations of the same election-generated party outcomes alter
 coalition majority status.
 
-Figure \ref{fig:timeline} shows why the inversion criterion is more demanding than ordinary overrepresentation. Several cabinet coalitions receive a larger share of seats than votes, but only those that cross the Chamber-majority threshold while remaining below the vote-majority threshold count as inversions. The two-panel structure makes this distinction visible. In the 2014-linked mandate, the figure shows the movement from Dilma’s initial vote-and-seat majority, through the short 2016.2 impeachment-window inversion, into the post-impeachment Temer sequence and the more durable 2017.1 inversion. In the 2018-linked mandate, the observed coalitions remain below the seat-majority threshold throughout the Bolsonaro period, which explains the absence of inversions despite positive seat differentials in some periods. In the 2022-linked mandate, the initial Lula coalition appears as an inversion, but later cabinet expansion pushes the coalition above both thresholds. The figure thus functions as a visual check on both the positive and negative cases.
+Figure \ref{fig:timeline} shows why the inversion criterion is more
+demanding than ordinary overrepresentation. The first two panels trace the
+vote and seat shares used to classify each cabinet period, while the third
+plots the coalition representation ratio. Values of \(R_C>1\) appear in
+multiple periods, including 2018-linked coalitions that remain below 257
+seats. The ratio panel therefore has a proportionality line at \(R_C=1\), not
+an inversion threshold: no constant value of \(R_C\) determines inversion.
+The 2014-linked mandate moves through the short 2016.2 impeachment-window
+inversion and the more durable 2017.1 Temer inversion; the 2018-linked
+sequence remains a seat minority; and the initial 2022-linked Lula coalition
+inverts before later cabinet expansion carries it above both majority
+thresholds.
 
 The 2016.2 case should not be dismissed because of its short duration. It is
 not evidence of a stable governing arrangement, but it is precisely for that
@@ -649,22 +684,35 @@ the coalition, the status changes: the 2023.2 coalition has 63.79 percent of the
 vote and 350 seats. It remains overrepresented, but it is no longer an inversion
 because it has both votes and seats.
 
-The negative case is as important as the positive cases. No observed cabinet
-coalition after the 2018 election satisfies the inversion criterion. This is not
-because the party system is less fragmented or because seat differentials vanish.
-The closest observed cases are 2021.3 and 2022.1, each with 45.50 percent of
-the vote and 250 seats. Each has a positive seat differential of 16.60 seats, but
-both remain below the 257-seat threshold. The result confirms that the criterion is not mechanically
-satisfied whenever a coalition is overrepresented. Overrepresentation becomes an
-inversion only when it crosses the majority threshold.
+The three observed inversions also differ in how they cross the threshold.
+The 2017.1 coalition is threshold-adjacent: \(R_C=1.04\) and
+\(d_C=9.95\), while only \(r_C=0.95\) is required. The 2023.1 coalition
+has \(R_C=1.05\), \(d_C=12.20\), and \(r_C=6.20\). By contrast, the
+2016.2 coalition begins farther below a vote majority and needs a much larger
+absolute surplus: its \(R_C=1.08\) corresponds to \(d_C=20.27\), which
+exceeds \(r_C=18.27\).
+
+The algorithmic negative-case rule retains both tied 2018-linked periods,
+2021.3 and 2022.1, rather than collapsing their identical coalition
+composition and metrics. Each is positively overrepresented
+(\(R_C=1.07\)) and accumulates \(d_C=16.60\) seats, but requires
+\(r_C=23.60\). Because \(d_C<r_C\), each remains at 250 seats and does
+not invert. This comparison makes the distinction explicit: substantial
+relative overrepresentation can remain short of a majority-changing absolute
+seat surplus.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=.98\textwidth]{observed_coalition_timeline.pdf}
-\caption{Observed cabinet-period coalition vote shares and seat shares}
+\caption{Observed cabinet-period coalition vote shares, seat shares, and representation ratios}
 \label{fig:timeline}
 \begin{flushleft}
-\footnotesize Notes: The left panel reports coalition vote shares. The right panel reports coalition seat shares. The horizontal reference lines mark the vote-majority threshold of 50 percent and the seat-majority threshold of $257/513 \approx 50.10$ percent. 
+\footnotesize Notes: The left panel reports coalition vote shares and marks the
+50 percent vote-majority threshold. The middle panel reports coalition seat
+shares and marks the Chamber-majority threshold of $257/513$. The right panel
+reports the Julia-computed coalition representation ratio and marks exact
+proportionality at $R_C=1$. Values above one indicate coalition
+overrepresentation but do not by themselves imply inversion.
 \end{flushleft}
 \end{figure}
 
@@ -755,15 +803,27 @@ Election & Start & End & Parties & Vote share & Seats & Seat diff. & Interval \\
 \footnotesize Notes: The Parties column reports interval size. Vote share is the interval's percentage of national federal-deputy votes. Seats are Chamber seats held by the interval. Seat diff. is the interval's seat total minus its proportional quota. Each listed interval has at least 257 seats and no vote majority.
 \end{flushleft}
 \end{table}
+\FloatBarrier
 
-The minimal intervals in Table \ref{tab:minimal-intervals} reveal two different
-forms of the phenomenon. The 2014 intervals are close to the 50 percent vote
-threshold and often just at the 257-seat threshold. These are genuine inversions,
-but they are close-run cases in the sense expected by the theory of PR
-inversions \parencite{miller14_elect_inver_under_propor_repres}. The 2022 PP--PL
-interval is different. It is compact, right-side, and substantially below the
-vote-majority threshold. With only 45.35 percent of the vote, it holds 258 seats.
-This is the strongest structural result in the analysis of minimal winning coalitions done here. 
+The 2014 cases in Table \ref{tab:minimal-intervals} are not uniformly
+close-run. Three sit exactly at 257 seats. The PT DO B--PSDC and
+SOLIDARIEDADE--PSL intervals each have \(R_C=1.02\), with their
+differentials just meeting requirements of \(5.70\) and \(5.72\) seats,
+respectively. PTB--PR also stops at 257, but begins farther below the vote
+threshold: \(R_C=1.05\) and \(d_C=r_C=12.86\). PSB--PTN instead reaches
+260 seats; its \(R_C=1.04\) yields \(d_C=9.03\), above
+\(r_C=6.03\). Thus, even within 2014, threshold-adjacent cases differ from
+intervals with stronger relative or absolute overrepresentation.
+
+The two 2022 inversions provide the clearest contrast. MDB--UNIÃO is already
+at 49.98 percent of the vote, so its required differential is only
+\(r_C=0.59\); \(R_C=1.03\) and \(d_C=8.59\) are more than sufficient for
+265 seats. PP--PL begins much deeper below a vote majority. Its proportional
+quota is \(q_C=232.64\), so it requires \(r_C=24.36\) seats; the observed
+\(d_C=25.36\) exceeds that requirement and produces 258 seats. Its
+\(R_C=1.11\) also indicates substantial relative overrepresentation. This is
+why PP--PL is the stronger 2022 inversion, whereas MDB--UNIÃO is
+threshold-adjacent.
 
 \begin{figure}[htbp]
 \centering
@@ -830,45 +890,12 @@ reach 258 seats with only 45.35 percent of the national federal-deputy vote.
 The result is stronger than the mere presence of orange cells in the heatmap:
 the minimal source of the inversion is already a narrow right-side bloc.
 
-The party-level composition of the PP--PL surplus also connects this interval
-to the 2022 representation profile in Figure~\ref{fig:vote-seat}. Within the
-interval, the four largest parties by national vote share are all
-overrepresented: PL, UNIÃO, PP, and REPUBLICANOS contribute positive seat
-differentials of approximately $13.78$, $11.10$, $6.24$, and $4.32$ seats,
-respectively. Conversely, the four smaller members are all underrepresented:
-PSC, PATRIOTA, NOVO, and DC contribute approximately $-3.12$, $-3.16$,
-$-3.35$, and $-0.46$ seats. The positive contributions sum to approximately
-$35.44$ seats, while the negative contributions sum to approximately $-10.09$,
-yielding an aggregate coalition differential of
-\[
-d_C
-=
-\sum_{i\in C}d_i
-\approx 25.36.
-\]
-
-With 45.35 percent of the national federal-deputy vote, the interval's exact
-proportional quota is approximately
-\[
-q_C \approx 232.64.
-\]
-It therefore requires a positive differential of
-\[
-257-q_C \approx 24.36
-\]
-seats to reach a Chamber majority. Its observed differential exceeds this
-requirement:
-\[
-d_C \approx 25.36 > 24.36 \approx 257-q_C.
-\]
-Indeed, the accumulated differential exceeds the minimum required for a
-majority by exactly one seat, producing 258 rather than 257 seats. The
-inversion therefore does not require every member of the interval to be
-overrepresented. In this case, the positive differentials of the four largest
-members more than compensate for the negative differentials of the four
-smallest members, leaving the interval with a seat surplus large enough to
-change its majority status.
-
+The aggregation identity also connects the PP--PL result to the party
+representation profile in Figure~\ref{fig:vote-seat}. Because \(R_C\) is the
+quota-weighted average of member-party \(R_i\) values, coalition
+overrepresentation does not require every member to be overrepresented. What
+matters for inversion is that the members' accumulated \(d_i\) values produce
+a coalition differential \(d_C\) large enough to meet \(r_C\).
 
 The figure also clarifies the weakness of the left in the Chamber. Left and
 center-left parties do not form an autonomous seat-majority region in any of
