@@ -45,6 +45,7 @@ tables_dir = joinpath(paper_output_root, "tables")
 figure_data_dir = joinpath(paper_output_root, "figure_data")
 latex_dir = joinpath(paper_output_root, "latex")
 artifact_manifest_path = joinpath(paper_output_root, "artifact_manifest.csv")
+review_manuscript_dir = joinpath(repo_root, "writing", "submission_inversions_review", "manuscript")
 
 analysis_years = [2014, 2018, 2022]
 expected_total_seats = 513
@@ -171,6 +172,16 @@ function write_artifact_text(path, content, artifact_type, description; rows = m
     return path
 end
 
+function sync_review_latex_asset(source_path)
+    isdir(review_manuscript_dir) || error(
+        "Current review manuscript directory not found: $(review_manuscript_dir)",
+    )
+    destination = joinpath(review_manuscript_dir, basename(source_path))
+    cp(source_path, destination; force = true)
+    println("Review manuscript table asset synchronized: ", destination)
+    return destination
+end
+
 function latex_escape(value)
     io = IOBuffer()
     for char in string(value)
@@ -247,6 +258,115 @@ end
 pct(x; digits = 2) = round(100 * Float64(x), digits = digits)
 display_round(x; digits = 2) = round(Float64(x), digits = digits)
 fmt2(x) = @sprintf("%.2f", Float64(x))
+function require_table_columns(df, required, label)
+    missing_columns = [column for column in required if column ∉ propertynames(df)]
+    isempty(missing_columns) || error(
+        "$(label) is missing columns: $(join(String.(missing_columns), ", ")).",
+    )
+    return true
+end
+
+function validate_display_accounting!(row, source_row, label)
+    source_row.coalition_inversion || error("$(label): source row is not an inversion.")
+    row.quota_display == display_round(source_row.quota) || error("$(label): displayed q_C does not match the unrounded quota.")
+    row.seat_diff_display == display_round(source_row.seat_diff) || error("$(label): displayed d_C does not match the unrounded differential.")
+    row.required_diff_display == display_round(source_row.required_diff) || error("$(label): displayed r_C does not match the unrounded required differential.")
+    abs(Float64(row.seats) - (Float64(row.quota_display) + Float64(row.seat_diff_display))) <= 0.011 || error(
+        "$(label): displayed s_C = q_C + d_C identity fails beyond rounding tolerance.",
+    )
+    abs(Float64(row.required_diff_display) - (seat_majority_threshold - Float64(row.quota_display))) <= 0.011 || error(
+        "$(label): displayed r_C = 257 - q_C identity fails beyond rounding tolerance.",
+    )
+    source_row.seat_diff > source_row.required_diff || accounting_isapprox(source_row.seat_diff, source_row.required_diff) || error(
+        "$(label): unrounded inversion row violates d_C >= r_C.",
+    )
+    Float64(row.seat_diff_display) >= Float64(row.required_diff_display) || error(
+        "$(label): displayed inversion row violates d_C >= r_C.",
+    )
+    return true
+end
+
+function validate_cabinet_inversion_table!(display_df, source_df)
+    required = (
+        :election_year, :period, :period_days, :vote_share_pct, :seats,
+        :quota_display, :seat_diff_display, :required_diff_display, :parties,
+    )
+    require_table_columns(display_df, required, "Cabinet inversion table CSV")
+    nrow(display_df) == nrow(source_df) || error("Cabinet inversion table row count changed.")
+    for (row, source_row) in zip(eachrow(display_df), eachrow(source_df))
+        key = "$(row.election_year)/$(row.period)"
+        Int(row.election_year) == Int(source_row.election_year) || error("Cabinet inversion table changed election for $(key).")
+        string(row.period) == string(source_row.period) || error("Cabinet inversion table changed period for $(key).")
+        row.period_days == source_row.period_days || error("Cabinet inversion table changed Days for $(key).")
+        row.vote_share_pct == pct(source_row.vote_share) || error("Cabinet inversion table changed Vote % for $(key).")
+        row.seats == source_row.seats || error("Cabinet inversion table changed Seats for $(key).")
+        String(row.parties) == String(source_row.parties) || error("Cabinet inversion table changed Parties for $(key).")
+        validate_display_accounting!(row, source_row, "cabinet $(key)")
+    end
+    return true
+end
+
+function validate_minimal_inversion_table!(display_df, source_df)
+    required = (
+        :election_year, :start_party, :end_party, :interval_size,
+        :vote_share_pct, :seats, :quota_display, :seat_diff_display,
+        :required_diff_display, :parties,
+    )
+    require_table_columns(display_df, required, "Minimal connected inversion table CSV")
+    nrow(display_df) == nrow(source_df) || error("Minimal connected inversion table row count changed.")
+    for (row, source_row) in zip(eachrow(display_df), eachrow(source_df))
+        key = "$(row.election_year)/$(row.start_party)--$(row.end_party)"
+        Int(row.election_year) == Int(source_row.election_year) || error("Minimal connected inversion table changed election for $(key).")
+        String(row.start_party) == String(source_row.start_party) || error("Minimal connected inversion table changed start party for $(key).")
+        String(row.end_party) == String(source_row.end_party) || error("Minimal connected inversion table changed end party for $(key).")
+        row.interval_size == source_row.interval_size || error("Minimal connected inversion table changed interval size for $(key).")
+        row.vote_share_pct == pct(source_row.vote_share) || error("Minimal connected inversion table changed Vote % for $(key).")
+        row.seats == source_row.seats || error("Minimal connected inversion table changed Seats for $(key).")
+        String(row.parties) == String(source_row.parties) || error("Minimal connected inversion table changed interval membership for $(key).")
+        validate_display_accounting!(row, source_row, "ideological interval $(key)")
+    end
+    return true
+end
+
+function cabinet_inversion_tabular_latex(df)
+    io = IOBuffer()
+    println(io, raw"\begin{tabularx}{\textwidth}{@{}llrrrrrr>{\raggedright\arraybackslash}X@{}}")
+    println(io, raw"\toprule")
+    println(io, "Election & Period & Days & Vote \\% & Seats & Quota \\(q_C\\) & Diff. \\(d_C\\) & Req. \\(r_C\\) & Parties " * repeat("\\", 2))
+    println(io, raw"\midrule")
+    for row in eachrow(df)
+        println(
+            io,
+            "$(row.election_year) & $(latex_escape(row.period)) & $(row.period_days) & " *
+            "$(fmt2(row.vote_share_pct)) & $(row.seats) & $(fmt2(row.quota_display)) & " *
+            "$(fmt2(row.seat_diff_display)) & $(fmt2(row.required_diff_display)) & " *
+            "$(latex_escape(row.parties)) \\\\",
+        )
+    end
+    println(io, raw"\bottomrule")
+    println(io, raw"\end{tabularx}")
+    return String(take!(io))
+end
+
+function minimal_inversion_tabular_latex(df)
+    io = IOBuffer()
+    println(io, raw"\begin{tabularx}{\textwidth}{@{}lllrrrrrr>{\raggedright\arraybackslash}X@{}}")
+    println(io, raw"\toprule")
+    println(io, "Election & Start & End & Parties & Vote \\% & Seats & \\(q_C\\) & \\(d_C\\) & \\(r_C\\) & Interval " * repeat("\\", 2))
+    println(io, raw"\midrule")
+    for row in eachrow(df)
+        println(
+            io,
+            "$(row.election_year) & $(latex_escape(row.start_party)) & $(latex_escape(row.end_party)) & " *
+            "$(row.interval_size) & $(fmt2(row.vote_share_pct)) & $(row.seats) & " *
+            "$(fmt2(row.quota_display)) & $(fmt2(row.seat_diff_display)) & " *
+            "$(fmt2(row.required_diff_display)) & $(latex_escape(row.parties)) \\\\",
+        )
+    end
+    println(io, raw"\bottomrule")
+    println(io, raw"\end{tabularx}")
+    return String(take!(io))
+end
 
 function vcat_or_empty(tables)
     isempty(tables) && return DataFrame()
@@ -908,13 +1028,36 @@ write_artifact_csv(joinpath(raw_dir, "observed_cabinet_inversions_only.csv"), ob
 write_artifact_csv(joinpath(raw_dir, "observed_cabinet_duration_summary.csv"), observed_cabinet_duration_summary, "raw", "Observed cabinet coverage and inversion duration summary.")
 
 function observed_display_table(df)
-    return select(df, :election_year, :period, :period_start, :period_end, :period_days, :days_overlapping_mandate, :share_of_mandate => ByRow(pct) => :share_of_mandate_pct, :parties, :votes, :vote_share => ByRow(pct) => :vote_share_pct, :seats, :seat_share => ByRow(pct) => :seat_share_pct, :quota => ByRow(display_round) => :quota_display, :seat_diff => ByRow(display_round) => :seat_diff_display, :majority_status, :coalition_inversion)
+    return select(
+        df,
+        :election_year,
+        :period,
+        :period_start,
+        :period_end,
+        :period_days,
+        :days_overlapping_mandate,
+        :share_of_mandate => ByRow(pct) => :share_of_mandate_pct,
+        :parties,
+        :votes,
+        :vote_share => ByRow(pct) => :vote_share_pct,
+        :seats,
+        :seat_share => ByRow(pct) => :seat_share_pct,
+        :quota => ByRow(display_round) => :quota_display,
+        :seat_diff => ByRow(display_round) => :seat_diff_display,
+        :required_diff => ByRow(display_round) => :required_diff_display,
+        :majority_status,
+        :coalition_inversion,
+    )
 end
 
 table_03_observed_cabinet_coalitions = observed_display_table(observed_cabinet_coalitions_all_years)
 table_04_observed_cabinet_inversions_only = observed_display_table(observed_cabinet_inversions_only)
 write_artifact_csv(joinpath(tables_dir, "table_03_observed_cabinet_coalitions.csv"), table_03_observed_cabinet_coalitions, "table", "Observed cabinet-period coalitions with rounded display columns.")
-write_artifact_csv(joinpath(tables_dir, "table_04_observed_cabinet_inversions_only.csv"), table_04_observed_cabinet_inversions_only, "table", "Observed cabinet-period coalition inversions only with rounded display columns.")
+cabinet_inversion_table_csv_path = write_artifact_csv(joinpath(tables_dir, "table_04_observed_cabinet_inversions_only.csv"), table_04_observed_cabinet_inversions_only, "table", "Observed cabinet-period coalition inversions with rounded q_C, d_C, and r_C display columns.")
+cabinet_inversion_table_from_csv = CSV.read(cabinet_inversion_table_csv_path, DataFrame)
+validate_cabinet_inversion_table!(cabinet_inversion_table_from_csv, observed_cabinet_inversions_only)
+cabinet_inversion_tabular_path = write_artifact_text(joinpath(latex_dir, "table_02_cabinet_inversion_tabular.tex"), cabinet_inversion_tabular_latex(cabinet_inversion_table_from_csv), "latex", "CSV-driven tabularx for manuscript Table 2."; rows = nrow(cabinet_inversion_table_from_csv), columns = 9)
+sync_review_latex_asset(cabinet_inversion_tabular_path)
 focal_negative_cases = cabinet_coalition_focal_cases[cabinet_coalition_focal_cases.focal_case_type .== "closest_non_inversion_below_both_thresholds", :]
 nrow(cabinet_coalition_focal_cases) == 5 || error("Cabinet focal regression failed: expected three inversions plus two tied negative periods.")
 nrow(focal_negative_cases) == 2 || error("Cabinet focal regression failed: expected two tied closest negative periods.")
@@ -1140,10 +1283,29 @@ function interval_summary_table(df)
 end
 
 table_05_ideological_interval_summary_by_election = interval_summary_table(ideological_intervals_all_years)
-table_06_minimal_ideological_interval_inversions = select(minimal_connected_inversions, :election_year, :start_party, :end_party, :parties, :interval_size, :votes, :vote_share => ByRow(pct) => :vote_share_pct, :seats, :seat_share => ByRow(pct) => :seat_share_pct, :quota => ByRow(display_round) => :quota_display, :seat_diff => ByRow(display_round) => :seat_diff_display, :majority_status)
+table_06_minimal_ideological_interval_inversions = select(
+    minimal_connected_inversions,
+    :election_year,
+    :start_party,
+    :end_party,
+    :parties,
+    :interval_size,
+    :votes,
+    :vote_share => ByRow(pct) => :vote_share_pct,
+    :seats,
+    :seat_share => ByRow(pct) => :seat_share_pct,
+    :quota => ByRow(display_round) => :quota_display,
+    :seat_diff => ByRow(display_round) => :seat_diff_display,
+    :required_diff => ByRow(display_round) => :required_diff_display,
+    :majority_status,
+)
 table_appendix_minimal_connected_winning_intervals = appendix_minimal_connected_winning_table(ideological_intervals_all_years)
 write_artifact_csv(joinpath(tables_dir, "table_05_ideological_interval_summary_by_election.csv"), table_05_ideological_interval_summary_by_election, "table", "Ideological interval counts and inversion counts by election.")
-write_artifact_csv(joinpath(tables_dir, "table_06_minimal_ideological_interval_inversions.csv"), table_06_minimal_ideological_interval_inversions, "table", "Endpoint-minimal ideological interval inversions with rounded display columns.")
+minimal_inversion_table_csv_path = write_artifact_csv(joinpath(tables_dir, "table_06_minimal_ideological_interval_inversions.csv"), table_06_minimal_ideological_interval_inversions, "table", "Endpoint-minimal ideological interval inversions with rounded q_C, d_C, and r_C display columns.")
+minimal_inversion_table_from_csv = CSV.read(minimal_inversion_table_csv_path, DataFrame)
+validate_minimal_inversion_table!(minimal_inversion_table_from_csv, minimal_connected_inversions)
+minimal_inversion_tabular_path = write_artifact_text(joinpath(latex_dir, "table_04_minimal_connected_inversion_tabular.tex"), minimal_inversion_tabular_latex(minimal_inversion_table_from_csv), "latex", "CSV-driven tabularx for manuscript Table 4."; rows = nrow(minimal_inversion_table_from_csv), columns = 10)
+sync_review_latex_asset(minimal_inversion_tabular_path)
 minimal_connected_winning_csv_path = write_artifact_csv(joinpath(tables_dir, "table_appendix_minimal_connected_winning_intervals.csv"), table_appendix_minimal_connected_winning_intervals, "table", "Endpoint-minimal connected winning ideological intervals.")
 minimal_connected_winning_latex_path = write_artifact_text(joinpath(latex_dir, "table_appendix_minimal_connected_winning_intervals.tex"), minimal_connected_winning_latex(table_appendix_minimal_connected_winning_intervals), "latex", "Landscape longtable for endpoint-minimal connected winning ideological intervals."; rows = nrow(table_appendix_minimal_connected_winning_intervals), columns = 10)
 

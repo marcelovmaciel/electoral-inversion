@@ -613,20 +613,18 @@ available data window; the coalition remains a vote-and-seat majority.
 \centering
 \caption{Observed cabinet-period coalition inversions}
 \label{tab:cabinet-inversions}
-\small
-\setlength{\tabcolsep}{3.5pt}
+\footnotesize
+\setlength{\tabcolsep}{2pt}
 \renewcommand{\arraystretch}{1.06}
-\begin{tabularx}{\textwidth}{@{}llrrrr>{\raggedright\arraybackslash}X@{}}
-\toprule
-Election & Period & Days & Vote share & Seats & Seat diff. & Parties \\
-\midrule
-2014 & 2016.2 & 2 & 46.54 & 259 & 20.27 & PCdoB, PDT, PMDB, PR, PSD, PT, PTB \\
-2014 & 2017.1 & 100 & 49.91 & 266 & 9.95 & DEM, PMDB, PP, PPS, PSB, PSD, PSDB, PV \\
-2022 & 2023.1 & 255 & 48.89 & 263 & 12.20 & MDB, PCdoB, PDT, PSB, PSD, PSOL, PT, REDE, UNIÃO \\
-\bottomrule
-\end{tabularx}
+\input{table_02_cabinet_inversion_tabular.tex}
 \begin{flushleft}
-\footnotesize Notes: Vote share is the coalition's percentage of the national federal-deputy vote for the election linked to the mandate. Seats are Chamber seats held by the translated election-year party set. Seat diff. is the coalition's seat total minus its proportional quota. Each listed period is an inversion because the coalition has at least 257 seats and no vote majority.
+  \footnotesize Notes: Vote \% is the coalition's percentage of the national
+  federal-deputy vote for the election linked to the mandate. Seats are Chamber
+  seats held by the translated election-year party set. Quota \(q_C\) is the
+  proportional benchmark, Diff. \(d_C=s_C-q_C\) is the observed seat surplus,
+  and Req. \(r_C=257-q_C\) is the differential required for a Chamber majority.
+  Each listed period is an inversion because it has at least 257 seats and no
+  vote majority.
 \end{flushleft}
 \end{table}
 
@@ -636,18 +634,16 @@ in cabinet. The cabinet-period comparison therefore isolates how successive
 realized recombinations of the same election-generated party outcomes alter
 coalition majority status.
 
-Figure \ref{fig:timeline} shows why the inversion criterion is more
-demanding than ordinary overrepresentation. The first two panels trace the
-vote and seat shares used to classify each cabinet period, while the third
-plots the coalition representation ratio. Values of \(R_C>1\) appear in
-multiple periods, including 2018-linked coalitions that remain below 257
-seats. The ratio panel therefore has a proportionality line at \(R_C=1\), not
-an inversion threshold: no constant value of \(R_C\) determines inversion.
-The 2014-linked mandate moves through the short 2016.2 impeachment-window
-inversion and the more durable 2017.1 Temer inversion; the 2018-linked
-sequence remains a seat minority; and the initial 2022-linked Lula coalition
-inverts before later cabinet expansion carries it above both majority
-thresholds.
+Figure \ref{fig:timeline} shows why the inversion criterion is more demanding than ordinary
+overrepresentation. The first two panels trace the vote and seat shares used to
+classify each cabinet period, while the third plots the coalition representation
+ratio. Of the 22 cabinet-period party sets, 21 have $R_C>1$; the only exception
+is the 2020.2 Bolsonaro-period configuration. Thus, cabinet coalitions can be
+systematically overrepresented as party sets without producing inversions. The
+2014-linked mandate moves through the short 2016.2 impeachment-window inversion
+and the more durable 2017.1 Temer inversion; the 2018-linked sequence remains a
+seat minority; and the initial 2022-linked Lula coalition inverts before later
+cabinet expansion carries it above both majority thresholds.
 
 The 2016.2 case should not be dismissed because of its short duration. It is
 not evidence of a stable governing arrangement, but it is precisely for that
@@ -787,20 +783,16 @@ the seat-majority intervals in that year also cross the vote-majority threshold.
 \caption{Minimal connected interval inversions}
 \label{tab:minimal-intervals}
 \scriptsize
-\begin{tabularx}{\textwidth}{lllr rrrX}
-\toprule
-Election & Start & End & Parties & Vote share & Seats & Seat diff. & Interval \\
-\midrule
-2014 & PSB & PTN & 12 & 48.92 & 260 & 9.03 & PSB, PPS, PV, PTB, PT DO B, SOLIDARIEDADE, PMN, PHS, PMDB, PSD, PSDB, PTN \\
-2014 & PTB & PR & 14 & 47.59 & 257 & 12.86 & PTB, PT DO B, SOLIDARIEDADE, PMN, PHS, PMDB, PSD, PSDB, PTN, PPL, PRTB, PROS, PRP, PR \\
-2014 & PT DO B & PSDC & 16 & 48.99 & 257 & 5.70 & PT DO B, SOLIDARIEDADE, PMN, PHS, PMDB, PSD, PSDB, PTN, PPL, PRTB, PROS, PRP, PR, PRB, PTC, PSDC \\
-2014 & SOLIDARIEDADE & PSL & 16 & 48.98 & 257 & 5.72 & SOLIDARIEDADE, PMN, PHS, PMDB, PSD, PSDB, PTN, PPL, PRTB, PROS, PRP, PR, PRB, PTC, PSDC, PSL \\
-2022 & MDB & UNIÃO & 15 & 49.98 & 265 & 8.59 & MDB, PMN, PSDB, PSD, PMB, PODE, PROS, PRTB, AGIR, PTB, PP, DC, REPUBLICANOS, PSC, UNIÃO \\
-2022 & PP & PL & 8 & 45.35 & 258 & 25.36 & PP, DC, REPUBLICANOS, PSC, UNIÃO, PATRIOTA, NOVO, PL \\
-\bottomrule
-\end{tabularx}
+\setlength{\tabcolsep}{1.5pt}
+\renewcommand{\arraystretch}{1.04}
+\input{table_04_minimal_connected_inversion_tabular.tex}
 \begin{flushleft}
-\footnotesize Notes: The Parties column reports interval size. Vote share is the interval's percentage of national federal-deputy votes. Seats are Chamber seats held by the interval. Seat diff. is the interval's seat total minus its proportional quota. Each listed interval has at least 257 seats and no vote majority.
+\footnotesize Notes: Parties reports interval size, while Interval reports the
+full party composition. Vote \% is the interval's percentage of national
+federal-deputy votes, and Seats is its Chamber seat total. Quota \(q_C\) is the
+proportional benchmark, Diff. \(d_C=s_C-q_C\) is the observed seat surplus, and
+Req. \(r_C=257-q_C\) is the differential required for a Chamber majority. Each
+listed interval has at least 257 seats and no vote majority.
 \end{flushleft}
 \end{table}
 \FloatBarrier
