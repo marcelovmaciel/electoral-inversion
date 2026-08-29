@@ -5,7 +5,9 @@ const _PROCESSING_MODULE_FILE = joinpath(@__DIR__, "..", "src", "Processing.jl")
 
 const _PROCESSING_LOADED = let
     try
-        include(_PROCESSING_MODULE_FILE)
+        if !isdefined(@__MODULE__, :Processing)
+            include(_PROCESSING_MODULE_FILE)
+        end
         @eval using .Processing
         true
     catch err

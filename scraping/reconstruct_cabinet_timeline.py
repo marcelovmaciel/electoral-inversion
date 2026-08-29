@@ -2,7 +2,7 @@
 import csv
 import json
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from urllib.parse import quote
@@ -25,13 +25,25 @@ from scrape_wikipedia_ministerios import (
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = ROOT / "scraping" / "output"
+SOURCE_DATA_DIR = ROOT / "scraping" / "data"
+SOURCE_SNAPSHOT_PATH = SOURCE_DATA_DIR / "cabinet_source_snapshot.json"
+AFFILIATION_SPELLS_PATH = SOURCE_DATA_DIR / "cabinet_party_affiliation_spells.csv"
 ORGAOS_PATH = OUTPUT_DIR / "orgaos_ministeriais.json"
 PARTY_PERIODS_PATH = OUTPUT_DIR / "partidos_por_periodo.json"
+PARTY_PERIODS_CSV_PATH = OUTPUT_DIR / "partidos_por_periodo.csv"
 RAW_JSON_PATH = OUTPUT_DIR / "ministerios_eventos.json"
 DASHBOARD_JSON_PATH = OUTPUT_DIR / "cabinet_timeline_dashboard.json"
 EVENTS_CSV_PATH = OUTPUT_DIR / "ministerios_eventos.csv"
 INTERVALS_CSV_PATH = OUTPUT_DIR / "ministerios_nomeacoes_intervalos.csv"
 REPORT_PATH = OUTPUT_DIR / "ministerios_eventos_review_report.md"
+
+SOURCE_SNAPSHOT = json.loads(SOURCE_SNAPSHOT_PATH.read_text(encoding="utf-8"))
+SOURCE_AS_OF = date.fromisoformat(SOURCE_SNAPSHOT["source_as_of"])
+GENERATED_AT = SOURCE_SNAPSHOT["generated_at"]
+ANALYSIS_START = date(2015, 1, 1)
+FUSION_EFFECTIVE_DATE = date(2022, 2, 8)
+FUSION_PREDECESSORS = {"DEM", "PSL"}
+FUSION_SUCCESSOR = "UNIÃO"
 
 GOVERNMENT_WINDOWS = [
     {
@@ -186,11 +198,11 @@ AMBIGUOUS_START_PARTY_RESOLUTIONS = {
         "Gilson Machado Neto",
         "2020-12-09",
     ): {
-        "status": "unresolved",
-        "method": "insufficient_repository_evidence",
-        "start_party": None,
-        "confidence": "low",
-        "evidence": "Unresolved: the repo only supplies the ambiguous source row and a 2022 candidacy for PL, which does not pin the 2020-12-09 start-date party.",
+        "status": "resolved",
+        "method": "dated_affiliation_spells",
+        "start_party": "PSC",
+        "confidence": "high",
+        "evidence": "Dated external evidence establishes PSC at appointment and a formal switch to PL on 2022-03-30; see scraping/data/cabinet_party_affiliation_spells.csv.",
     },
     (
         "jair_bolsonaro",
@@ -279,6 +291,36 @@ def parse_iso_date(value):
     return date(year, month, day)
 
 
+def load_affiliation_spells():
+    spells = defaultdict(list)
+    with AFFILIATION_SPELLS_PATH.open(encoding="utf-8", newline="") as handle:
+        for raw in csv.DictReader(handle):
+            key = (
+                raw["source_page_id"],
+                raw["ministerio_canonical"],
+                raw["person_name_canonical"],
+                raw["appointment_start"],
+            )
+            spells[key].append(
+                {
+                    **raw,
+                    "affiliation_start_date": parse_iso_date(raw["affiliation_start"]),
+                    "affiliation_end_date": parse_iso_date(raw["affiliation_end"]),
+                    "appointment_end_override_date": parse_iso_date(raw["appointment_end_override"]),
+                }
+            )
+    for values in spells.values():
+        values.sort(key=lambda item: item["affiliation_start_date"])
+    return dict(spells)
+
+
+AFFILIATION_SPELLS = load_affiliation_spells()
+
+
+def affiliation_spells_for_record(record):
+    return AFFILIATION_SPELLS.get(party_resolution_key(record), [])
+
+
 def classify_status_type(label):
     norm = normalize_header(label)
     orgao_prefixes = (
@@ -297,7 +339,10 @@ def classify_status_type(label):
 
 def fetch_page_payload(page_info):
     params = {"action": "parse", "prop": "text|revid", "format": "json"}
-    if "page" in page_info:
+    pinned_revision = SOURCE_SNAPSHOT["wikipedia_revisions"].get(page_info["label"])
+    if pinned_revision is not None:
+        params["oldid"] = pinned_revision
+    elif "page" in page_info:
         params["page"] = page_info["page"]
     else:
         params["pageid"] = page_info["pageid"]
@@ -553,8 +598,66 @@ def party_resolution_key(record):
     )
 
 
+def apply_affiliation_record_correction(record):
+    spells = affiliation_spells_for_record(record)
+    if not spells:
+        record["source_end_date"] = record["end_date"]
+        record["source_end_raw"] = record["end_raw"]
+        record["party_affiliation_spells"] = []
+        return
+
+    overrides = {item["appointment_end_override_date"] for item in spells}
+    if len(overrides) != 1:
+        raise ValueError(f"Conflicting appointment-end overrides for {party_resolution_key(record)}")
+    corrected_end = next(iter(overrides))
+    record["source_end_date"] = record["end_date"]
+    record["source_end_raw"] = record["end_raw"]
+    record["end_date"] = corrected_end
+    record["party_affiliation_spells"] = [
+        {
+            "party": item["party"],
+            "start": item["affiliation_start"],
+            "end": item["affiliation_end"],
+            "evidence_url": item["evidence_url"],
+            "evidence_publication_date": item["evidence_publication_date"],
+            "evidence_claim": item["evidence_claim"],
+            "date_semantics": item["date_semantics"],
+            "notes": item["notes"],
+        }
+        for item in spells
+    ]
+
+    expected_start = record["start_date"]
+    for item in spells:
+        if item["affiliation_start_date"] != expected_start:
+            raise ValueError(f"Affiliation spells do not cover {party_resolution_key(record)} contiguously")
+        if item["affiliation_end_date"] < item["affiliation_start_date"]:
+            raise ValueError(f"Invalid affiliation spell for {party_resolution_key(record)}")
+        if item["party"] not in record["party_codes"]:
+            raise ValueError(f"Affiliation party absent from raw source candidates for {party_resolution_key(record)}")
+        expected_start = item["affiliation_end_date"] + timedelta(days=1)
+    if expected_start != corrected_end + timedelta(days=1):
+        raise ValueError(f"Affiliation spells do not cover the corrected appointment end for {party_resolution_key(record)}")
+
+    record["notes"].append(
+        "Authoritative dated correction: PSC through 2022-03-29, PL on 2022-03-30; "
+        "official office records place the successor in office from 2022-03-31."
+    )
+
+
 def resolve_start_party(record):
     party_codes = dedupe_preserve_order(record.get("party_codes") or [])
+    dated_spells = record.get("party_affiliation_spells") or []
+    if dated_spells:
+        return {
+            "status": "resolved",
+            "method": "dated_affiliation_spells",
+            "start_party": dated_spells[0]["party"],
+            "candidate_parties": party_codes,
+            "confidence": "high",
+            "evidence": "Dated evidence resolves the raw multi-party field as a temporal sequence; see cabinet_party_affiliation_spells.csv.",
+            "affiliation_spells": dated_spells,
+        }
     if not party_codes:
         return {
             "status": "missing",
@@ -917,6 +1020,7 @@ def extract_records():
                     "flags": flags,
                     "source_snippet": snippet,
                 }
+                apply_affiliation_record_correction(record)
                 record["party_resolution"] = resolve_start_party(record)
                 resolution = record["party_resolution"]
                 if resolution["status"] == "unresolved":
@@ -1128,7 +1232,49 @@ def join_notes(existing, extra):
     return f"{existing}; {extra}"
 
 
-def build_dashboard_appointments(records, party_periods):
+def party_slices_for_interval(record, interval):
+    resolution = record["party_resolution"]
+    dated_spells = resolution.get("affiliation_spells") or []
+    if not dated_spells:
+        resolved_party = (
+            resolution["start_party"]
+            if resolution["status"] == "resolved" and resolution["start_party"]
+            else None
+        )
+        return [
+            {
+                "start": interval["start"],
+                "end": interval["end"],
+                "party": resolved_party,
+                "spell_index": None,
+                "spell_evidence_url": None,
+                "spell_evidence_publication_date": None,
+            }
+        ]
+
+    slices = []
+    for spell_index, spell in enumerate(dated_spells, start=1):
+        spell_start = parse_iso_date(spell["start"])
+        spell_end = parse_iso_date(spell["end"])
+        if not interval_overlap(interval["start"], interval["end"], spell_start, spell_end):
+            continue
+        slice_start = max(interval["start"], spell_start)
+        end_candidates = [item for item in [interval["end"], spell_end] if item is not None]
+        slice_end = min(end_candidates) if end_candidates else None
+        slices.append(
+            {
+                "start": slice_start,
+                "end": slice_end,
+                "party": spell["party"],
+                "spell_index": spell_index,
+                "spell_evidence_url": spell["evidence_url"],
+                "spell_evidence_publication_date": spell["evidence_publication_date"],
+            }
+        )
+    return slices
+
+
+def build_dashboard_appointments(records, party_periods=()):
     appointments = []
     for record in records:
         actual_start = record["start_date"]
@@ -1142,14 +1288,15 @@ def build_dashboard_appointments(records, party_periods):
         clipped_start = max(item for item in [actual_start, scope_start] if item is not None)
         clipped_end_candidates = [item for item in [actual_end, scope_end] if item is not None]
         clipped_end = min(clipped_end_candidates) if clipped_end_candidates else None
-        if clipped_end is not None and clipped_start is not None and clipped_end < clipped_start:
+        if clipped_end is not None and clipped_end < clipped_start:
             continue
 
         intervals = split_by_government(clipped_start, clipped_end)
         if not intervals and "non_entry" not in record["flags"]:
             intervals = [
                 {
-                    "government_id": government_for_date(clipped_start) or record["source_scope"]["government_id"],
+                    "government_id": government_for_date(clipped_start)
+                    or record["source_scope"]["government_id"],
                     "start": clipped_start,
                     "end": clipped_end,
                 }
@@ -1159,44 +1306,64 @@ def build_dashboard_appointments(records, party_periods):
 
         for interval in intervals:
             resolution = record["party_resolution"]
-            resolved_party = resolution["start_party"] if resolution["status"] == "resolved" and resolution["start_party"] else None
-            effective_party_codes = [resolved_party] if resolved_party else []
-            matches = coalition_matches(
-                effective_party_codes,
-                interval["start"],
-                interval["end"],
-                party_periods,
-            )
-            appointments.append(
-                {
-                    "appointment_id": record["record_id"],
-                    "ministry": record["ministerio_canonical"],
-                    "ministry_raw": record["ministerio_raw"],
-                    "ministry_status_type": record["ministerio_status_type"],
-                    "person": record["person_name_canonical"],
-                    "person_raw": record["person_name_raw"],
-                    "party": record["party"],
-                    "party_codes": effective_party_codes,
-                    "party_candidates": resolution.get("candidate_parties", record["party_codes"]),
-                    "resolved_party": resolved_party,
-                    "party_resolution": resolution,
-                    "start": iso_or_none(interval["start"]),
-                    "end": iso_or_none(interval["end"]),
-                    "actual_start": iso_or_none(actual_start),
-                    "actual_end": iso_or_none(actual_end),
-                    "appointment_type": classify_appointment_type(record["role_classification"]),
-                    "role_classification": record["role_classification"],
-                    "government_id": interval["government_id"],
-                    "source_url": record["source_url"],
-                    "source_section": record["source_section"],
-                    "source_snippet": record["source_snippet"],
-                    "notes": "; ".join(record["notes"]) if record["notes"] else "",
-                    "confidence": record["confidence"],
-                    "needs_review": record["needs_review"],
-                    "coalition_matches": matches,
-                }
-            )
-    appointments.sort(key=lambda item: (item["start"] or "9999-12-31", item["ministry"], item["person"]))
+            for party_slice in party_slices_for_interval(record, interval):
+                resolved_party = party_slice["party"]
+                effective_party_codes = [resolved_party] if resolved_party else []
+                matches = coalition_matches(
+                    effective_party_codes,
+                    party_slice["start"],
+                    party_slice["end"],
+                    party_periods,
+                )
+                suffix = (
+                    f":party-spell-{party_slice['spell_index']}"
+                    if party_slice["spell_index"] is not None
+                    else ""
+                )
+                appointments.append(
+                    {
+                        "appointment_id": record["record_id"] + suffix,
+                        "source_record_id": record["record_id"],
+                        "ministry": record["ministerio_canonical"],
+                        "ministry_raw": record["ministerio_raw"],
+                        "ministry_status_type": record["ministerio_status_type"],
+                        "person": record["person_name_canonical"],
+                        "person_raw": record["person_name_raw"],
+                        "party": record["party"],
+                        "party_at_date": resolved_party,
+                        "party_codes": effective_party_codes,
+                        "party_candidates": resolution.get("candidate_parties", record["party_codes"]),
+                        "resolved_party": resolved_party,
+                        "party_resolution": resolution,
+                        "start": iso_or_none(party_slice["start"]),
+                        "end": iso_or_none(party_slice["end"]),
+                        "actual_start": iso_or_none(actual_start),
+                        "actual_end": iso_or_none(actual_end),
+                        "source_actual_end": iso_or_none(record.get("source_end_date")),
+                        "appointment_type": classify_appointment_type(record["role_classification"]),
+                        "role_classification": record["role_classification"],
+                        "government_id": interval["government_id"],
+                        "source_url": record["source_url"],
+                        "source_section": record["source_section"],
+                        "source_snippet": record["source_snippet"],
+                        "spell_evidence_url": party_slice["spell_evidence_url"],
+                        "spell_evidence_publication_date": party_slice[
+                            "spell_evidence_publication_date"
+                        ],
+                        "notes": "; ".join(record["notes"]) if record["notes"] else "",
+                        "confidence": record["confidence"],
+                        "needs_review": record["needs_review"],
+                        "coalition_matches": matches,
+                    }
+                )
+    appointments.sort(
+        key=lambda item: (
+            item["start"] or "9999-12-31",
+            item["ministry"],
+            item["person"],
+            item["appointment_id"],
+        )
+    )
     return appointments
 
 
@@ -1226,7 +1393,10 @@ def coalition_matches(party_codes, start_value, end_value, party_periods):
     matches = []
     for period in party_periods:
         if interval_overlap(start_value, end_value, period["start"], period["end"]):
-            overlap_parties = sorted(set(party_codes).intersection(period["parties"]))
+            effective_codes = {
+                cabinet_party_at_date(party, period["start"]) for party in party_codes
+            }
+            overlap_parties = sorted(effective_codes.intersection(period["parties"]))
             if overlap_parties:
                 matches.append(
                     {
@@ -1236,6 +1406,132 @@ def coalition_matches(party_codes, start_value, end_value, party_periods):
                     }
                 )
     return matches
+
+
+def cabinet_party_at_date(party, current_date):
+    canonical = canonicalize_party_code(party)
+    if current_date >= FUSION_EFFECTIVE_DATE and canonical in FUSION_PREDECESSORS:
+        return FUSION_SUCCESSOR
+    if canonical in {"Patriota", "Republicanos"}:
+        return canonical.upper()
+    return canonical
+
+
+def build_party_periods(appointments):
+    bounded_spells = []
+    boundaries = {ANALYSIS_START, SOURCE_AS_OF + timedelta(days=1)}
+    if ANALYSIS_START < FUSION_EFFECTIVE_DATE <= SOURCE_AS_OF:
+        boundaries.add(FUSION_EFFECTIVE_DATE)
+
+    for appointment in appointments:
+        if not appointment["party_codes"] or appointment["start"] is None:
+            continue
+        spell_start = max(parse_iso_date(appointment["start"]), ANALYSIS_START)
+        raw_end = parse_iso_date(appointment["end"]) if appointment["end"] else SOURCE_AS_OF
+        spell_end = min(raw_end, SOURCE_AS_OF)
+        if spell_end < spell_start:
+            continue
+        bounded_spells.append(
+            {
+                "start": spell_start,
+                "end": spell_end,
+                "party": appointment["party_codes"][0],
+                "appointment": appointment,
+            }
+        )
+        boundaries.add(spell_start)
+        if spell_end < SOURCE_AS_OF:
+            boundaries.add(spell_end + timedelta(days=1))
+
+    ordered_boundaries = sorted(
+        item
+        for item in boundaries
+        if ANALYSIS_START <= item <= SOURCE_AS_OF + timedelta(days=1)
+    )
+    raw_periods = []
+    for start_value, next_start in zip(ordered_boundaries, ordered_boundaries[1:]):
+        end_value = next_start - timedelta(days=1)
+        active_counts = Counter(
+            cabinet_party_at_date(spell["party"], start_value)
+            for spell in bounded_spells
+            if spell["start"] <= start_value <= spell["end"]
+        )
+        parties = sorted(active_counts)
+        if not parties:
+            raise ValueError(f"No resolved cabinet party is active on {start_value.isoformat()}")
+        if raw_periods and raw_periods[-1]["parties"] == parties:
+            raw_periods[-1]["end"] = end_value
+        else:
+            raw_periods.append(
+                {
+                    "start": start_value,
+                    "end": end_value,
+                    "parties": parties,
+                    "government_id": government_for_date(start_value),
+                }
+            )
+
+    year_counts = Counter()
+    periods = []
+    for item in raw_periods:
+        year_counts[item["start"].year] += 1
+        periods.append(
+            {
+                "period_id": f"{item['start'].year}.{year_counts[item['start'].year]}",
+                **item,
+            }
+        )
+    validate_party_periods(periods)
+    return periods
+
+
+def validate_party_periods(periods):
+    if not periods:
+        raise ValueError("Cabinet period reconstruction produced no periods")
+    if periods[0]["start"] != ANALYSIS_START:
+        raise ValueError("Cabinet period coverage does not start on 2015-01-01")
+    if periods[-1]["end"] != SOURCE_AS_OF:
+        raise ValueError("Cabinet period coverage does not end on the pinned source cutoff")
+    for previous, current in zip(periods, periods[1:]):
+        if previous["end"] + timedelta(days=1) != current["start"]:
+            raise ValueError(
+                f"Cabinet period gap/overlap: {previous['period_id']} -> {current['period_id']}"
+            )
+        if previous["parties"] == current["parties"]:
+            raise ValueError("Adjacent cabinet periods have identical party sets")
+    if len({item["period_id"] for item in periods}) != len(periods):
+        raise ValueError("Cabinet period identifiers are not unique")
+
+
+def write_party_periods(periods):
+    payload = {
+        item["period_id"]: {
+            "data_inicio": item["start"].isoformat(),
+            "data_fim": item["end"].isoformat(),
+            "partidos": item["parties"],
+        }
+        for item in periods
+    }
+    PARTY_PERIODS_PATH.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    with PARTY_PERIODS_CSV_PATH.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=["periodo", "data_inicio", "data_fim", "partido"],
+        )
+        writer.writeheader()
+        for item in periods:
+            for party in item["parties"]:
+                writer.writerow(
+                    {
+                        "periodo": item["period_id"],
+                        "data_inicio": item["start"].isoformat(),
+                        "data_fim": item["end"].isoformat(),
+                        "partido": party,
+                    }
+                )
 
 
 def build_ministry_index(records):
@@ -1269,7 +1565,9 @@ def build_ministry_index(records):
 
 def write_raw_json(page_outputs, events):
     payload = {
-        "generated_at": datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "generated_at": GENERATED_AT,
+        "source_as_of": SOURCE_AS_OF.isoformat(),
+        "source_snapshot": str(SOURCE_SNAPSHOT_PATH.relative_to(ROOT)),
         "source_pages": page_outputs,
         "heuristics": [
             "Linhas com 'interino' foram classificadas como assunções temporárias.",
@@ -1282,7 +1580,7 @@ def write_raw_json(page_outputs, events):
     RAW_JSON_PATH.write_text(json.dumps(payload, ensure_ascii=True, indent=2), encoding="utf-8")
 
 
-def write_dashboard_json(page_outputs, records, events, party_periods):
+def write_dashboard_json(page_outputs, records, events, party_periods, appointments):
     governments = [
         {
             "government_id": item["government_id"],
@@ -1293,9 +1591,10 @@ def write_dashboard_json(page_outputs, records, events, party_periods):
         }
         for item in GOVERNMENT_WINDOWS
     ]
-    appointments = build_dashboard_appointments(records, party_periods)
     payload = {
-        "generated_at": datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "generated_at": GENERATED_AT,
+        "source_as_of": SOURCE_AS_OF.isoformat(),
+        "source_snapshot": str(SOURCE_SNAPSHOT_PATH.relative_to(ROOT)),
         "source_pages": page_outputs,
         "governments": governments,
         "ministries": build_ministry_index(records),
@@ -1382,6 +1681,7 @@ def write_events_csv(events):
 def write_intervals_csv(appointments):
     fieldnames = [
         "appointment_id",
+        "source_record_id",
         "government_id",
         "ministry",
         "ministry_raw",
@@ -1389,12 +1689,19 @@ def write_intervals_csv(appointments):
         "person",
         "person_raw",
         "party",
+        "party_at_date",
+        "party_codes",
+        "party_candidates",
+        "party_resolution_method",
         "appointment_type",
         "role_classification",
         "start",
         "end",
         "actual_start",
         "actual_end",
+        "source_actual_end",
+        "spell_evidence_url",
+        "spell_evidence_publication_date",
         "confidence",
         "needs_review",
         "coalition_period_ids",
@@ -1410,6 +1717,7 @@ def write_intervals_csv(appointments):
             writer.writerow(
                 {
                     "appointment_id": appointment["appointment_id"],
+                    "source_record_id": appointment["source_record_id"],
                     "government_id": appointment["government_id"],
                     "ministry": appointment["ministry"],
                     "ministry_raw": appointment["ministry_raw"],
@@ -1417,12 +1725,19 @@ def write_intervals_csv(appointments):
                     "person": appointment["person"],
                     "person_raw": appointment["person_raw"],
                     "party": appointment["party"],
+                    "party_at_date": appointment["party_at_date"],
+                    "party_codes": ",".join(appointment["party_codes"]),
+                    "party_candidates": ",".join(appointment["party_candidates"]),
+                    "party_resolution_method": appointment["party_resolution"]["method"],
                     "appointment_type": appointment["appointment_type"],
                     "role_classification": appointment["role_classification"],
                     "start": appointment["start"],
                     "end": appointment["end"],
                     "actual_start": appointment["actual_start"],
                     "actual_end": appointment["actual_end"],
+                    "source_actual_end": appointment["source_actual_end"],
+                    "spell_evidence_url": appointment["spell_evidence_url"],
+                    "spell_evidence_publication_date": appointment["spell_evidence_publication_date"],
                     "confidence": appointment["confidence"],
                     "needs_review": appointment["needs_review"],
                     "coalition_period_ids": ",".join(item["period_id"] for item in appointment["coalition_matches"]),
@@ -1543,15 +1858,20 @@ def write_review_report(records, events, appointments):
 def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     page_outputs, records = extract_records()
-    party_periods = load_party_periods()
     events = build_events(records)
+    appointments = build_dashboard_appointments(records)
+    party_periods = build_party_periods(appointments)
+    write_party_periods(party_periods)
+    appointments = build_dashboard_appointments(records, party_periods)
     write_raw_json(page_outputs, events)
-    appointments = write_dashboard_json(page_outputs, records, events, party_periods)
+    write_dashboard_json(page_outputs, records, events, party_periods, appointments)
     write_events_csv(events)
     write_intervals_csv(appointments)
     write_review_report(records, events, appointments)
     print(
         "Wrote",
+        PARTY_PERIODS_CSV_PATH,
+        PARTY_PERIODS_PATH,
         RAW_JSON_PATH,
         DASHBOARD_JSON_PATH,
         EVENTS_CSV_PATH,

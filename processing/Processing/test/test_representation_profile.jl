@@ -3,11 +3,11 @@ using CSV
 using DataFrames
 
 
-module RepresentationProfileTestEnvironment
-include(joinpath(@__DIR__, "..", "src", "Processing.jl"))
+if !isdefined(@__MODULE__, :Processing)
+    include(joinpath(@__DIR__, "..", "src", "Processing.jl"))
 end
 
-const ProfileProcessing = RepresentationProfileTestEnvironment.Processing
+const ProfileProcessing = Processing
 
 
 function _toy_representation_profile_data()

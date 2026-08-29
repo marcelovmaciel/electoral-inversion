@@ -5,7 +5,9 @@ const _PROCESSING_MODULE_FILE_INTERVALS = joinpath(@__DIR__, "..", "src", "Proce
 
 const _PROCESSING_LOADED_INTERVALS = let
     try
-        include(_PROCESSING_MODULE_FILE_INTERVALS)
+        if !isdefined(@__MODULE__, :Processing)
+            include(_PROCESSING_MODULE_FILE_INTERVALS)
+        end
         @eval using .Processing
         true
     catch err

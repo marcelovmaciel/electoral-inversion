@@ -18,10 +18,11 @@ Run commands from the repository root unless the command changes directory.
 julia --project=processing/Processing -e 'using Pkg; Pkg.instantiate()'
 ```
 
-2. Run the main analysis.
+2. Run the main analysis from a stable Julia 1.12.2 invocation.
 
 ```bash
-ALLOW_OVERWRITE=true julia --project=processing/Processing processing/Processing/running/running.jl
+ALLOW_OVERWRITE=true SYNC_REVIEW_ASSETS=true julia -O0 --startup-file=no --project=processing/Processing processing/Processing/running/running.jl
+ALLOW_OVERWRITE=true SYNC_REVIEW_ASSETS=true julia -O0 --startup-file=no --project=processing/Processing processing/Processing/decomposition/run_decomposition.jl
 ```
 
 This writes the paper analysis artifacts under:
@@ -30,29 +31,36 @@ This writes the paper analysis artifacts under:
 processing/Processing/output/paper/
 ```
 
-3. Generate manuscript figures.
+3. Generate all manuscript figures, including the separately rendered party
+representation profile.
 
 ```bash
-python writing/make_coalition_figures.py --artifact-root processing/Processing/output/paper --figure-dir writing/figures
+julia -O0 --startup-file=no --project=processing/Processing processing/make_representation_profile.jl
+python writing/make_coalition_figures.py --artifact-root processing/Processing/output/paper --figure-dir writing/submission_inversions_review/manuscript
 ```
 
 This writes figure PDFs under:
 
 ```text
-writing/figures/
+writing/submission_inversions_review/manuscript/
 ```
 
 4. Compile the manuscript.
 
 ```bash
-cd writing && latexmk -pdf -interaction=nonstopmode main.tex
+cd writing/submission_inversions_review/manuscript
+latexmk -pdf -interaction=nonstopmode main.tex
 ```
 
 The compiled manuscript is:
 
 ```text
-writing/main.pdf
+writing/submission_inversions_review/manuscript/main.pdf
 ```
+
+The source at `writing/submission_inversions_review/manuscript/main.tex` is the
+authoritative current manuscript. `writing/main.tex` is retained only as a
+legacy draft and should not be used to build the submission.
 
 ## Data Inputs
 
@@ -98,11 +106,13 @@ Manuscript compilation requires a LaTeX installation with `latexmk`.
 
 After running the main analysis, the high-level replication results should be:
 
-- observed cabinet inversion periods: 3
+- observed cabinet inversion periods: 5
 - 2014 cabinet inversions: `2016.2`, `2017.1`
-- 2018 cabinet inversions: 0
+- 2018 cabinet inversions: `2021.3`, `2022.1` (47.2469 percent of the vote and
+  exactly 257 seats in each period)
 - 2022 cabinet inversion: `2023.1`
 - ideological interval inversions: 2014 = 8, 2018 = 0, 2022 = 6
+- minimal ideological interval inversions: 2014 = 4, 2018 = 0, 2022 = 2
 - 2022 PP to PL interval: 258 seats and 45.35 percent vote share
 
 Use the files under `processing/Processing/output/paper/` to inspect the
@@ -110,11 +120,15 @@ generated tables and diagnostics.
 
 ## Tests
 
-Run the Julia test suite from the repository root:
+Run the focused decomposition suite from the repository root:
 
 ```bash
-julia --project=processing/Processing processing/Processing/test/runtests.jl
+julia -O0 --startup-file=no --project=processing/Processing processing/Processing/decomposition/runtests.jl
 ```
 
-The tests should pass with the input files listed above available in the
-repository.
+This focused suite is the empirical gate for the decomposition and checks the
+five-case registry, coalition compositions, district accounting identities, and
+party contribution identities against the corrected PSC baseline. The
+repository-wide Julia suite is not the gate for this revision: under Julia
+1.12.2 its normal invocation has exhibited a compiler crash, and a separate
+pre-existing PCA14 loader error remains outside the federal-deputy analysis.

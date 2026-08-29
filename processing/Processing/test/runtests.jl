@@ -1,4 +1,5 @@
 using Test
+using Processing
 
 @testset "Processing.jl" begin
     include("test_party_classification.jl")
@@ -8,4 +9,5 @@ using Test
     include("test_coalition_period_linkage.jl")
     include("test_ideological_interval_coalitions.jl")
     include("test_representation_profile.jl")
+    include("test_psc_baseline_repair.jl")
 end

@@ -1,3 +1,9 @@
+% LEGACY DRAFT -- NOT THE MANUSCRIPT SOURCE OF TRUTH.
+% The authoritative current source is
+% writing/submission_inversions_review/manuscript/main.tex. Empirical statements
+% in this retained draft are kept consistent with the corrected PSC baseline,
+% but new tables, figures, and decomposition presentation are maintained only in
+% the authoritative review manuscript.
 \documentclass[11pt]{article}
 
 \usepackage[margin=1.05in]{geometry}
@@ -40,7 +46,7 @@
 }
 \newcommand{\ArtifactRoot}{\RepoRoot/processing/Processing/output/paper}
 
-\graphicspath{{figures/}}
+\graphicspath{{submission_inversions_review/manuscript/}}
 
 \newtheorem{definition}{Definition}
 \newtheorem{proposition}{Proposition}
@@ -78,13 +84,13 @@
   Using party vote totals, elected-seat totals, cabinet-period coalition data,
   and party ideology classifications for the 2014, 2018, and 2022 federal-deputy
   elections, I identify inversions in two analytically distinct objects:
-  observed cabinet coalitions and ideological intervals defined over the election-year party set. Three
+  observed cabinet coalitions and ideological intervals defined over the election-year party set. Five
   observed cabinet periods satisfy the inversion criterion: two during the
-  mandate that followed the 2014 election and one during the mandate that
-  followed the 2022 election. No observed inversion appears after the 2018
-  election because the relevant cabinet coalitions remain below the Chamber
-  majority threshold. An all-interval ideological search finds minimal connected
-  interval inversions in 2014 and 2022, including a compact 2022 PP--PL interval
+  mandate that followed the 2014 election, two during the mandate that followed
+  the 2018 election, and one during the mandate that followed the 2022 election.
+  The two 2018 cases each combine 47.25 percent of the vote with exactly 257
+  seats. An all-interval ideological search finds minimal connected interval
+  inversions in 2014 and 2022, but none in 2018, including a compact 2022 PP--PL interval
   with 45.35 percent of the vote and 258 of 513 seats. The results show that
   Brazil’s federally allocated and highly fragmented proportional system can
   generate coalitional inversions: party sets with less than half of the
@@ -146,17 +152,16 @@ a seat majority without a vote majority. This second step does not replace the
 cabinet analysis. It asks whether inversions are also visible in the ordered
 ideological structure of the Chamber delegation.
 
-The results are straightforward. There are three observed cabinet-period
-inversions. The first, 2016.2, lasted only two days, from April 14 to April 15,
+The results identify five observed cabinet-period inversions. The first, 2016.2,
+lasted only two days, from April 14 to April 15,
 2016. It is an event-window diagnostic around the impeachment rupture rather
 than evidence of a stable governing configuration. The second, 2017.1, is the
 more politically meaningful Temer-period case. After translating cabinet labels into the 2014 election-year party labels,
 the coalition held 266 of 513 seats while corresponding to 49.91 percent of
-the national federal-deputy vote. The third, 2023.1, is the initial
-Lula coalition after the 2022 election. It held 263 seats with 48.89 percent of
-the vote. Conversely, no observed cabinet coalition after the 2018 election
-reaches both conditions for inversion, because Bolsonaro-period cabinet
-coalitions remain below the 257-seat threshold.
+the national federal-deputy vote. The 2018-linked periods 2021.3 and 2022.1
+each have 47.25 percent of the vote and exactly 257 seats. The fifth case,
+2023.1, is the initial Lula coalition after the 2022 election. It held 263 seats
+with 48.89 percent of the vote.
 
 The ideological interval results reinforce the point while adding structure.
 In 2014, there are 528 contiguous intervals in the election-year party order,
@@ -302,7 +307,7 @@ For any coalition $C \subseteq \Parties$, define
   \Quota_C = 513\frac{v_C}{V}, \qquad \Diff_C = s_C - \Quota_C.
 \]
 A coalition has a vote majority when $v_C/V > .5$ and a seat majority when
-$s_C \geq 257$. A coalition inversion occurs when a party set $C$ has a seat majority but not a vote majority: \(s_C \geq 257 \quad \text{and} \quad \frac{v_C}{V} \leq .5.\)
+$s_C \geq 257$. A coalition inversion occurs when a party set $C$ has a seat majority but less than half of the vote: \(s_C \geq 257 \quad \text{and} \quad \frac{v_C}{V} < .5.\)
 Equivalently, $C$ is a Chamber majority without being a national federal-deputy
 vote majority.
 
@@ -451,15 +456,13 @@ rupture. The 2017.1 coalition drops PTB and becomes the most important
 Temer-period inversion. Later, DEM, PSB, and PV leave in 2018.1, and PTN enters
 in 2018.2.
 
-The 2018 mandate has many cabinet-period changes, but none reaches the inversion
-criterion. The initial Bolsonaro-period coalition contains DEM, MDB, NOVO,
-PATRIOTA, PR, PRB, and PSL. PSDB briefly enters in 2020.1; MDB leaves in
-2020.2; PSD enters in 2020.3; PSL leaves in 2020.4 and returns in 2021.1; NOVO
-leaves in 2021.2; and PP enters in 2021.3. The final 2022 sequence is handled
-through the União Brasil lineage rule: after the DEM--PSL fusion, UNIÃO is used
-to define cabinet-period changes and is then expanded back to DEM and PSL for
-2018 vote-seat accounting. The closest cases are 2021.3 and 2022.1,
-which each reach 250 seats, still below the 257-seat majority threshold.
+The 2018 mandate contains thirteen cabinet periods. PSC enters on December 9,
+2020 and remains in the translated election-space coalition through March 29,
+2022. After PP enters, the 2021.3 and 2022.1 coalitions each reach exactly 257
+seats with 47.25 percent of the vote. PSC leaves on March 30, 2022, ending the
+inversion. The final 2022 sequence continues to use the União Brasil lineage
+rule: UNIÃO defines contemporaneous cabinet-period changes and is then expanded
+back to DEM and PSL for 2018 vote-seat accounting.
 
 The 2022 mandate begins with MDB, PCdoB, PDT, PSB, PSD, PSOL, PT, REDE, and
 UNIÃO. That initial 2023.1 coalition is an inversion. In 2023.2, PP and
@@ -472,19 +475,17 @@ available data window; the coalition remains a vote-and-seat majority.
 \centering
 \caption{Observed cabinet-period coalition inversions}
 \label{tab:cabinet-inversions}
-\small
-\begin{tabularx}{\textwidth}{llrrrrX}
-\toprule
-Election & Period & Days & Vote share & Seats & Seat diff. & Parties \\
-\midrule
-2014 & 2016.2 & 2 & 46.54 & 259 & 20.27 & PCdoB, PDT, PMDB, PR, PSD, PT, PTB \\
-2014 & 2017.1 & 100 & 49.91 & 266 & 9.95 & DEM, PMDB, PP, PPS, PSB, PSD, PSDB, PV \\
-2022 & 2023.1 & 255 & 48.89 & 263 & 12.20 & MDB, PCdoB, PDT, PSB, PSD, PSOL, PT, REDE, UNIÃO \\
-\bottomrule
-\end{tabularx}
+\footnotesize
+\input{\ArtifactRoot/latex/table_02_cabinet_inversion_tabular.tex}
 \end{table}
 
-Figure \ref{fig:timeline} shows why the inversion criterion is more demanding than ordinary overrepresentation. Several cabinet coalitions receive a larger share of seats than votes, but only those that cross the Chamber-majority threshold while remaining below the vote-majority threshold count as inversions. The two-panel structure makes this distinction visible. In the 2014-linked mandate, the figure shows the movement from Dilma’s initial vote-and-seat majority, through the short 2016.2 impeachment-window inversion, into the post-impeachment Temer sequence and the more durable 2017.1 inversion. In the 2018-linked mandate, the observed coalitions remain below the seat-majority threshold throughout the Bolsonaro period, which explains the absence of inversions despite positive seat differentials in some periods. In the 2022-linked mandate, the initial Lula coalition appears as an inversion, but later cabinet expansion pushes the coalition above both thresholds. The figure thus functions as a visual check on both the positive and negative cases.
+Figure \ref{fig:timeline} shows why the inversion criterion is more demanding
+than ordinary overrepresentation. In the 2014-linked mandate, the figure shows
+the short 2016.2 impeachment-window inversion and the more durable 2017.1
+inversion. In the 2018-linked mandate, the PSC-inclusive sequence reaches the
+seat-majority threshold in 2021.3 and remains there through 2022.1. In the
+2022-linked mandate, the initial Lula coalition appears as an inversion, but
+later cabinet expansion pushes the coalition above both thresholds.
 
 The 2016.2 case should not be dismissed because of its short duration. It is
 not evidence of a stable governing arrangement, but it is precisely for that
@@ -513,32 +514,30 @@ the coalition, the status changes: the 2023.2 coalition has 63.79 percent of the
 vote and 350 seats. It remains overrepresented, but it is no longer an inversion
 because it has both votes and seats.
 
-The negative case is as important as the positive cases. No observed cabinet
-coalition after the 2018 election satisfies the inversion criterion. This is not
-because the party system is less fragmented or because seat differentials vanish.
-The closest observed cases are 2021.3 and 2022.1, each with 45.50 percent of
-the vote and 250 seats. Each has a positive seat differential of 16.60 seats, but
-both remain below the 257-seat threshold. The result confirms that the criterion is not mechanically
-satisfied whenever a coalition is overrepresented. Overrepresentation becomes an
-inversion only when it crosses the majority threshold.
+The 2018 cases show that the observed-cabinet and ideological-interval domains
+can diverge. Periods 2021.3 and 2022.1 each have 47.25 percent of the vote, 257
+seats, and a seat differential of 14.62 seats, so both are inversions. The 2018
+ideological-interval search nevertheless contains zero inversions.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=.98\textwidth]{observed_coalition_timeline.pdf}
-\caption{Observed cabinet-period coalition vote shares and seat shares}
+\caption{Observed cabinet-period coalition vote shares, seat shares, and representation ratios}
 \label{fig:timeline}
 \begin{flushleft}
-\footnotesize Notes: The left panel reports coalition vote shares. The right panel reports coalition seat shares. The horizontal reference lines mark the vote-majority threshold of 50 percent and the seat-majority threshold of $257/513 \approx 50.10$ percent. 
+\footnotesize Notes: The panels report coalition vote shares, seat shares, and
+representation ratios. Reference lines mark the vote-majority threshold, the
+seat-majority threshold of $257/513$, and exact proportionality at $R_C=1$.
 \end{flushleft}
 \end{figure}
 
 A duration summary helps discipline the interpretation. In the mandate
 following the 2014 election, 102 of 1461 covered days are inversion days. In the
-mandate following the 2018 election, there are no inversion days. In the
+mandate following the 2018 election, 238 of 1461 covered days are inversion days. In the
 available 2022 window, 255 of 1174 covered days are inversion days. Thus, the
 observed inversion pattern is not evenly distributed over mandates. It is
 concentrated in a short transition window and a later Temer period after 2014,
-and in the initial cabinet formation after 2022.
+the PSC-inclusive phase after 2018, and the initial cabinet formation after 2022.
 
 \section{Ideologically contiguous intervals}
 \label{sec:ideology}
@@ -708,8 +707,9 @@ The compact 2022 PP--PL interval is therefore not just another minimal winning
 interval. It identifies a right-side bloc whose seat conversion is strong enough
 to produce a Chamber majority without a national vote majority.
 
-The 2018 panel is a useful negative case. It contains many seat-majority
-intervals, but none of them are inversions. Contiguous ideological blocks could
+The 2018 panel isolates a useful null result within the ideological-interval
+domain. It contains many seat-majority intervals, but none of them are
+inversions. Contiguous ideological blocks could
 become legislative majorities, but only after also crossing the vote-majority
 threshold. This indicates that the absence of 2018 inversions is not due to the
 absence of large contiguous ideological intervals. It is due to the fact that the
@@ -770,12 +770,11 @@ institutional form to the representational problem: the governing arrangement
 was supported by a congressional majority whose seat status exceeded its
 national vote basis.
 
-The 2018-linked mandate works as a control case. Bolsonaro's cabinets are absent
-because the relevant cabinet party sets never reach the Chamber majority
-threshold. The closest case remains below 257 seats. This is why the inversion
-criterion is more demanding than a generic claim about overrepresentation. It
-identifies the moment at which a quantitative seat surplus becomes a qualitative
-majority-status change.
+The 2018-linked mandate distinguishes the two coalition domains. PSC-inclusive
+Bolsonaro cabinets in 2021.3 and 2022.1 each reach exactly 257 seats with 47.25
+percent of the vote, while none of the contiguous ideological intervals in the
+2018 party order is an inversion. The result is a within-election contrast
+between realized, sparse cabinet coalitions and connected ideological blocs.
 
 The 2022-linked mandate complicates the political interpretation in the opposite
 direction. Lula's initial cabinet is also an observed inversion. It begins as a
@@ -801,14 +800,13 @@ majorities.
 This is why the Brazilian case belongs in the broader discussion of the dark side of proportional representation. The analysis does not show that PR is generally inferior to majoritarian systems, nor that Brazilian representation is simply disproportional. It shows a more specific institutional pathology. A system may be evaluated as proportional at the party level while still producing majority-status distortions at the level where legislative authority is exercised. In that sense, coalition inversions are parallel to spoilers, threshold effects, apportionment effects, mixed-system paradoxes, and manipulation problems: each identifies a point at which the electoral rule translates votes into politically consequential seats in a way that is not visible from simple party vote shares alone \parencite{van1993paradoxes,kurrild2008voting,kaminski18_spoil_effec_propor_repres_system,FlisGrofmanKaminski2025Introduction}.
 
 
-The current design identifies inversions but does not yet decompose their source.
-This matters because Brazil is not a single national PR district. Seats are
-allocated through twenty-seven district contests and only then aggregated into a
-national Chamber. Future work should therefore compute the contribution of
-each state to each coalition's seat differential. A state-level decomposition would
-show whether the inversion is produced by a few high-leverage districts, by
-systematic federal apportionment effects, or by small surpluses accumulated across
-many states.
+The current pipeline decomposes all five observed inversions as an accounting
+identity, \(d_C=A_C+B_C\), where \(A_C\) is the within-district allocation
+component and \(B_C\) is the between-district weighting component. The latter
+combines district seat weights, turnout and valid-vote differences, and coalition
+vote geography; it is not pure malapportionment and the identity is not causal.
+The authoritative review manuscript reports the full decomposition and
+party-contribution results.
 
 The ideological analysis should also be treated as a structured diagnostic rather
 than a final map of Brazilian party ideology. The classifications make it possible
@@ -835,15 +833,15 @@ Brazil. They are assembled from party sets. The question, then, is whether a
 system that is evaluated party by party also preserves majority status once
 parties are recombined into governing coalitions or ideological blocs.
 
-The answer is not uniform across elections. After the 2014 election, coalition
-inversions appear in the impeachment realignment and again in the Temer period.
-After the 2018 election, observed cabinets remain below the Chamber majority
-threshold, so no cabinet inversion appears. After the 2022 election, Lula's
-initial cabinet begins as a seat majority without a vote majority, but later
-becomes a vote-and-seat majority after cabinet expansion. The ideological
-interval analysis adds a second result: connected vote-minority seat-majorities
-exist in 2014 and 2022, and the strongest 2022 case is the compact PP--PL
-right-side interval.
+The answer is not uniform across elections or coalition domains. After the 2014
+election, cabinet inversions appear in the impeachment realignment and again in
+the Temer period. After the 2018 election, PSC-inclusive cabinets generate two
+inversions at exactly 257 seats, while the ideological-interval result remains
+null. After the 2022 election, Lula's initial cabinet begins as a seat majority
+without a vote majority, but later becomes a vote-and-seat majority after
+cabinet expansion. Connected ideological vote-minority seat-majorities exist in
+2014 and 2022, and the strongest 2022 case is the compact PP--PL right-side
+interval.
 
 These findings show, in the Brazilian context, that seat differentials are not politically
 inert. Once parties are grouped into cabinets or connected ideological
@@ -851,18 +849,12 @@ intervals, those differentials can accumulate enough to change majority status.
 In some configurations, a party set that falls short of half of the national
 federal-deputy vote nevertheless controls a majority of Chamber seats.
 
-The results also clarify the next analytical step. The present analysis
-establishes the inversion at the level where Chamber majorities are formed:
-national party blocs, cabinet coalitions, and connected ideological intervals.
-Because federal-deputy seats are allocated through state-level districts before
-being aggregated into the national Chamber, the next question is how much each
-district-level allocation contributes to the coalition seat differential. A
-state-level decomposition would locate the institutional sources of each
-inversion, distinguishing cases driven by federal apportionment, district
-magnitude, turnout, party geography, threshold rules, federation effects, or
-small surpluses accumulated across many contests. That extension would move the
-analysis from identifying coalition inversions to explaining their production
-inside Brazil's federal proportional system.
+The district accounting decomposition partitions every observed inversion into
+within-district allocation and between-district weighting components and verifies
+that party contributions sum to the coalition differential. Explaining the
+causal roles of apportionment, district magnitude, turnout, party geography,
+threshold rules, electoral coalitions, and federations remains a separate
+counterfactual research agenda.
 
 
 \printbibliography
@@ -1009,77 +1001,7 @@ Election & Pos. & Party & Classification & Score & Source & Source party \\
 \section{Cabinet periods and composition}
 \label{app:composition}
 
-\begin{landscape}
-\scriptsize
-\setlength{\tabcolsep}{2pt}
-\renewcommand{\arraystretch}{1.08}
-
-\begin{longtable}{|l|l|l|r|r|r|r|l|L{0.30\linewidth}|L{0.13\linewidth}|L{0.13\linewidth}|}
-\caption{Cabinet-period composition and transitions after cabinet-label harmonization and election-year label translation}\label{tab:full-cabinet-composition}\\
-\hline
-Election & Period & Dates & Days & Vote \% & Seats & Seat diff. & Status & Composition & Entered & Left \\
-\hline
-\endfirsthead
-
-\hline
-Election & Period & Dates & Days & Vote \% & Seats & Seat diff. & Status & Composition & Entered & Left \\
-\hline
-\endhead
-
-2014 & 2015.1 & 2015-01-01--2016-03-23 & 448 & 57.69 & 318 & 22.07 & votes+seats & PCdoB, PDT, PMDB, PP, PR, PRB, PSD, PT, PTB &  &  \\
-\hline
-2014 & 2016.1 & 2016-03-24--2016-04-13 & 21 & 53.14 & 297 & 24.39 & votes+seats & PCdoB, PDT, PMDB, PP, PR, PSD, PT, PTB &  & PRB \\
-\hline
-2014 & 2016.2 & 2016-04-14--2016-04-15 & 2 & 46.54 & 259 & 20.27 & seats only & PCdoB, PDT, PMDB, PR, PSD, PT, PTB &  & PP \\
-\hline
-2014 & 2016.3 & 2016-04-16--2016-05-11 & 26 & 40.41 & 223 & 15.72 & neither & PCdoB, PDT, PMDB, PR, PT, PTB &  & PSD \\
-\hline
-2014 & 2016.4 & 2016-05-12--2017-12-27 & 595 & 53.93 & 291 & 14.33 & votes+seats & DEM, PMDB, PP, PPS, PSB, PSD, PSDB, PTB, PV & DEM, PP, PPS, PSB, PSD, PSDB, PV & PCdoB, PDT, PR, PT \\
-\hline
-2014 & 2017.1 & 2017-12-28--2018-04-06 & 100 & 49.91 & 266 & 9.95 & seats only & DEM, PMDB, PP, PPS, PSB, PSD, PSDB, PV &  & PTB \\
-\hline
-2014 & 2018.1 & 2018-04-07--2018-05-27 & 51 & 37.22 & 203 & 12.07 & neither & PMDB, PP, PPS, PSD, PSDB &  & DEM, PSB, PV \\
-\hline
-2014 & 2018.2 & 2018-05-28--2018-12-31 & 218 & 37.96 & 207 & 12.26 & neither & PMDB, PP, PPS, PSD, PSDB, PTN & PTN &  \\
-\hline
-
-2018 & 2019.1 & 2019-01-01--2020-02-10 & 406 & 36.48 & 190 & 2.86 & neither & DEM, MDB, NOVO, PATRIOTA, PR, PRB, PSL &  &  \\
-\hline
-2018 & 2020.1 & 2020-02-11--2020-02-14 & 4 & 42.47 & 220 & 2.11 & neither & DEM, MDB, NOVO, PATRIOTA, PR, PRB, PSDB, PSL & PSDB &  \\
-\hline
-2018 & 2020.2 & 2020-02-15--2020-06-16 & 123 & 36.94 & 186 & -3.50 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSDB, PSL &  & MDB \\
-\hline
-2018 & 2020.3 & 2020-06-17--2020-12-09 & 176 & 42.79 & 221 & 1.49 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSD, PSDB, PSL & PSD &  \\
-\hline
-2018 & 2020.4 & 2020-12-10--2021-03-28 & 109 & 31.15 & 169 & 9.19 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSD, PSDB &  & PSL \\
-\hline
-2018 & 2021.1 & 2021-03-29--2021-06-23 & 87 & 42.79 & 221 & 1.49 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSD, PSDB, PSL & PSL &  \\
-\hline
-2018 & 2021.2 & 2021-06-24--2021-08-03 & 41 & 39.99 & 213 & 7.84 & neither & DEM, PATRIOTA, PR, PRB, PSD, PSDB, PSL &  & NOVO \\
-\hline
-2018 & 2021.3 & 2021-08-04--2022-02-07 & 188 & 45.50 & 250 & 16.60 & neither & DEM, PATRIOTA, PP, PR, PRB, PSD, PSDB, PSL & PP &  \\
-\hline
-2018 & 2022.1 & 2022-02-08--2022-03-31 & 52 & 45.50 & 250 & 16.60 & neither & DEM, PATRIOTA, PP, PR, PRB, PSD, PSDB, PSL &  &  \\
-\hline
-2018 & 2022.2 & 2022-04-01--2022-04-01 & 1 & 39.50 & 220 & 17.36 & neither & DEM, PATRIOTA, PP, PR, PRB, PSD, PSL &  & PSDB \\
-\hline
-2018 & 2022.3 & 2022-04-02--2022-12-31 & 274 & 34.18 & 187 & 11.64 & neither & DEM, PATRIOTA, PP, PRB, PSD, PSL &  & PR \\
-\hline
-
-2022 & 2023.1 & 2023-01-01--2023-09-12 & 255 & 48.89 & 263 & 12.20 & seats only & MDB, PCdoB, PDT, PSB, PSD, PSOL, PT, REDE, UNIÃO &  &  \\
-\hline
-2022 & 2023.2 & 2023-09-13--2025-12-23 & 833 & 63.79 & 350 & 22.76 & votes+seats & MDB, PCdoB, PDT, PP, PSB, PSD, PSOL, PT, REDE, REPUBLICANOS, UNIÃO & PP, REPUBLICANOS &  \\
-\hline
-2022 & 2025.1 & 2025-12-24--2026-03-19 & 86 & 54.45 & 291 & 11.66 & votes+seats & MDB, PCdoB, PDT, PP, PSB, PSD, PSOL, PT, REDE, REPUBLICANOS &  & UNIÃO \\
-\hline
-
-\end{longtable}
-\begin{flushleft}
-\scriptsize Notes: Composition, Entered, and Left are reported using the election-year party
-labels used for vote-seat accounting. Period windows are constructed from the
-party labels observed in the cabinet data. When a party fusion occurs, the successor party is used to determine whether the cabinet party set changes; it is then expanded into antecedent election parties if the relevant election occurred before the fusion.
-\end{flushleft}
-\end{landscape}
+\input{\ArtifactRoot/latex/table_appendix_cabinet_composition.tex}
 
 
 \section{Minimal connected winning ideological intervals}
@@ -1118,7 +1040,7 @@ ideological blocs or sparse selections from a wider ideological span.
 
 The first result is that no observed cabinet coalition is itself a contiguous
 ideological interval. Every cabinet period has gaps inside its connected closure.
-The smallest number of gaps is nine, and several cabinet periods have more than
+The smallest number of gaps is eight, and several cabinet periods have more than
 fifteen. This means that Brazilian cabinet coalitions are not simply connected
 ideological blocs translated into government. They are selective coalitions: party
 sets assembled from a wider ideological span while omitting many parties that
@@ -1167,16 +1089,13 @@ left-anchored and broad. The Temer coalitions are center-to-right and broad.
 Both are non-contiguous, but they occupy different regions of the ideological
 order.
 
-The Bolsonaro-period cabinets provide the opposite kind of case. They are more
-ideologically concentrated on the right and far right, and their connected
-closures are narrower than the 2014 and 2022 closures. Yet the observed
-Bolsonaro cabinets do not become seat majorities. The closest cases, 2021.3 and
-2022.1, have 45.50 percent of the vote and 250 seats, still below the Chamber
-majority threshold. Their connected closure, PSD--DEM, has 57.37 percent of the
-vote and 292 seats, and the closest minimal connected winning interval is
-PSDB--DEM, which has 51.52 percent of the vote and 257 seats. The 2018 mandate
-is therefore negative in both senses: no observed cabinet inversion appears, and
-no minimal connected inversion exists in the ideological interval analysis.
+The Bolsonaro-period cabinets provide a domain contrast. The PSC-inclusive
+2021.3 and 2022.1 cabinets each have 47.25 percent of the vote and exactly 257
+seats, so both observed coalitions are inversions. Their connected closure,
+PSD--DEM, has 57.37 percent of the vote and 292 seats and is a vote-and-seat
+majority. The closest minimal connected winning interval is PSDB--DEM, which
+has 51.52 percent of the vote and 257 seats. Thus, the 2018 mandate contains
+observed cabinet inversions but no ideological-interval inversion.
 
 
 The 2023.1 Lula cabinet returns to a left-anchored structure, but it is not a
@@ -1204,7 +1123,8 @@ the seat-vote geometry of ideological blocs. The cabinet-to-interval comparison
 shows that realized cabinets may draw on seat asymmetries without being
 connected blocs themselves. In 2014, the pre-Temer coalitions are sparse and
 left-anchored, while the Temer coalitions are sparse and shifted rightward. In
-2018, right-side cabinets remain below the seat-majority threshold. In 2022, the
+2018, two right-side cabinets reach exactly 257 seats without a vote majority,
+while their connected closures have both vote and seat majorities. In 2022, the
 Lula cabinet is a broad realized inversion, while the compact connected
 inversion lies on the right. The gap between cabinet coalitions and connected
 intervals is therefore not a nuisance. It shows how Brazil's coalition

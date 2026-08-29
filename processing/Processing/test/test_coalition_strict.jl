@@ -5,7 +5,9 @@ const _PROCESSING_MODULE_FILE_STRICT = joinpath(@__DIR__, "..", "src", "Processi
 
 const _PROCESSING_LOADED_STRICT = let
     try
-        include(_PROCESSING_MODULE_FILE_STRICT)
+        if !isdefined(@__MODULE__, :Processing)
+            include(_PROCESSING_MODULE_FILE_STRICT)
+        end
         @eval using .Processing
         true
     catch err

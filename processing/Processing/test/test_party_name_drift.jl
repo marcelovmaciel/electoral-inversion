@@ -2,15 +2,17 @@ using Test
 using CSV
 using DataFrames
 
-const _PROCESSING_MODULE_FILE = joinpath(@__DIR__, "..", "src", "Processing.jl")
+const _PROCESSING_MODULE_FILE_DRIFT = joinpath(@__DIR__, "..", "src", "Processing.jl")
 const _ROOT_DIR = abspath(@__DIR__, "..", "..", "..")
 const _COALITION_CSV = joinpath(_ROOT_DIR, "scraping", "output", "partidos_por_periodo.csv")
 const _PMZ_DIR = joinpath(_ROOT_DIR, "data", "raw", "electionsBR")
 const _FIXTURES_DIR = joinpath(@__DIR__, "fixtures")
 
-const _PROCESSING_LOADED = let
+const _PROCESSING_LOADED_DRIFT = let
     try
-        include(_PROCESSING_MODULE_FILE)
+        if !isdefined(@__MODULE__, :Processing)
+            include(_PROCESSING_MODULE_FILE_DRIFT)
+        end
         @eval using .Processing
         true
     catch err
@@ -36,18 +38,22 @@ function _expected_fixture(name::AbstractString)::Vector{String}
     return _read_fixture_set(joinpath(_FIXTURES_DIR, name))
 end
 
+function _canonical_election_label_set(values, year::Int)::Vector{String}
+    raws = String[]
+    seen = Set{String}()
+    for value in values
+        raw = strip(string(value))
+        (isempty(raw) || raw in seen) && continue
+        push!(seen, raw)
+        push!(raws, raw)
+    end
+    return Processing.canonicalize_parties(raws; year = year, strict = true)
+end
+
 function _actual_election_set(year::Int)::Vector{String}
     path = joinpath(_PMZ_DIR, string(year), "party_mun_zone.csv")
     df = CSV.read(path, DataFrame; select=["SG_PARTIDO"])
-
-    vals = Set{String}()
-    for x in df.SG_PARTIDO
-        raw = strip(string(x))
-        isempty(raw) && continue
-        canon = Processing.canonical_party(raw; year = year)
-        isempty(strip(canon)) || push!(vals, canon)
-    end
-    return sort(collect(vals))
+    return _canonical_election_label_set(df.SG_PARTIDO, year)
 end
 
 function _actual_mandate_set(election_year::Int)::Vector{String}
@@ -75,7 +81,7 @@ function _actual_mandate_set(election_year::Int)::Vector{String}
 end
 
 @testset "Party Name Drift" begin
-    if !_PROCESSING_LOADED
+    if !_PROCESSING_LOADED_DRIFT
         @test_skip "Módulo Processing não carregado; testes de drift ignorados."
     else
         @testset "Cobertura de canonicalização em coalizões" begin
@@ -123,6 +129,13 @@ end
 
             @test Processing.canonical_party("UNIAO"; year = 2022) == "UNIÃO"
             @test Processing.canonical_party("UNIÃO"; year = 2022) == "UNIÃO"
+        end
+
+        @testset "Canonicalização em lote preserva o conjunto" begin
+            @test _canonical_election_label_set(
+                [" PT ", "PT", "PMDB", "PMDB", ""],
+                2014,
+            ) == ["PMDB", "PT"]
         end
 
         @testset "Snapshot eleições (fixture)" begin
