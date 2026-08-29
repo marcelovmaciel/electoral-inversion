@@ -2,15 +2,17 @@
 """
 Generate the figures used in the coalition-inversions manuscripts.
 
-Figure 2 and the decomposition-component figure consume full-precision inputs
-computed by Julia. Python performs presentation-only date, percentage, and
-layout formatting after validating the frozen empirical case lists.
+Figure 2 and the accounting figures consume full-precision inputs computed by
+Julia. Python performs presentation-only date, percentage, and layout
+formatting after validating the frozen empirical case lists.
 
 Expected input tree:
   <artifact-root>/figure_data/party_vote_share_vs_seat_share.csv
   <artifact-root>/figure_data/observed_coalition_timeline.csv
   <artifact-root>/figure_data/ideological_interval_heatmap.csv
   <artifact-root>/figure_data/inversion_decomposition_components.csv
+  <artifact-root>/figure_data/accounting_state_weighting_anatomy.csv
+  <artifact-root>/figure_data/accounting_district_electoral_weight.csv
 
 Outputs:
   party_vote_share_vs_seat_share.pdf
@@ -19,6 +21,8 @@ Outputs:
   ideological_interval_heatmap_2018.pdf
   ideological_interval_heatmap_2022.pdf
   inversion_decomposition_components.pdf
+  accounting_state_weighting_anatomy.pdf
+  district_electoral_weight_by_magnitude.pdf
 """
 
 from __future__ import annotations
@@ -31,6 +35,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, BoundaryNorm
 from matplotlib.dates import DateFormatter
+
+import make_district_electoral_weight_diagnostic as district_weight_diagnostic
 
 
 DEFAULT_REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -60,6 +66,24 @@ EXPECTED_IDEOLOGICAL_COUNTS = {
 }
 EXPECTED_IDEOLOGICAL_INTERVAL_COUNTS = {2014: 528, 2018: 630, 2022: 528}
 DECOMPOSITION_COMPONENTS = ("A_C", "B_C", "d_C")
+EXPECTED_STATE_WEIGHTING_CASES = (
+    ("cabinet/2014/2016.2", "Cabinet 2014/2016.2"),
+    ("cabinet/2014/2017.1", "Cabinet 2014/2017.1"),
+    (
+        "cabinet/2018/shared-2021.3-2022.1",
+        "Cabinet 2018/2021.3 and 2022.1 (shared vector)",
+    ),
+    ("cabinet/2022/2023.1", "Cabinet 2022/2023.1"),
+    ("ideological/2014/11-24", "Ideological 2014/PTB-PR"),
+    ("ideological/2022/15-29", "Ideological 2022/MDB-UNIÃO"),
+    ("ideological/2022/25-32", "Ideological 2022/PP-PL"),
+)
+STATE_WEIGHTING_MAGNITUDE_COLUMNS = (
+    "b_positive_eight_seat",
+    "b_positive_other",
+    "b_negative_sp",
+    "b_negative_other",
+)
 
 # Discrete palette for ideological-interval categories.
 INTERVAL_COLORS = [
@@ -333,6 +357,118 @@ def load_inversion_decomposition_components(artifact_root: Path) -> pd.DataFrame
     return pivoted.sort_values("_order").drop(columns="_order").reset_index(drop=True)
 
 
+def load_accounting_state_weighting_anatomy(artifact_root: Path) -> pd.DataFrame:
+    """Load and validate the seven unique focal state-weighting vectors.
+
+    Negative component columns are stored by Julia as positive magnitudes. The
+    loader verifies that gross positive minus gross negative contributions
+    reproduces the reported net between-district component before plotting.
+    """
+    input_path = artifact_root / "figure_data" / "accounting_state_weighting_anatomy.csv"
+    anatomy = read_csv(input_path)
+    required = {
+        "case_id",
+        "case_display",
+        "case_order",
+        "focal_order",
+        *STATE_WEIGHTING_MAGNITUDE_COLUMNS,
+        "B_C",
+        "largest_positive_state",
+        "largest_positive_b_Cd",
+    }
+    require_columns(anatomy, input_path, required)
+    require_finite_numeric(
+        anatomy,
+        input_path,
+        {
+            "case_order",
+            "focal_order",
+            *STATE_WEIGHTING_MAGNITUDE_COLUMNS,
+            "B_C",
+            "largest_positive_b_Cd",
+        },
+    )
+
+    for column in ("case_id", "case_display", "largest_positive_state"):
+        if anatomy[column].isna().any():
+            raise ValueError(f"Text column {column!r} contains missing values in {input_path}")
+        anatomy[column] = anatomy[column].astype(str).str.strip()
+        if (anatomy[column] == "").any():
+            raise ValueError(f"Text column {column!r} contains blank values in {input_path}")
+
+    focal_order = anatomy["focal_order"].to_numpy(dtype=float)
+    if not np.equal(focal_order, np.floor(focal_order)).all():
+        raise ValueError(f"focal_order must contain integers in {input_path}")
+    anatomy["focal_order"] = anatomy["focal_order"].astype(int)
+    if anatomy["case_id"].duplicated().any():
+        raise ValueError(f"Duplicate case_id rows in {input_path}")
+    if anatomy["focal_order"].duplicated().any():
+        raise ValueError(f"Duplicate focal_order rows in {input_path}")
+
+    anatomy = anatomy.sort_values("focal_order").reset_index(drop=True)
+    expected_ids = tuple(case_id for case_id, _ in EXPECTED_STATE_WEIGHTING_CASES)
+    expected_displays = tuple(display for _, display in EXPECTED_STATE_WEIGHTING_CASES)
+    actual_ids = tuple(anatomy["case_id"])
+    actual_displays = tuple(anatomy["case_display"])
+    actual_order = tuple(anatomy["focal_order"])
+    expected_order = tuple(range(1, len(EXPECTED_STATE_WEIGHTING_CASES) + 1))
+    if actual_ids != expected_ids:
+        raise ValueError(
+            f"State-weighting focal-case registry changed in {input_path}: "
+            f"expected {expected_ids}, found {actual_ids}"
+        )
+    if actual_displays != expected_displays:
+        raise ValueError(
+            f"State-weighting case labels changed in {input_path}: "
+            f"expected {expected_displays}, found {actual_displays}"
+        )
+    if actual_order != expected_order:
+        raise ValueError(
+            f"State-weighting focal order changed in {input_path}: "
+            f"expected {expected_order}, found {actual_order}"
+        )
+
+    magnitudes = anatomy.loc[:, STATE_WEIGHTING_MAGNITUDE_COLUMNS]
+    if (magnitudes < -ACCOUNTING_ATOL).any().any():
+        raise ValueError(
+            f"State-weighting gross components must be nonnegative magnitudes in {input_path}"
+        )
+    if (anatomy["largest_positive_b_Cd"] <= 0).any():
+        raise ValueError(f"Largest positive state contributions must be positive in {input_path}")
+
+    gross_positive = anatomy["b_positive_eight_seat"] + anatomy["b_positive_other"]
+    gross_negative = anatomy["b_negative_sp"] + anatomy["b_negative_other"]
+    residual = gross_positive - gross_negative - anatomy["B_C"]
+    if not np.allclose(residual, 0.0, atol=ACCOUNTING_ATOL, rtol=ACCOUNTING_RTOL):
+        failures = anatomy.loc[
+            ~np.isclose(residual, 0.0, atol=ACCOUNTING_ATOL, rtol=ACCOUNTING_RTOL),
+            ["case_id", *STATE_WEIGHTING_MAGNITUDE_COLUMNS, "B_C"],
+        ]
+        raise ValueError(
+            "State-weighting gross components do not reproduce B_C in "
+            f"{input_path}: {failures.to_dict(orient='records')}"
+        )
+    if (
+        anatomy["largest_positive_b_Cd"].to_numpy(dtype=float)
+        > gross_positive.to_numpy(dtype=float) + ACCOUNTING_ATOL
+    ).any():
+        raise ValueError(
+            f"A largest positive state contribution exceeds gross positive B in {input_path}"
+        )
+
+    return anatomy
+
+
+def load_district_electoral_weight(artifact_root: Path) -> pd.DataFrame:
+    """Load the validated neutral state-year district-weight diagnostic data."""
+    input_path = (
+        artifact_root
+        / "figure_data"
+        / "accounting_district_electoral_weight.csv"
+    )
+    return district_weight_diagnostic.load_district_electoral_weight(input_path)
+
+
 def save_party_vote_share_vs_seat_share(artifact_root: Path, figure_dir: Path) -> Path:
     party = load_party_vote_share_vs_seat_share(artifact_root)
 
@@ -506,14 +642,132 @@ def save_inversion_decomposition_components(artifact_root: Path, figure_dir: Pat
     return output
 
 
+def save_accounting_state_weighting_anatomy(artifact_root: Path, figure_dir: Path) -> Path:
+    anatomy = load_accounting_state_weighting_anatomy(artifact_root)
+    positions = np.arange(len(anatomy))
+    positive_eight = anatomy["b_positive_eight_seat"].to_numpy(dtype=float)
+    positive_other = anatomy["b_positive_other"].to_numpy(dtype=float)
+    negative_sp = anatomy["b_negative_sp"].to_numpy(dtype=float)
+    negative_other = anatomy["b_negative_other"].to_numpy(dtype=float)
+    positive_total = positive_eight + positive_other
+    negative_total = negative_sp + negative_other
+
+    fig, ax = plt.subplots(figsize=(10.2, 5.8))
+    bar_options = {"height": 0.62, "edgecolor": "white", "linewidth": 0.45, "zorder": 2}
+    ax.barh(
+        positions,
+        positive_eight,
+        color="#0072B2",
+        label="Positive: eight-seat districts",
+        **bar_options,
+    )
+    ax.barh(
+        positions,
+        positive_other,
+        left=positive_eight,
+        color="#56B4E9",
+        label="Positive: other districts",
+        **bar_options,
+    )
+    ax.barh(
+        positions,
+        -negative_sp,
+        color="#D55E00",
+        label="Negative: São Paulo",
+        **bar_options,
+    )
+    ax.barh(
+        positions,
+        -negative_other,
+        left=-negative_sp,
+        color="#E69F00",
+        label="Negative: other districts",
+        **bar_options,
+    )
+    ax.scatter(
+        anatomy["B_C"],
+        positions,
+        marker="D",
+        s=34,
+        facecolor="black",
+        edgecolor="white",
+        linewidth=0.45,
+        label=r"Net $B_C$",
+        zorder=4,
+    )
+
+    extent = max(
+        float(positive_total.max()),
+        float(negative_total.max()),
+        float(np.abs(anatomy["B_C"]).max()),
+        1.0,
+    )
+    for position, positive_endpoint, state, value in zip(
+        positions,
+        positive_total,
+        anatomy["largest_positive_state"],
+        anatomy["largest_positive_b_Cd"],
+        strict=True,
+    ):
+        ax.annotate(
+            f"{state} +{value:.2f}",
+            xy=(positive_endpoint, position),
+            xytext=(4, 0),
+            textcoords="offset points",
+            ha="left",
+            va="center",
+            fontsize=7.5,
+            color="#005A8C",
+            clip_on=False,
+        )
+
+    ax.axvline(0, color="0.25", linewidth=0.8, zorder=3)
+    ax.set_xlim(
+        -float(negative_total.max()) - 0.05 * extent,
+        float(positive_total.max()) + 0.24 * extent,
+    )
+    ax.set_yticks(positions, anatomy["case_display"])
+    ax.invert_yaxis()
+    ax.set_xlabel(r"Between-district accounting contribution (seats; $b_{Cd}$ and net $B_C$)")
+    ax.grid(True, axis="x", linewidth=0.4, alpha=0.35, zorder=0)
+    ax.legend(
+        frameon=False,
+        fontsize=8,
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.01),
+        ncol=3,
+    )
+
+    output = figure_dir / "accounting_state_weighting_anatomy.pdf"
+    fig.tight_layout()
+    fig.savefig(output, bbox_inches="tight")
+    plt.close(fig)
+    return output
+
+
+def save_district_electoral_weight_by_magnitude(
+    artifact_root: Path, figure_dir: Path
+) -> Path:
+    """Render the neutral district-weight diagnostic into the requested figure tree."""
+    district_weights = load_district_electoral_weight(artifact_root)
+    output = figure_dir / "district_electoral_weight_by_magnitude.pdf"
+    return district_weight_diagnostic.render_district_electoral_weight(
+        district_weights, output
+    )
+
+
 def generate_figures(artifact_root: Path, figure_dir: Path) -> list[Path]:
     figure_dir.mkdir(parents=True, exist_ok=True)
     outputs = [
         save_party_vote_share_vs_seat_share(artifact_root, figure_dir),
         save_observed_coalition_timeline(artifact_root, figure_dir),
         save_inversion_decomposition_components(artifact_root, figure_dir),
+        save_accounting_state_weighting_anatomy(artifact_root, figure_dir),
     ]
     outputs.extend(save_ideological_interval_heatmaps(artifact_root, figure_dir))
+    outputs.append(
+        save_district_electoral_weight_by_magnitude(artifact_root, figure_dir)
+    )
     return outputs
 
 

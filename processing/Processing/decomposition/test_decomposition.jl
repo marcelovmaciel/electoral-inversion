@@ -34,6 +34,8 @@ function source_row(data, year, period, period_column)
     return only(eachrow(selected))
 end
 
+display_milli(value) = parse(Int, replace(String(value), "." => ""))
+
 coalition_periods = required_csv(joinpath(OUTPUT_ROOT_TEST, "raw", "coalition_period_quantities.csv"))
 decomposition = required_csv(joinpath(OUTPUT_ROOT_TEST, "raw", "inversion_decomposition.csv"))
 party_contributions = required_csv(joinpath(OUTPUT_ROOT_TEST, "raw", "inversion_party_contributions.csv"))
@@ -52,6 +54,36 @@ test_result = @testset "PSC-correct five-case coalition decomposition" begin
     @test nrow(decomposition) == 5
     @test nrow(district_contributions) == 5 * 27
     @test !((2018, "2022.2") in key_set(decomposition, :cabinet_period))
+
+    observed_latex = CoalitionDecomposition.decomposition_latex(decomposition)
+    @test occursin("\\begin{tabularx}", observed_latex)
+    @test occursin(
+        "Election & Period & Days & Vote \\% & Seats & \\(d_C\\) & \\(A_C\\) & \\(B_C\\) & Parties",
+        observed_latex,
+    )
+    @test !occursin("\\(q_C\\)", observed_latex)
+    @test !occursin("\\(r_C\\)", observed_latex)
+    @test !occursin("Threshold", observed_latex)
+    @test occursin("2021.3", observed_latex)
+    @test occursin("2022.1", observed_latex)
+
+    # CSV B_C stays at full precision; only its manuscript display is the exact
+    # three-decimal residual of the independently rounded d_C and A_C entries.
+    raw_B_C = copy(decomposition.B_C)
+    for row in eachrow(decomposition)
+        displayed = CoalitionDecomposition.closure_preserving_display(
+            row.d_C,
+            row.A_C,
+        )
+        @test display_milli(displayed.d_C) ==
+            display_milli(displayed.A_C) + display_milli(displayed.B_C)
+        @test occursin(
+            "$(displayed.d_C) & $(displayed.A_C) & $(displayed.B_C)",
+            observed_latex,
+        )
+    end
+    @test decomposition.B_C == raw_B_C
+    @test any(abs.(decomposition.B_C .- round.(decomposition.B_C; digits = 3)) .> 1e-12)
 
     for key in EXPECTED_INVERSION_KEYS
         year, period = key

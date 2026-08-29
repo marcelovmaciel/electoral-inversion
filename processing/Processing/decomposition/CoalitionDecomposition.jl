@@ -551,7 +551,7 @@ end
 
 function qualification_for_year(year::Integer)
     year in (2014, 2018) && return "ex post party accounting contribution; joint electoral lists"
-    return "ex post party accounting contribution; party/federation allocation context"
+    return "accounting attribution; not an independent causal effect"
 end
 
 """
@@ -776,33 +776,44 @@ end
 
 fmt2(value) = @sprintf("%.2f", Float64(value))
 
+function closure_preserving_display(d_C, A_C)
+    d_milli = round(Int, 1000 * Float64(d_C))
+    A_milli = round(Int, 1000 * Float64(A_C))
+    B_milli = d_milli - A_milli
+    return (
+        d_C = @sprintf("%.3f", d_milli / 1000),
+        A_C = @sprintf("%.3f", A_milli / 1000),
+        B_C = @sprintf("%.3f", B_milli / 1000),
+    )
+end
+
 function decomposition_latex(data::DataFrame)
+    nrow(data) == length(EXPECTED_INVERSION_KEYS) || error(
+        "Observed-inversion presentation requires exactly five rows.",
+    )
+    presented_keys = [
+        (Int(row.election_year), string(row.cabinet_period)) for row in eachrow(data)
+    ]
+    presented_keys == EXPECTED_INVERSION_KEYS || error(
+        "Observed-inversion presentation registry changed: $(presented_keys).",
+    )
+
     io = IOBuffer()
-    println(io, "\\begin{landscape}")
-    println(io, "\\begin{table}[p]")
-    println(io, "\\centering")
-    println(io, "\\caption{Accounting decomposition of the five observed cabinet inversions}")
-    println(io, "\\label{tab:inversion-decomposition}")
-    println(io, "\\scriptsize")
-    println(io, "\\setlength{\\tabcolsep}{3.2pt}")
-    println(io, "\\begin{tabular}{llrrrrrrr}")
+    println(io, "\\begin{tabularx}{\\textwidth}{@{}llrrrrrr>{\\raggedright\\arraybackslash}X@{}}")
     println(io, "\\toprule")
-    println(io, "Election & Period & Vote \\% & Seats & \\(q_C\\) & \\(d_C\\) & \\(r_C\\) & \\(A_C\\) & \\(B_C\\) \\\\")
+    println(io, "Election & Period & Days & Vote \\% & Seats & \\(d_C\\) & \\(A_C\\) & \\(B_C\\) & Parties \\\\")
     println(io, "\\midrule")
     for row in eachrow(data)
+        displayed = closure_preserving_display(row.d_C, row.A_C)
         println(io,
             "$(row.election_year) & $(latex_escape(row.cabinet_period)) & " *
-            "$(fmt2(row.vote_share_pct)) & $(row.s_C) & $(fmt2(row.q_C)) & " *
-            "$(fmt2(row.d_C)) & $(fmt2(row.r_C)) & $(fmt2(row.A_C)) & $(fmt2(row.B_C)) \\\\",
+            "$(row.period_days) & $(fmt2(row.vote_share_pct)) & $(row.s_C) & " *
+            "$(displayed.d_C) & $(displayed.A_C) & $(displayed.B_C) & " *
+            "$(latex_escape(row.coalition_parties)) \\\\",
         )
     end
     println(io, "\\bottomrule")
-    println(io, "\\end{tabular}")
-    println(io, "\\begin{minipage}{0.94\\linewidth}")
-    println(io, "\\footnotesize Notes: \\(A_C\\) is the within-district allocation component. \\(B_C\\) is the between-district seat--vote weighting component; it combines district seat weights, turnout and valid-vote differences, and coalition vote geography. The equality \\(d_C=A_C+B_C\\) is an accounting identity, not a causal decomposition.")
-    println(io, "\\end{minipage}")
-    println(io, "\\end{table}")
-    println(io, "\\end{landscape}")
+    println(io, "\\end{tabularx}")
     return String(take!(io))
 end
 
@@ -921,7 +932,7 @@ function write_decomposition_outputs(output_root::AbstractString, coalition_peri
         (
             "latex/table_observed_inversion_decomposition.tex",
             decomposition_latex(decomposition_from_csv),
-            "Landscape manuscript table for the five-case accounting decomposition.",
+            "Portrait manuscript tabularx for the five observed cabinet inversions and their accounting components.",
             nrow(decomposition_from_csv),
             9,
         ),

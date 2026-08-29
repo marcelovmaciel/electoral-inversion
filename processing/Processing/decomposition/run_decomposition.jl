@@ -15,6 +15,10 @@ using Processing
 
 include(joinpath(DECOMPOSITION_DIR, "CoalitionDecomposition.jl"))
 using .CoalitionDecomposition
+include(joinpath(DECOMPOSITION_DIR, "IntermediateAccountingReport.jl"))
+using .IntermediateAccountingReport
+include(joinpath(DECOMPOSITION_DIR, "AccountingIntegration.jl"))
+using .AccountingIntegration
 
 const PAPER_ROOT = joinpath(PROCESSING_ROOT, "output", "paper")
 const OUTPUT_ROOT = joinpath(PROCESSING_ROOT, "output", "decomposition")
@@ -50,6 +54,35 @@ function require_file(path::AbstractString)
     return path
 end
 
+const ACCOUNTING_ARTIFACT_PREFIXES = (
+    "raw/accounting_",
+    "tables/table_accounting_",
+    "figure_data/accounting_",
+    "latex/accounting_",
+    "latex/table_accounting_",
+    "accounting_",
+    "table_accounting_",
+)
+
+function is_accounting_integration_artifact(relative_path::AbstractString)
+    normalized = replace(String(relative_path), '\\' => '/')
+    return any(prefix -> startswith(normalized, prefix), ACCOUNTING_ARTIFACT_PREFIXES)
+end
+
+function prune_stale_accounting_artifacts!(root::AbstractString, allowed_paths::Set{String})
+    isdir(root) || return
+    for (directory, _, filenames) in walkdir(root)
+        for filename in filenames
+            path = joinpath(directory, filename)
+            relative = replace(relpath(path, root), '\\' => '/')
+            if is_accounting_integration_artifact(relative) && !(relative in allowed_paths)
+                rm(path; force = true)
+            end
+        end
+    end
+end
+
+
 function update_manifest!(manifest_path::AbstractString, additions::DataFrame)
     manifest = CSV.read(require_file(manifest_path), DataFrame)
     required = Set([:path, :artifact_type, :description, :rows, :columns])
@@ -57,8 +90,12 @@ function update_manifest!(manifest_path::AbstractString, additions::DataFrame)
         "Paper artifact manifest schema changed: $(propertynames(manifest)).",
     )
     addition_paths = Set(String.(additions.path))
-    filter!(row -> String(row.path) != "artifact_manifest.csv" &&
-                   !(String(row.path) in addition_paths), manifest)
+    filter!(row -> begin
+        path = String(row.path)
+        path != "artifact_manifest.csv" &&
+            !is_accounting_integration_artifact(path) &&
+            !(path in addition_paths)
+    end, manifest)
     append!(manifest, select(additions, :path, :artifact_type, :description, :rows, :columns))
     push!(manifest, (
         path = "artifact_manifest.csv",
@@ -104,19 +141,29 @@ function sync_decomposition_to_paper!(manifest::DataFrame)
     ))
 
     paper_additions = DataFrame(paper_records)
-    update_manifest!(joinpath(PAPER_ROOT, "artifact_manifest.csv"), paper_additions)
+    paper_manifest = update_manifest!(joinpath(PAPER_ROOT, "artifact_manifest.csv"), paper_additions)
+    prune_stale_accounting_artifacts!(PAPER_ROOT, Set(String.(paper_manifest.path)))
 
     if SYNC_REVIEW_ASSETS
         isdir(REVIEW_MANUSCRIPT_DIR) || error(
             "Review manuscript directory not found: $(REVIEW_MANUSCRIPT_DIR)",
         )
-        for filename in (
+        review_filenames = (
             "table_observed_inversion_decomposition.tex",
             "table_inversion_party_contribution_extremes.tex",
+            "accounting_numeric_macros.tex",
+            "table_accounting_focal_cases.tex",
+            "table_accounting_gross_components.tex",
+            "table_accounting_selected_party_geography.tex",
+            "table_accounting_minimal_ideological.tex",
         )
+        for filename in review_filenames
             source = joinpath(OUTPUT_ROOT, "latex", filename)
             cp(source, joinpath(REVIEW_MANUSCRIPT_DIR, filename); force = true)
         end
+        review_allowed = Set(String.(review_filenames))
+        push!(review_allowed, "accounting_state_weighting_anatomy.pdf")
+        prune_stale_accounting_artifacts!(REVIEW_MANUSCRIPT_DIR, review_allowed)
     end
     return paper_additions
 end
@@ -173,12 +220,22 @@ manifest = write_decomposition_outputs(OUTPUT_ROOT, coalition_periods, outputs)
 ideological_regression = validate_ideological_counts(ideological_intervals)
 ideological_audit_path = joinpath(OUTPUT_ROOT, "audit", "ideological_regression.csv")
 CSV.write(ideological_audit_path, ideological_regression)
+case_registry = build_inversion_case_registry(
+    coalition_periods,
+    ideological_intervals,
+    accounting_by_year,
+)
+accounting_integration = build_accounting_integration(case_registry, accounting_by_year)
+integration_artifacts = write_accounting_integration_outputs(OUTPUT_ROOT, accounting_integration)
+
 
 input_paths = [
     observed_path,
     party_path,
     ideology_input_path,
     joinpath(DECOMPOSITION_DIR, "CoalitionDecomposition.jl"),
+    joinpath(DECOMPOSITION_DIR, "IntermediateAccountingReport.jl"),
+    joinpath(DECOMPOSITION_DIR, "AccountingIntegration.jl"),
     joinpath(DECOMPOSITION_DIR, "run_decomposition.jl"),
     joinpath(PROCESSING_ROOT, "psc_baseline_repair", "POST_PSC_BASELINE.md"),
     joinpath(PROCESSING_ROOT, "psc_baseline_repair", "post_psc_baseline_manifest.csv"),
@@ -201,7 +258,7 @@ sort!(input_manifest, :path)
 input_manifest_path = joinpath(OUTPUT_ROOT, "audit", "decomposition_input_manifest.csv")
 CSV.write(input_manifest_path, input_manifest)
 
-manifest = append_output_manifest_rows!([
+manifest = append_output_manifest_rows!(vcat(integration_artifacts, [
     (
         path = "audit/ideological_regression.csv",
         artifact_type = "audit",
@@ -218,8 +275,9 @@ manifest = append_output_manifest_rows!([
         columns = length(names(input_manifest)),
         sha256 = sha256_file(input_manifest_path),
     ),
-])
+]))
 
+prune_stale_accounting_artifacts!(OUTPUT_ROOT, Set(String.(manifest.path)))
 paper_additions = sync_decomposition_to_paper!(manifest)
 
 println("Recovered inversion cases:")
@@ -232,5 +290,7 @@ end
 println("Ideological regression:")
 show(stdout, MIME("text/plain"), ideological_regression; allrows = true, allcols = true)
 println()
+println("Generated accounting-integration artifacts: ", length(integration_artifacts))
+println("Focal accounting vectors: ", nrow(accounting_integration.focal.total))
 println("Generated decomposition artifacts: ", nrow(manifest))
 println("Synchronized paper artifacts: ", nrow(paper_additions))
