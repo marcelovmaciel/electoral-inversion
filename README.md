@@ -5,8 +5,11 @@ Coalition Inversions in Brazil's Chamber of Deputies."
 
 The repository computes whether party coalitions in Brazil's Chamber of
 Deputies hold a seat majority without a national federal-deputy vote majority.
-It covers observed cabinet-period coalitions and contiguous ideological
-intervals for the mandates tied to the 2014, 2018, and 2022 elections.
+It covers observed cabinet-period coalitions and ideologically constrained
+potential coalitions for the mandates tied to the 2014, 2018, and 2022
+elections. The ideological analysis uses exact-connected intervals as the
+\(k=0\) baseline and a nested \(k=1\) domain permitting one omitted interior
+party as a sensitivity check.
 
 ## Main Workflow
 
@@ -82,7 +85,7 @@ sets used for observed coalition analysis.
 
 `scrape_classification/output/classificacao_2023/` and
 `scrape_classification/output/classificacao_2025/` contain the party ideology
-classification inputs used to order parties for interval analysis.
+classification inputs used to construct the fixed election-year party orders.
 
 `processing/Processing/data/` contains party harmonization inputs used by the
 Julia runner.
@@ -111,12 +114,29 @@ After running the main analysis, the high-level replication results should be:
 - 2018 cabinet inversions: `2021.3`, `2022.1` (47.2469 percent of the vote and
   exactly 257 seats in each period)
 - 2022 cabinet inversion: `2023.1`
-- ideological interval inversions: 2014 = 8, 2018 = 0, 2022 = 6
-- minimal ideological interval inversions: 2014 = 4, 2018 = 0, 2022 = 2
-- 2022 PP to PL interval: 258 seats and 45.35 percent vote share
+- exact-connected (\(k=0\)) ideological inversions: 2014 = 8, 2018 = 0,
+  2022 = 6
+- exact-connected minimal seat-majority coalitions: 2014 = 8, 2018 = 8,
+  2022 = 4
+- one-gap (\(k=1\)) ideological inversions: 2014 = 74, 2018 = 34, 2022 = 43
+- one-gap minimal seat-majority coalitions: 2014 = 88, 2018 = 118, 2022 = 53
+- strongest exact-connected 2022 inversion: PP--PL, 258 seats and 45.35
+  percent vote share
+- strongest one-gap inversions: PTB--PR omitting PPL (2014), PCdoB--PODE
+  omitting PSDB (2018), and PP--PL omitting DC (2022)
 
 Use the files under `processing/Processing/output/paper/` to inspect the
 generated tables and diagnostics.
+
+The k-gap outputs are:
+
+    processing/Processing/output/paper/raw/ideology_k_gap_coalitions.csv
+    processing/Processing/output/paper/raw/ideology_k_gap_minimal_majorities.csv
+    processing/Processing/output/paper/raw/ideology_k_gap_inversions.csv
+    processing/Processing/output/paper/tables/ideology_k_gap_summary.csv
+    processing/Processing/output/paper/diagnostics/ideology_k_gap_checks.csv
+    processing/Processing/output/paper/diagnostics/ideology_k_gap_strongest_inversion_ties.csv
+    processing/Processing/output/paper/latex/table_03_ideology_k_gap_summary_tabular.tex
 
 ## Tests
 
@@ -125,6 +145,10 @@ Run the focused decomposition suite from the repository root:
 ```bash
 julia -O0 --startup-file=no --project=processing/Processing processing/Processing/decomposition/runtests.jl
 ```
+
+Run the focused ideological-domain suite with:
+
+    julia -O0 --startup-file=no --project=processing/Processing processing/Processing/test/test_ideological_interval_coalitions.jl
 
 This focused suite is the empirical gate for the decomposition and checks the
 five-case registry, coalition compositions, district accounting identities, and

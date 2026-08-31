@@ -677,6 +677,167 @@ function ideological_interval_coalitions(
     return result
 end
 
+"""
+    ideological_k_gap_coalitions(summary_df, ideology_df; k = 0, tie_policy = :error)
+
+Enumerate the ideological coalition domain D_k for k equal to zero or one.
+For each ideological span, D_0 contains the complete interval. D_1 also
+contains every coalition obtained by deleting exactly one interior party.
+Coalition membership is canonicalized in ideological order and duplicate party
+sets are removed. A seat-majority coalition is minimal only when no proper
+seat-majority subset is present in the same admissible domain.
+"""
+function ideological_k_gap_coalitions(
+    summary_df::DataFrame,
+    ideology_df::DataFrame;
+    k::Integer = 0,
+    tie_policy::Symbol = :error,
+)
+    k in (0, 1) || error("Unsupported ideological gap limit k=$(k). Only k=0 and k=1 are implemented.")
+    tie_policy == :error || error("Unsupported tie_policy $(tie_policy). Only :error is implemented.")
+
+    _require_columns(summary_df, [:SG_PARTIDO, :valid_total, :total_seats], "summary_df")
+    _require_columns(ideology_df, [:SG_PARTIDO, :ordinal_position], "ideology_df")
+
+    summary_dupes = _duplicate_values(summary_df, :SG_PARTIDO)
+    isempty(summary_dupes) || error("summary_df has duplicate SG_PARTIDO values: $(join(summary_dupes, ", ")).")
+
+    ideology_dupes = _duplicate_values(ideology_df, :SG_PARTIDO)
+    isempty(ideology_dupes) || error("ideology_df has duplicate SG_PARTIDO values: $(join(ideology_dupes, ", ")).")
+
+    ordered = innerjoin(
+        select(ideology_df, :SG_PARTIDO, :ordinal_position),
+        select(summary_df, :SG_PARTIDO, :valid_total, :total_seats),
+        on = :SG_PARTIDO,
+    )
+
+    summary_parties = sort(String.(summary_df.SG_PARTIDO))
+    ordered_parties = sort(String.(ordered.SG_PARTIDO))
+    summary_parties == ordered_parties || error(
+        "Every party in summary_df must appear exactly once in ideology_df before k-gap coalitions are meaningful. " *
+        "Missing ideology coverage for: $(join(setdiff(summary_parties, ordered_parties), ", ")).",
+    )
+
+    ordinal_counts = combine(groupby(ordered, :ordinal_position), nrow => :n)
+    if any(ordinal_counts.n .> 1)
+        duplicated_positions = ordinal_counts.ordinal_position[ordinal_counts.n .> 1]
+        error(
+            "Duplicate ideology ordinal_position value(s) found: $(join(string.(duplicated_positions), ", ")). " *
+            "Resolve tied ideological positions before k-gap coalitions are meaningful; tied positions cannot be " *
+            "silently sorted by party name.",
+        )
+    end
+
+    sort!(ordered, :ordinal_position)
+    parties = String.(ordered.SG_PARTIDO)
+    votes = Int.(round.(ordered.valid_total))
+    seats_raw = ordered.total_seats
+    seats = Int.(round.(seats_raw))
+    all(Float64.(seats_raw) .== Float64.(seats)) || error("total_seats must be integer-valued for every party.")
+
+    total_votes = sum(votes)
+    total_seats_raw = sum(seats_raw)
+    total_seats = sum(seats)
+    total_votes > 0 || error("Total votes must be positive.")
+    total_seats > 0 || error("Total seats must be positive.")
+    Float64(total_seats_raw) == Float64(total_seats) || error("total_seats must be integer-valued after summing.")
+    seat_majority_threshold = fld(total_seats, 2) + 1
+
+    rows = NamedTuple[]
+    member_sets = BitSet[]
+    seen_coalition_ids = Set{String}()
+    n = nrow(ordered)
+
+    for left_index in 1:n
+        for right_index in left_index:n
+            omission_indices = Int[0]
+            if k == 1 && right_index >= left_index + 2
+                append!(omission_indices, (left_index + 1):(right_index - 1))
+            end
+
+            for omitted_index in omission_indices
+                member_indices = [
+                    index for index in left_index:right_index if index != omitted_index
+                ]
+                member_parties = parties[member_indices]
+                coalition_id = join(member_parties, "|")
+                coalition_id in seen_coalition_ids && continue
+                push!(seen_coalition_ids, coalition_id)
+                push!(member_sets, BitSet(member_indices))
+
+                coalition_votes = sum(votes[member_indices])
+                coalition_seats = sum(seats[member_indices])
+                accounting = coalition_accounting_metrics(
+                    coalition_votes,
+                    coalition_seats;
+                    national_vote_total = total_votes,
+                    total_seats = total_seats,
+                    seat_majority_threshold = seat_majority_threshold,
+                )
+                inversion = coalition_seats >= seat_majority_threshold && 2 * coalition_votes < total_votes
+                gap_count = right_index - left_index + 1 - length(member_indices)
+                omitted_party = omitted_index == 0 ? missing : parties[omitted_index]
+                coalition_label = omitted_index == 0 ?
+                                  "$(parties[left_index])--$(parties[right_index])" :
+                                  "$(parties[left_index])--$(parties[right_index]), omitting $(parties[omitted_index])"
+
+                push!(rows, (
+                    k = Int(k),
+                    coalition_id = coalition_id,
+                    coalition_label = coalition_label,
+                    left_index = Int(left_index),
+                    right_index = Int(right_index),
+                    left_endpoint = parties[left_index],
+                    right_endpoint = parties[right_index],
+                    omitted_party = omitted_party,
+                    party_count = Int(length(member_indices)),
+                    parties = join(member_parties, ", "),
+                    gap_count = Int(gap_count),
+                    votes = Int(coalition_votes),
+                    national_vote_total = Int(total_votes),
+                    vote_share = accounting.vote_share,
+                    seats = Int(coalition_seats),
+                    total_seats = Int(total_seats),
+                    seat_majority_threshold = Int(seat_majority_threshold),
+                    seat_share = accounting.seat_share,
+                    q_C = accounting.quota,
+                    d_C = accounting.seat_diff,
+                    r_C = accounting.required_diff,
+                    R_C = accounting.representation_ratio,
+                    vote_majority = Bool(accounting.vote_majority),
+                    seat_majority = Bool(accounting.seat_majority),
+                    inversion = Bool(inversion),
+                    vote_deficit_pp = inversion ? 50.0 - 100.0 * accounting.vote_share : missing,
+                ))
+            end
+        end
+    end
+
+    result = DataFrame(rows)
+    expected_rows = n * (n + 1) ÷ 2 + (k == 1 ? binomial(n, 3) : 0)
+    nrow(result) == expected_rows || error(
+        "D_$(k) coalition count mismatch: expected $(expected_rows), found $(nrow(result)).",
+    )
+    length(seen_coalition_ids) == nrow(result) || error("D_$(k) contains duplicate canonical party sets.")
+
+    minimal_seat_majority = falses(nrow(result))
+    winning_indices = findall(identity, Bool.(result.seat_majority))
+    for coalition_index in winning_indices
+        coalition_members = member_sets[coalition_index]
+        has_winning_proper_subset = any(winning_indices) do subset_index
+            subset_members = member_sets[subset_index]
+            length(subset_members) < length(coalition_members) &&
+                issubset(subset_members, coalition_members)
+        end
+        minimal_seat_majority[coalition_index] = !has_winning_proper_subset
+    end
+    result[!, :minimal_seat_majority] = minimal_seat_majority
+    result[!, :minimal_inversion] = result.inversion .& result.minimal_seat_majority
+
+    sort!(result, [:left_index, :right_index, :gap_count, :omitted_party])
+    return result
+end
+
 
 # =============================================================================
 # Coalition periods (ministerial base)

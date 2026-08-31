@@ -387,15 +387,99 @@ function validate_selected_party_differential_table!(display_df, source_df)
     return true
 end
 
-function validate_ideological_summary_table!(display_df, source_df)
-    required = (:election_year, :all_intervals, :seat_majority_intervals, :coalition_inversions, :minimal_inversions)
-    require_table_columns(display_df, required, "Ideological summary table CSV")
+function validate_ideology_k_gap_summary_table!(display_df, source_df)
+    required = (
+        :election,
+        :k,
+        :minimal_seat_majority_coalitions,
+        :inversions,
+        :strongest_inversion_coalition,
+        :strongest_inversion_vote_share,
+        :strongest_inversion_vote_share_pct,
+        :strongest_inversion_seats,
+        :strongest_inversion_r_C,
+        :strongest_inversion_vote_deficit_pp,
+        :diagnostic_admissible_coalitions,
+        :diagnostic_exact_strength_tie_count,
+        :diagnostic_exact_strength_tied_coalitions,
+    )
+    require_table_columns(display_df, required, "Ideology k-gap summary table CSV")
+    nrow(display_df) == length(analysis_years) * 2 || error(
+        "Ideology k-gap summary must contain six election-domain rows.",
+    )
+    length(unique(zip(display_df.election, display_df.k))) == nrow(display_df) || error(
+        "Ideology k-gap summary contains duplicate election-k rows.",
+    )
+
     for row in eachrow(display_df)
-        source_year = source_df[source_df.election_year .== Int(row.election_year), :]
-        nrow(source_year) == Int(row.all_intervals) || error("Ideological summary changed all-interval count for $(row.election_year).")
-        sum(Int.(source_year.seat_majority)) == Int(row.seat_majority_intervals) || error("Ideological summary changed seat-majority count for $(row.election_year).")
-        sum(Int.(source_year.coalition_inversion)) == Int(row.coalition_inversions) || error("Ideological summary changed inversion count for $(row.election_year).")
-        sum(Int.(source_year.minimal_connected_inversion)) == Int(row.minimal_inversions) || error("Ideological summary changed minimal-inversion count for $(row.election_year).")
+        source_domain = source_df[
+            (source_df.election .== Int(row.election)) .&
+            (source_df.k .== Int(row.k)),
+            :,
+        ]
+        nrow(source_domain) == Int(row.diagnostic_admissible_coalitions) || error(
+            "Ideology k-gap summary changed admissible-coalition count for $(row.election)/k=$(row.k).",
+        )
+        sum(Int.(source_domain.minimal_seat_majority)) == Int(row.minimal_seat_majority_coalitions) || error(
+            "Ideology k-gap summary changed minimal-majority count for $(row.election)/k=$(row.k).",
+        )
+        sum(Int.(source_domain.inversion)) == Int(row.inversions) || error(
+            "Ideology k-gap summary changed inversion count for $(row.election)/k=$(row.k).",
+        )
+
+        strongest = strongest_inversion_selection(source_domain)
+        if strongest === nothing
+            String(row.strongest_inversion_coalition) == "None" || error(
+                "Ideology k-gap summary must report None for $(row.election)/k=$(row.k).",
+            )
+            for column in (
+                :strongest_inversion_vote_share,
+                :strongest_inversion_vote_share_pct,
+                :strongest_inversion_seats,
+                :strongest_inversion_r_C,
+                :strongest_inversion_vote_deficit_pp,
+            )
+                ismissing(row[column]) || error(
+                    "Ideology k-gap summary has a nonmissing strongest-case metric for a null domain.",
+                )
+            end
+            Int(row.diagnostic_exact_strength_tie_count) == 0 || error(
+                "Ideology k-gap summary has a nonzero tie count for a null domain.",
+            )
+            isempty(csv_text(row.diagnostic_exact_strength_tied_coalitions)) || error(
+                "Ideology k-gap summary has tied labels for a null domain.",
+            )
+            continue
+        end
+
+        selected = strongest.selected
+        String(row.strongest_inversion_coalition) == String(selected.coalition_label) || error(
+            "Ideology k-gap summary changed strongest coalition for $(row.election)/k=$(row.k).",
+        )
+        isapprox(Float64(row.strongest_inversion_vote_share), Float64(selected.vote_share); atol = 1e-12, rtol = 0.0) || error(
+            "Ideology k-gap summary changed strongest vote share for $(row.election)/k=$(row.k).",
+        )
+        isapprox(Float64(row.strongest_inversion_vote_share_pct), 100.0 * Float64(selected.vote_share); atol = 1e-10, rtol = 0.0) || error(
+            "Ideology k-gap summary changed strongest vote percentage for $(row.election)/k=$(row.k).",
+        )
+        Int(row.strongest_inversion_seats) == Int(selected.seats) || error(
+            "Ideology k-gap summary changed strongest seats for $(row.election)/k=$(row.k).",
+        )
+        isapprox(Float64(row.strongest_inversion_r_C), Float64(selected.r_C); atol = 1e-10, rtol = 0.0) || error(
+            "Ideology k-gap summary changed strongest r_C for $(row.election)/k=$(row.k).",
+        )
+        isapprox(Float64(row.strongest_inversion_vote_deficit_pp), Float64(selected.vote_deficit_pp); atol = 1e-10, rtol = 0.0) || error(
+            "Ideology k-gap summary changed strongest vote deficit for $(row.election)/k=$(row.k).",
+        )
+        has_exact_tie = nrow(strongest.exact_ties) > 1
+        expected_tie_count = has_exact_tie ? nrow(strongest.exact_ties) : 0
+        Int(row.diagnostic_exact_strength_tie_count) == expected_tie_count || error(
+            "Ideology k-gap summary changed exact-strength tie count for $(row.election)/k=$(row.k).",
+        )
+        expected_tied_labels = has_exact_tie ? join(String.(strongest.exact_ties.coalition_label), " | ") : ""
+        csv_text(row.diagnostic_exact_strength_tied_coalitions) == expected_tied_labels || error(
+            "Ideology k-gap summary changed exact-strength tied labels for $(row.election)/k=$(row.k).",
+        )
     end
     return true
 end
@@ -531,21 +615,29 @@ function selected_party_differential_tabular_latex(df)
     return String(take!(io))
 end
 
-function ideological_summary_tabular_latex(df)
+function ideology_k_gap_summary_tabular_latex(df)
     io = IOBuffer()
-    println(io, raw"\begin{tabular}{rrrrr}")
+    println(io, raw"\begin{tabularx}{\textwidth}{@{}rrcc>{\raggedright\arraybackslash}X@{}}")
     println(io, raw"\toprule")
-    println(io, "Election & All intervals & Seat-majority intervals & Inversions & Minimal inversions " * repeat("\\", 2))
+    println(io, "Election & \\(k\\) & Minimal seat-majority coalitions & Inversions & Strongest inversion " * repeat("\\", 2))
     println(io, raw"\midrule")
     for row in eachrow(df)
+        strongest_cell = if String(row.strongest_inversion_coalition) == "None"
+            "None"
+        else
+            "$(latex_escape(row.strongest_inversion_coalition)); " *
+            "$(fmt2(row.strongest_inversion_vote_share_pct))\\%; " *
+            "$(row.strongest_inversion_seats) seats; " *
+            "\\(r_C=$(fmt2(row.strongest_inversion_r_C))\\)"
+        end
         println(
             io,
-            "$(row.election_year) & $(row.all_intervals) & $(row.seat_majority_intervals) & " *
-            "$(row.coalition_inversions) & $(row.minimal_inversions) \\\\",
+            "$(row.election) & $(row.k) & $(row.minimal_seat_majority_coalitions) & " *
+            "$(row.inversions) & $(strongest_cell) \\\\",
         )
     end
     println(io, raw"\bottomrule")
-    println(io, raw"\end{tabular}")
+    println(io, raw"\end{tabularx}")
     return String(take!(io))
 end
 
@@ -1642,6 +1734,429 @@ validate_coalition_accounting!(ideological_intervals_2014, party_seat_differenti
 validate_coalition_accounting!(ideological_intervals_2018, party_seat_differentials_2018; domain = "ideological_interval", id_columns = (:election_year, :start_party, :end_party))
 validate_coalition_accounting!(ideological_intervals_2022, party_seat_differentials_2022; domain = "ideological_interval", id_columns = (:election_year, :start_party, :end_party))
 
+# =============================================================================
+# BLOCK 11A. NESTED K-GAP IDEOLOGICAL-COALITION ROBUSTNESS
+# =============================================================================
+
+print_block("BLOCK 11A. NESTED K-GAP IDEOLOGICAL-COALITION ROBUSTNESS")
+
+ideology_k_gap_check_rows = NamedTuple[]
+
+function record_k_gap_check!(year, k, check, ok, detail)
+    push!(ideology_k_gap_check_rows, (
+        election = Int(year),
+        k = Int(k),
+        check = String(check),
+        ok = Bool(ok),
+        detail = String(detail),
+    ))
+    ok || error("Ideology k-gap check failed for $(year), k=$(k), $(check): $(detail)")
+    return true
+end
+
+function k_gap_parties(value)
+    text = strip(String(value))
+    isempty(text) && return String[]
+    return strip.(split(text, ","))
+end
+
+function k_gap_mask(value, position)
+    mask = UInt64(0)
+    for party in k_gap_parties(value)
+        haskey(position, party) || error("Party $(party) is absent from the election-specific ideology order.")
+        mask |= UInt64(1) << (position[party] - 1)
+    end
+    return mask
+end
+
+function build_k_gap_domain(year, summary_df, ideology_df; k)
+    raw = Processing.ideological_k_gap_coalitions(summary_df, ideology_df; k = k)
+    raw[!, :election] = fill(Int(year), nrow(raw))
+    select!(raw, :election, Not(:election))
+    sort!(raw, [:election, :k, :left_index, :right_index, :gap_count, :omitted_party])
+    return raw
+end
+
+function strongest_inversion_selection(domain)
+    inversions = domain[domain.inversion .== true, :]
+    nrow(inversions) == 0 && return nothing
+    strongest_r_C = maximum(Float64.(inversions.r_C))
+    exact_ties = inversions[Float64.(inversions.r_C) .== strongest_r_C, :]
+    sort!(exact_ties, [:party_count, :coalition_id])
+    return (
+        selected = NamedTuple(first(eachrow(exact_ties))),
+        exact_ties = exact_ties,
+    )
+end
+
+function validate_k_gap_domain!(domain, summary_df, ideology_df, year, k)
+    ordered = sort(select(ideology_df, :SG_PARTIDO, :ordinal_position), :ordinal_position)
+    parties = String.(ordered.SG_PARTIDO)
+    n = length(parties)
+    n <= 64 || error("k-gap audit bit masks require at most 64 parties, found $(n).")
+    position = Dict(party => index for (index, party) in enumerate(parties))
+    party_votes = Dict(String(row.SG_PARTIDO) => Int(row.valid_total) for row in eachrow(summary_df))
+    party_seats = Dict(String(row.SG_PARTIDO) => Int(row.total_seats) for row in eachrow(summary_df))
+    national_votes = sum(values(party_votes))
+    chamber_seats = sum(values(party_seats))
+    expected_rows = n * (n + 1) ÷ 2 + (k == 1 ? binomial(n, 3) : 0)
+
+    record_k_gap_check!(year, k, "analytical_domain_count", nrow(domain) == expected_rows, "expected=$(expected_rows), observed=$(nrow(domain)), n=$(n)")
+    record_k_gap_check!(year, k, "year_and_domain_labels", all(domain.election .== year) && all(domain.k .== k), "all rows must carry the correct election and k")
+    record_k_gap_check!(year, k, "canonical_party_sets_unique", length(unique(String.(domain.coalition_id))) == nrow(domain), "rows=$(nrow(domain)), unique=$(length(unique(String.(domain.coalition_id))))")
+    record_k_gap_check!(year, k, "gap_bound", all((domain.gap_count .>= 0) .& (domain.gap_count .<= k)), "all reported gaps must be between zero and k")
+
+    masks = UInt64[]
+    arithmetic_ok = true
+    structure_ok = true
+    inversion_ok = true
+    first_problem = ""
+    for row in eachrow(domain)
+        member_parties = k_gap_parties(row.parties)
+        member_indices = sort([position[party] for party in member_parties])
+        mask = k_gap_mask(row.parties, position)
+        push!(masks, mask)
+
+        left_index = first(member_indices)
+        right_index = last(member_indices)
+        span_indices = collect(left_index:right_index)
+        omitted_indices = setdiff(span_indices, member_indices)
+        expected_gap = length(omitted_indices)
+        expected_omitted = expected_gap == 0 ? missing : parties[only(omitted_indices)]
+        structure_row_ok =
+            member_parties == parties[member_indices] &&
+            String(row.coalition_id) == join(member_parties, "|") &&
+            Int(row.party_count) == length(member_parties) &&
+            Int(row.left_index) == left_index &&
+            Int(row.right_index) == right_index &&
+            String(row.left_endpoint) == parties[left_index] &&
+            String(row.right_endpoint) == parties[right_index] &&
+            Int(row.gap_count) == expected_gap &&
+            expected_gap <= k &&
+            (expected_gap == 0 ? ismissing(row.omitted_party) : (!ismissing(row.omitted_party) && String(row.omitted_party) == expected_omitted)) &&
+            (expected_gap == 0 || (left_index < only(omitted_indices) < right_index))
+        if !structure_row_ok && structure_ok
+            structure_ok = false
+            first_problem = "structural mismatch for $(row.coalition_label)"
+        end
+
+        expected_votes = sum(party_votes[party] for party in member_parties)
+        expected_seats = sum(party_seats[party] for party in member_parties)
+        expected_vote_share = expected_votes / national_votes
+        expected_q_C = chamber_seats * expected_vote_share
+        expected_d_C = expected_seats - expected_q_C
+        expected_r_C = seat_majority_threshold - expected_q_C
+        expected_R_C = expected_seats / expected_q_C
+        arithmetic_row_ok =
+            Int(row.votes) == expected_votes &&
+            Int(row.national_vote_total) == national_votes &&
+            isapprox(Float64(row.vote_share), expected_vote_share; atol = 1e-12, rtol = 0.0) &&
+            Int(row.seats) == expected_seats &&
+            Int(row.total_seats) == chamber_seats &&
+            isapprox(Float64(row.q_C), expected_q_C; atol = 1e-10, rtol = 0.0) &&
+            isapprox(Float64(row.d_C), expected_d_C; atol = 1e-10, rtol = 0.0) &&
+            isapprox(Float64(row.r_C), expected_r_C; atol = 1e-10, rtol = 0.0) &&
+            isapprox(Float64(row.R_C), expected_R_C; atol = 1e-10, rtol = 0.0)
+        if !arithmetic_row_ok && arithmetic_ok
+            arithmetic_ok = false
+            first_problem = "arithmetic mismatch for $(row.coalition_label)"
+        end
+
+        expected_inversion = expected_seats >= seat_majority_threshold && 2 * expected_votes < national_votes
+        expected_deficit = 50.0 - 100.0 * expected_vote_share
+        inversion_row_ok =
+            Bool(row.inversion) == expected_inversion &&
+            (expected_inversion ?
+             (!ismissing(row.vote_deficit_pp) && isapprox(Float64(row.vote_deficit_pp), expected_deficit; atol = 1e-10, rtol = 0.0)) :
+             ismissing(row.vote_deficit_pp))
+        if !inversion_row_ok && inversion_ok
+            inversion_ok = false
+            first_problem = "inversion mismatch for $(row.coalition_label)"
+        end
+    end
+    record_k_gap_check!(year, k, "span_membership_and_gap_count", structure_ok, isempty(first_problem) ? "all rows match their spans" : first_problem)
+    record_k_gap_check!(year, k, "party_sum_arithmetic", arithmetic_ok, isempty(first_problem) ? "all coalition metrics equal party sums" : first_problem)
+    record_k_gap_check!(year, k, "strict_inversion_definition", inversion_ok, isempty(first_problem) ? "all inversion flags use unrounded vote shares" : first_problem)
+
+    length(unique(masks)) == length(masks) || error("Duplicate k-gap membership masks for $(year), k=$(k).")
+    winning_indices = findall(Bool.(domain.seat_majority))
+    minimality_ok = true
+    minimality_problem = ""
+    for coalition_index in 1:nrow(domain)
+        coalition_mask = masks[coalition_index]
+        has_winning_proper_subset = any(winning_indices) do subset_index
+            subset_mask = masks[subset_index]
+            subset_mask != coalition_mask && (subset_mask & coalition_mask) == subset_mask
+        end
+        expected_minimal =
+            Bool(domain.seat_majority[coalition_index]) &&
+            !has_winning_proper_subset
+        if Bool(domain.minimal_seat_majority[coalition_index]) != expected_minimal
+            minimality_ok = false
+            minimality_problem = "exact subset test differs for $(domain.coalition_label[coalition_index])"
+            break
+        end
+    end
+    record_k_gap_check!(year, k, "domain_relative_minimality_both_directions", minimality_ok, isempty(minimality_problem) ? "every minimal label and every nonminimal winning label has the correct subset status" : minimality_problem)
+    return true
+end
+
+function validate_k0_regression!(domain, intervals, year)
+    expected = Dict(
+        2014 => (minimal_majorities = 8, inversions = 8, strongest = "PTB--PR"),
+        2018 => (minimal_majorities = 8, inversions = 0, strongest = "None"),
+        2022 => (minimal_majorities = 4, inversions = 6, strongest = "PP--PL"),
+    )[year]
+
+    interval_ids = [
+        join(k_gap_parties(row.parties), "|")
+        for row in eachrow(intervals)
+    ]
+    interval_map = Dict(interval_ids[index] => index for index in eachindex(interval_ids))
+    membership_ok = Set(String.(domain.coalition_id)) == Set(interval_ids)
+    record_k_gap_check!(year, 0, "matches_established_interval_membership", membership_ok, "D_0 and the established interval output must contain identical party sets")
+
+    metrics_ok = membership_ok
+    metrics_problem = ""
+    if metrics_ok
+        for row in eachrow(domain)
+            baseline = intervals[interval_map[String(row.coalition_id)], :]
+            row_ok =
+                Int(row.votes) == Int(baseline.votes) &&
+                isapprox(Float64(row.vote_share), Float64(baseline.vote_share); atol = 1e-12, rtol = 0.0) &&
+                Int(row.seats) == Int(baseline.seats) &&
+                isapprox(Float64(row.q_C), Float64(baseline.quota); atol = 1e-10, rtol = 0.0) &&
+                isapprox(Float64(row.d_C), Float64(baseline.seat_diff); atol = 1e-10, rtol = 0.0) &&
+                isapprox(Float64(row.r_C), Float64(baseline.required_diff); atol = 1e-10, rtol = 0.0) &&
+                isapprox(Float64(row.R_C), Float64(baseline.representation_ratio); atol = 1e-10, rtol = 0.0) &&
+                Bool(row.inversion) == Bool(baseline.coalition_inversion) &&
+                Bool(row.minimal_seat_majority) == Bool(baseline.minimal_connected_winning)
+            if !row_ok
+                metrics_ok = false
+                metrics_problem = "mismatch for $(row.coalition_label)"
+                break
+            end
+        end
+    end
+    record_k_gap_check!(year, 0, "matches_established_interval_metrics", metrics_ok, isempty(metrics_problem) ? "membership, arithmetic, inversion, and minimality match" : metrics_problem)
+
+    minimal_count = sum(Int.(domain.minimal_seat_majority))
+    inversion_count = sum(Int.(domain.inversion))
+    record_k_gap_check!(year, 0, "baseline_minimal_majority_count", minimal_count == expected.minimal_majorities, "expected=$(expected.minimal_majorities), observed=$(minimal_count)")
+    record_k_gap_check!(year, 0, "baseline_inversion_count", inversion_count == expected.inversions, "expected=$(expected.inversions), observed=$(inversion_count)")
+
+    strongest = strongest_inversion_selection(domain)
+    strongest_label = strongest === nothing ? "None" : String(strongest.selected.coalition_label)
+    record_k_gap_check!(year, 0, "baseline_strongest_inversion", strongest_label == expected.strongest, "expected=$(expected.strongest), observed=$(strongest_label)")
+    if strongest !== nothing
+        record_k_gap_check!(year, 0, "baseline_strongest_is_minimal", Bool(strongest.selected.minimal_seat_majority), "$(strongest_label) must be a minimal majority")
+    end
+    if year == 2022
+        selected = strongest.selected
+        record_k_gap_check!(year, 0, "baseline_pp_pl_display_regression", round(100.0 * Float64(selected.vote_share); digits = 2) == 45.35 && Int(selected.seats) == 258, "expected 45.35% and 258 seats")
+    end
+    return true
+end
+
+function validate_nested_domains!(d0, d1, year)
+    d1_map = Dict(String(row.coalition_id) => row for row in eachrow(d1))
+    subset_ok = all(haskey(d1_map, String(row.coalition_id)) for row in eachrow(d0))
+    record_k_gap_check!(year, 1, "D0_strict_subset_D1", subset_ok && nrow(d1) > nrow(d0), "|D_0|=$(nrow(d0)), |D_1|=$(nrow(d1))")
+    shared_metrics_ok = subset_ok
+    if shared_metrics_ok
+        for row in eachrow(d0)
+            nested = d1_map[String(row.coalition_id)]
+            if Int(row.votes) != Int(nested.votes) ||
+               Int(row.seats) != Int(nested.seats) ||
+               !isapprox(Float64(row.q_C), Float64(nested.q_C); atol = 1e-10, rtol = 0.0)
+                shared_metrics_ok = false
+                break
+            end
+        end
+    end
+    record_k_gap_check!(year, 1, "D0_metrics_unchanged_inside_D1", shared_metrics_ok, "shared party sets retain identical votes, seats, and q_C")
+    return true
+end
+
+function build_k_gap_summary(all_domains)
+    rows = NamedTuple[]
+    for year in analysis_years
+        for k in (0, 1)
+            domain = all_domains[
+                (all_domains.election .== year) .&
+                (all_domains.k .== k),
+                :,
+            ]
+            strongest = strongest_inversion_selection(domain)
+            if strongest === nothing
+                push!(rows, (
+                    election = Int(year),
+                    k = Int(k),
+                    minimal_seat_majority_coalitions = sum(Int.(domain.minimal_seat_majority)),
+                    inversions = sum(Int.(domain.inversion)),
+                    strongest_inversion_coalition = "None",
+                    strongest_inversion_vote_share = missing,
+                    strongest_inversion_vote_share_pct = missing,
+                    strongest_inversion_seats = missing,
+                    strongest_inversion_r_C = missing,
+                    strongest_inversion_vote_deficit_pp = missing,
+                    diagnostic_admissible_coalitions = nrow(domain),
+                    diagnostic_exact_strength_tie_count = 0,
+                    diagnostic_exact_strength_tied_coalitions = "",
+                ))
+                continue
+            end
+            selected = strongest.selected
+            has_exact_tie = nrow(strongest.exact_ties) > 1
+            push!(rows, (
+                election = Int(year),
+                k = Int(k),
+                minimal_seat_majority_coalitions = sum(Int.(domain.minimal_seat_majority)),
+                inversions = sum(Int.(domain.inversion)),
+                strongest_inversion_coalition = String(selected.coalition_label),
+                strongest_inversion_vote_share = Float64(selected.vote_share),
+                strongest_inversion_vote_share_pct = 100.0 * Float64(selected.vote_share),
+                strongest_inversion_seats = Int(selected.seats),
+                strongest_inversion_r_C = Float64(selected.r_C),
+                strongest_inversion_vote_deficit_pp = Float64(selected.vote_deficit_pp),
+                diagnostic_admissible_coalitions = nrow(domain),
+                diagnostic_exact_strength_tie_count = has_exact_tie ? nrow(strongest.exact_ties) : 0,
+                diagnostic_exact_strength_tied_coalitions = has_exact_tie ? join(String.(strongest.exact_ties.coalition_label), " | ") : "",
+            ))
+        end
+    end
+    result = DataFrame(rows)
+    sort!(result, [:election, :k])
+    return result
+end
+
+function strongest_tie_diagnostic(all_domains)
+    rows = NamedTuple[]
+    for year in analysis_years
+        for k in (0, 1)
+            domain = all_domains[(all_domains.election .== year) .& (all_domains.k .== k), :]
+            strongest = strongest_inversion_selection(domain)
+            strongest === nothing && continue
+            nrow(strongest.exact_ties) > 1 || continue
+            selected_id = String(strongest.selected.coalition_id)
+            for row in eachrow(strongest.exact_ties)
+                push!(rows, (
+                    election = Int(year),
+                    k = Int(k),
+                    coalition_id = String(row.coalition_id),
+                    coalition_label = String(row.coalition_label),
+                    party_count = Int(row.party_count),
+                    vote_share = Float64(row.vote_share),
+                    seats = Int(row.seats),
+                    r_C = Float64(row.r_C),
+                    selected_after_party_count_tiebreak = String(row.coalition_id) == selected_id,
+                ))
+            end
+        end
+    end
+    isempty(rows) && return DataFrame(
+        election = Int[],
+        k = Int[],
+        coalition_id = String[],
+        coalition_label = String[],
+        party_count = Int[],
+        vote_share = Float64[],
+        seats = Int[],
+        r_C = Float64[],
+        selected_after_party_count_tiebreak = Bool[],
+    )
+    return DataFrame(rows)
+end
+
+# k=0 is constructed and checked against the established interval pipeline
+# before k=1 is evaluated or any new manuscript-facing asset is written.
+ideology_k_gap_2014_k0 = build_k_gap_domain(2014, party_summary_2014, ideology_order_2014_base; k = 0)
+ideology_k_gap_2018_k0 = build_k_gap_domain(2018, party_summary_2018, ideology_order_2018_base; k = 0)
+ideology_k_gap_2022_k0 = build_k_gap_domain(2022, party_summary_2022, ideology_order_2022_base; k = 0)
+for (year, domain, summary_df, ideology_df, intervals) in [
+    (2014, ideology_k_gap_2014_k0, party_summary_2014, ideology_order_2014_base, ideological_intervals_2014),
+    (2018, ideology_k_gap_2018_k0, party_summary_2018, ideology_order_2018_base, ideological_intervals_2018),
+    (2022, ideology_k_gap_2022_k0, party_summary_2022, ideology_order_2022_base, ideological_intervals_2022),
+]
+    validate_k_gap_domain!(domain, summary_df, ideology_df, year, 0)
+    validate_k0_regression!(domain, intervals, year)
+end
+println("All k=0 regression gates passed; constructing k=1.")
+
+ideology_k_gap_2014_k1 = build_k_gap_domain(2014, party_summary_2014, ideology_order_2014_base; k = 1)
+ideology_k_gap_2018_k1 = build_k_gap_domain(2018, party_summary_2018, ideology_order_2018_base; k = 1)
+ideology_k_gap_2022_k1 = build_k_gap_domain(2022, party_summary_2022, ideology_order_2022_base; k = 1)
+for (year, d0, d1, summary_df, ideology_df) in [
+    (2014, ideology_k_gap_2014_k0, ideology_k_gap_2014_k1, party_summary_2014, ideology_order_2014_base),
+    (2018, ideology_k_gap_2018_k0, ideology_k_gap_2018_k1, party_summary_2018, ideology_order_2018_base),
+    (2022, ideology_k_gap_2022_k0, ideology_k_gap_2022_k1, party_summary_2022, ideology_order_2022_base),
+]
+    validate_k_gap_domain!(d1, summary_df, ideology_df, year, 1)
+    validate_nested_domains!(d0, d1, year)
+end
+
+ideology_k_gap_coalitions = vcat(
+    ideology_k_gap_2014_k0,
+    ideology_k_gap_2014_k1,
+    ideology_k_gap_2018_k0,
+    ideology_k_gap_2018_k1,
+    ideology_k_gap_2022_k0,
+    ideology_k_gap_2022_k1;
+    cols = :union,
+)
+sort!(ideology_k_gap_coalitions, [:election, :k, :left_index, :right_index, :gap_count, :omitted_party])
+ideology_k_gap_minimal_majorities = ideology_k_gap_coalitions[ideology_k_gap_coalitions.minimal_seat_majority .== true, :]
+ideology_k_gap_inversions = ideology_k_gap_coalitions[ideology_k_gap_coalitions.inversion .== true, :]
+ideology_k_gap_summary = build_k_gap_summary(ideology_k_gap_coalitions)
+ideology_k_gap_checks = DataFrame(ideology_k_gap_check_rows)
+ideology_k_gap_ties = strongest_tie_diagnostic(ideology_k_gap_coalitions)
+
+write_artifact_csv(joinpath(raw_dir, "ideology_k_gap_coalitions.csv"), ideology_k_gap_coalitions, "raw", "All k=0 and k=1 ideological coalitions with full-precision metrics and domain-relative minimality.")
+write_artifact_csv(joinpath(raw_dir, "ideology_k_gap_minimal_majorities.csv"), ideology_k_gap_minimal_majorities, "raw", "All domain-relative minimal seat-majority coalitions for k=0 and k=1.")
+write_artifact_csv(joinpath(raw_dir, "ideology_k_gap_inversions.csv"), ideology_k_gap_inversions, "raw", "All strict vote-minority seat-majority inversions in the full k=0 and k=1 domains.")
+write_artifact_csv(joinpath(diagnostics_dir, "ideology_k_gap_checks.csv"), ideology_k_gap_checks, "diagnostic", "Fail-loud domain, arithmetic, minimality, nesting, and baseline regression checks for k=0 and k=1.")
+write_artifact_csv(joinpath(diagnostics_dir, "ideology_k_gap_strongest_inversion_ties.csv"), ideology_k_gap_ties, "diagnostic", "Exact strongest-inversion ties retained before the party-count tiebreak.")
+
+ideology_k_gap_summary_csv_path = write_artifact_csv(
+    joinpath(tables_dir, "ideology_k_gap_summary.csv"),
+    ideology_k_gap_summary,
+    "table",
+    "Six-row k=0/k=1 ideological-coalition robustness summary.",
+)
+ideology_k_gap_summary_from_csv = CSV.read(ideology_k_gap_summary_csv_path, DataFrame)
+validate_csv_roundtrip!(
+    ideology_k_gap_summary_from_csv,
+    ideology_k_gap_summary,
+    (
+        :election,
+        :k,
+        :minimal_seat_majority_coalitions,
+        :inversions,
+        :strongest_inversion_coalition,
+        :strongest_inversion_vote_share,
+        :strongest_inversion_vote_share_pct,
+        :strongest_inversion_seats,
+        :strongest_inversion_r_C,
+        :strongest_inversion_vote_deficit_pp,
+        :diagnostic_admissible_coalitions,
+        :diagnostic_exact_strength_tie_count,
+        :diagnostic_exact_strength_tied_coalitions,
+    ),
+    "Ideology k-gap summary table",
+)
+validate_ideology_k_gap_summary_table!(ideology_k_gap_summary_from_csv, ideology_k_gap_coalitions)
+ideology_k_gap_summary_latex_path = write_artifact_text(
+    joinpath(latex_dir, "table_03_ideology_k_gap_summary_tabular.tex"),
+    ideology_k_gap_summary_tabular_latex(ideology_k_gap_summary_from_csv),
+    "latex",
+    "CSV-driven tabularx for the six-row manuscript robustness summary.";
+    rows = nrow(ideology_k_gap_summary_from_csv),
+    columns = 5,
+)
+sync_review_latex_asset(ideology_k_gap_summary_latex_path)
+println("Ideology k-gap summary:")
+show_table(ideology_k_gap_summary)
+
 ideological_interval_inversions_only = ideological_intervals_all_years[ideological_intervals_all_years.coalition_inversion .== true, :]
 minimal_connected_inversions = ideological_intervals_all_years[ideological_intervals_all_years.minimal_connected_inversion .== true, :]
 minimal_connected_inversion_metrics = add_metric_display_columns(minimal_connected_inversions)
@@ -1678,24 +2193,12 @@ table_06_minimal_ideological_interval_inversions = select(
     :majority_status,
 )
 table_appendix_minimal_connected_winning_intervals = appendix_minimal_connected_winning_table(ideological_intervals_all_years)
-ideological_summary_csv_path = write_artifact_csv(joinpath(tables_dir, "table_05_ideological_interval_summary_by_election.csv"), table_05_ideological_interval_summary_by_election, "table", "Ideological interval counts and inversion counts by election.")
-ideological_summary_from_csv = CSV.read(ideological_summary_csv_path, DataFrame)
-validate_csv_roundtrip!(
-    ideological_summary_from_csv,
+legacy_ideological_summary_csv_path = write_artifact_csv(
+    joinpath(tables_dir, "table_05_ideological_interval_summary_by_election.csv"),
     table_05_ideological_interval_summary_by_election,
-    (:election_year, :all_intervals, :seat_majority_intervals, :coalition_inversions, :minimal_inversions),
-    "Ideological summary table",
+    "table",
+    "Legacy exact-connected interval diagnostic retained for baseline auditing; the manuscript summary uses ideology_k_gap_summary.csv.",
 )
-validate_ideological_summary_table!(ideological_summary_from_csv, ideological_intervals_all_years)
-ideological_summary_latex_path = write_artifact_text(
-    joinpath(latex_dir, "table_03_ideological_interval_summary_tabular.tex"),
-    ideological_summary_tabular_latex(ideological_summary_from_csv),
-    "latex",
-    "CSV-driven tabular for manuscript Table 3.";
-    rows = nrow(ideological_summary_from_csv),
-    columns = 5,
-)
-sync_review_latex_asset(ideological_summary_latex_path)
 minimal_inversion_table_csv_path = write_artifact_csv(joinpath(tables_dir, "table_06_minimal_ideological_interval_inversions.csv"), table_06_minimal_ideological_interval_inversions, "table", "Endpoint-minimal ideological interval inversions with rounded q_C, d_C, and r_C display columns.")
 minimal_inversion_table_from_csv = CSV.read(minimal_inversion_table_csv_path, DataFrame)
 validate_minimal_inversion_table!(minimal_inversion_table_from_csv, minimal_connected_inversions)

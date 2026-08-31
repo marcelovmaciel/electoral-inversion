@@ -95,6 +95,81 @@ end
             @test all(combine(groupby(df, [:start_index, :end_index]), nrow => :n).n .== 1)
         end
 
+        @testset "enumerates nested zero-gap and one-gap domains from spans" begin
+            parties = ["A", "B", "C", "D"]
+            summary = _summary(parties, [40, 30, 20, 10], [4, 3, 2, 1])
+            ideology = _ideology(parties)
+            d0 = Processing.ideological_k_gap_coalitions(summary, ideology; k = 0)
+            d1 = Processing.ideological_k_gap_coalitions(summary, ideology; k = 1)
+
+            @test nrow(d0) == 10
+            @test nrow(d1) == 14
+            @test issubset(Set(d0.coalition_id), Set(d1.coalition_id))
+            @test all(d0.gap_count .== 0)
+            @test all(d1.gap_count .<= 1)
+            @test length(unique(d1.coalition_id)) == nrow(d1)
+
+            ac = only(eachrow(d1[(d1.left_endpoint .== "A") .& (d1.right_endpoint .== "C") .& (coalesce.(d1.omitted_party, "") .== "B"), :]))
+            @test ac.coalition_id == "A|C"
+            @test ac.coalition_label == "A--C, omitting B"
+            @test ac.parties == "A, C"
+            @test ac.party_count == 2
+            @test ac.gap_count == 1
+            @test ac.votes == 60
+            @test ac.seats == 6
+        end
+
+        @testset "one-gap minimality uses exact admissible proper subsets" begin
+            parties = ["A", "B", "C"]
+            summary = _summary(parties, [40, 20, 40], [2, 0, 2])
+            ideology = _ideology(parties)
+            d0 = Processing.ideological_k_gap_coalitions(summary, ideology; k = 0)
+            d1 = Processing.ideological_k_gap_coalitions(summary, ideology; k = 1)
+
+            abc0 = only(eachrow(d0[d0.coalition_id .== "A|B|C", :]))
+            abc1 = only(eachrow(d1[d1.coalition_id .== "A|B|C", :]))
+            ac1 = only(eachrow(d1[d1.coalition_id .== "A|C", :]))
+            @test abc0.minimal_seat_majority == true
+            @test abc1.minimal_seat_majority == false
+            @test ac1.minimal_seat_majority == true
+
+            winning = d1[d1.seat_majority .== true, :]
+            for row in eachrow(d1[d1.minimal_seat_majority .== true, :])
+                members = Set(split(row.coalition_id, "|"))
+                @test !any(eachrow(winning)) do candidate
+                    candidate_members = Set(split(candidate.coalition_id, "|"))
+                    length(candidate_members) < length(members) && issubset(candidate_members, members)
+                end
+            end
+        end
+
+        @testset "k-gap inversion is strict at one-half and exposes accounting metrics" begin
+            parties = ["A", "B"]
+            tie = Processing.ideological_k_gap_coalitions(
+                _summary(parties, [50, 50], [3, 1]),
+                _ideology(parties);
+                k = 0,
+            )
+            a_tie = only(eachrow(tie[tie.coalition_id .== "A", :]))
+            @test a_tie.vote_share == 0.5
+            @test a_tie.seat_majority == true
+            @test a_tie.inversion == false
+            @test ismissing(a_tie.vote_deficit_pp)
+
+            strict = Processing.ideological_k_gap_coalitions(
+                _summary(parties, [49, 51], [3, 1]),
+                _ideology(parties);
+                k = 0,
+            )
+            a = only(eachrow(strict[strict.coalition_id .== "A", :]))
+            @test a.inversion == true
+            @test a.vote_deficit_pp ≈ 1.0
+            @test a.q_C ≈ 1.96
+            @test a.d_C ≈ 1.04
+            @test a.r_C ≈ 1.04
+            @test a.R_C ≈ 3 / 1.96
+        end
+
         @testset "arithmetic for votes seats shares quota and seat_diff" begin
             parties = ["A", "B", "C", "D"]
             toy = _summary(parties, [40, 30, 20, 10], [4, 3, 2, 1])
