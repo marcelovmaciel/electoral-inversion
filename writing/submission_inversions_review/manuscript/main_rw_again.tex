@@ -1,0 +1,1344 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1.05in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array,longtable,tabularx}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{csquotes}
+\usepackage{pdflscape}
+\usepackage{placeins}
+
+\usepackage[
+  authordate,
+  backend=biber,
+  doi=true,
+  url=true,
+  isbn=false
+]{biblatex-chicago}
+
+
+\usepackage{hyperref}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  citecolor=blue!50!black,
+  urlcolor=blue!50!black
+}
+
+\graphicspath{{./}}
+
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+
+\newcommand{\Votes}{V}
+\newcommand{\Seats}{S}
+\newcommand{\Quota}{q}
+\newcommand{\Diff}{d}
+\newcommand{\Parties}{P}
+\newcommand{\Coalition}{C}
+\newcommand{\ChamberSeats}{513}
+\newcommand{\MajoritySeats}{257}
+
+\input{accounting_numeric_macros.tex}
+
+\title{Seat Majorities without Vote Majorities:\\[0.3em]Coalition Inversions in Brazil's Chamber of Deputies}
+\author{
+Marcelo V. Maciel\\
+Department of Political Science, University of California, Irvine\\
+Irvine, CA, United States\\
+Corresponding author: mvmaciel@uci.edu\\
+ORCID: 0000-0001-7666-8494 }
+\date{}
+
+
+\addbibresource{refs2.bib}
+
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  Proportional representation is usually evaluated party by party, by comparing
+  each party's share of seats with its share of votes. Yet fragmented
+  legislatures are governed through combinations of parties, so small
+  party-level deviations can become consequential when parties are combined.
+  Brazil provides a useful setting because the Chamber of Deputies is assembled
+  from twenty-seven separate district elections. Several institutional steps
+  separate national votes from final party seat totals, and no national
+  compensatory allocation reconciles them. I ask whether politically meaningful
+  sets of parties can hold a legislative majority despite receiving less than
+  half of all valid federal-deputy votes nationwide, a condition known as
+  coalition inversion. Using the 2014, 2018, and 2022 elections, I follow the
+  party sets represented in presidential cabinets and examine potential
+  coalitions restricted by ideological proximity. Cabinet inversions appear
+  following all three elections. Among minimal connected winning coalitions,
+  inversions occur in 2014 and 2022; under the one-gap relaxation, minimal
+  inversions also appear in 2018. In 2022, one compact
+  bloc of ideologically adjacent parties combined 45.35 percent of the vote with
+  258 of 513 seats. Party-level deviations from proportionality can therefore
+  have a distinct coalition-level consequence: they can determine which
+  combinations of parties command a legislative majority.
+\end{abstract}
+
+\section{Introduction}
+
+Electoral systems translate votes into seats. Under proportional representation,
+the quality of that translation is usually assessed by comparing each party's
+share of the vote with its share of the
+seats \parencite{kaminski26_propor_repres_primer}. The comparison is
+indispensable, but it stops at the level of the units that contest the election.
+In fragmented legislatures, no single party need command a majority, and the
+majorities that organize government and legislative action are assembled from
+several parties.
+
+Combining parties changes the significance of their individual deviations from
+proportionality. One party may receive slightly more seats than its national
+vote share implies, while another receives slightly fewer. When parties are
+grouped together, these deviations can cancel or reinforce one another. A set of
+parties may therefore cross the legislative majority threshold before its
+combined vote share reaches one half, leaving the complementary set with more
+votes but fewer seats. This configuration is a coalition inversion: a set of
+parties holds a seat majority while receiving less than half of all valid
+national votes cast for the legislature. 
+
+
+\textcite{kurrild-klitgaard13_elect_inver_coalit_propor_repres} documents empirical cases of coalition inversions in Danish government
+formation. \textcite{miller14_elect_inver_under_propor_repres} establishes the more general result that inversions remain
+possible even when seats are allocated in a single national constituency,
+without an explicit seat threshold, and by a highly proportional formula.
+Because seats must be assigned in whole numbers, party seat shares will
+generally depart slightly from exact proportionality. Once positive and negative
+party-level deviations exist, some combinations of parties can reverse the vote
+and seat majorities. These results settle the existence question. They do not
+show how coalition inversions appear when national party seat totals are
+themselves assembled from many district elections.
+
+Brazil provides such a setting. The Chamber of Deputies is not formed by
+applying one proportional allocation to national party votes. Its seats are
+allocated separately across the twenty-six states and the Federal District.
+District magnitudes and electoral weights vary, electoral rules and the units
+over which votes were pooled changed across the three elections, and party
+support is distributed unevenly across the country. Several institutional and
+geographical mediations therefore stand between a party's national vote share
+and its final national seat share \parencite{nicolau2006openlist,samuelsSnyder2001value,bochsler2026winners}.
+
+This institutional structure changes the substantive problem relative to
+Miller's purified benchmark. Party-level deviations are no longer produced only
+by rounding a single national allocation. They emerge as the national outcome of
+twenty-seven district-level translations operating under heterogeneous
+conditions. The organizing question is therefore: when do these party-level
+deviations combine so that a politically meaningful set of parties holds a
+legislative majority without a national vote majority? The contribution lies in
+extending the established inversion result to this multidistrict setting and
+showing how the resulting party-level seat differentials can aggregate across
+coalitions and change majority status.
+
+The Chamber contains an enormous number of mathematically possible party
+subsets, most of which have little political meaning. Realized cabinet
+coalitions provide the first empirical domain. Brazilian presidents normally
+distribute cabinet offices among several parties, and changes in ministerial
+participation create successive party sets during a legislative term
+\parencite{abranches1988presidencialismo,figueiredo2000presidential,pereira2004cost}. Each change may produce a new realized party set. Comparing
+that set's Chamber seats with the votes received by its members in the
+corresponding election shows when a cabinet coalition held a legislative
+majority without a national vote majority. 
+
+Cabinets are politically realized, but they are also selective and may combine
+parties separated by substantial ideological distance. A second domain asks
+whether the same aggregation problem appears among potential coalitions
+disciplined by ideological proximity. The baseline uses minimal connected
+winning coalitions: contiguous blocs in the election-year left-right order that
+hold a seat majority and cannot be narrowed further while retaining it \parencite{axelrod1970conflict}.
+Exact connectedness is a deliberately restrictive baseline. Since party
+positions are estimated and actual coalitions need not include every
+intermediate party, a one-gap sensitivity extension permits one intermediate
+party to be omitted. The one-gap domain therefore provides a nested relaxation of the
+no-gap requirement while preserving ideological proximity as the organizing
+restriction. Across both domains, the relevant quantity is the coalition's
+accumulated seat differential, defined as the difference between its seats and
+the number implied by its national vote share. That differential admits an exact
+algebraic decomposition into a within-district term and a
+between-district term. The terms make cases comparable by showing
+whether the two components reinforce or offset one another.
+
+The empirical pattern spans both coalition domains and all three election cycles. Realized
+cabinet inversions appear in the mandates generated by the 2014, 2018, and 2022 elections.
+Among minimal connected winning coalitions, exact connectedness yields inversions in 2014
+and 2022, including a compact 2022 right-side bloc with 45.35 percent of the vote and 258
+seats. The 2018 null under exact connectedness does not survive the one-gap relaxation.
+The same inversion classification rests on different combinations of the two components.
+They reinforce one another in some cases, while between-district weighting partly offsets a
+positive within-district term in others and, in one 2022 case, more than compensates for a
+negative one. 
+
+The remainder of the article follows the order of these transformations.
+Section~\ref{sec:brazil-system} explains how Brazil's multidistrict open-list system
+converts district votes into the national party seat totals that coalitions later combine.
+Section~\ref{sec:mea} defines coalition inversion and the comparative decomposition, and
+Section~\ref{sec:data} describes the data. Sections~\ref{sec:party}--\ref{sec:decomposition}
+move from party-level deviations to realized cabinet coalitions, ideologically constrained
+coalitions, and the comparison of decomposition patterns. Section~\ref{sec:disc} discusses
+the implications, and the final section concludes.
+
+
+
+\section{Brazil's multidistrict open-list proportional system}
+\label{sec:brazil-system}
+
+
+Before coalition majorities can be compared, one institutional question must be
+answered: how do twenty-seven separate electoral contests produce the national
+party seat distribution that coalitions later combine? Elections to Brazil's
+Chamber of Deputies take place inside the states, not in a single national
+constituency. Each of the twenty-six states and the Federal District forms a
+separate electoral circumscription for federal-deputy elections\footnote{The
+  Federal District is therefore one ordinary eight-seat district within this
+  architecture.}. Seats are allocated independently in these twenty-seven
+districts and together compose the 513-member Chamber. No national compensatory
+calculation revises the party totals once the district counts have been
+completed \parencite{brasil1993lc78,camaraDeputadosNumeroEstados,tse2021res23677}.
+
+The number of seats at stake varies sharply across districts. The constitutional
+floor is eight the ceiling is seventy. Eleven districts elect eight deputies,
+the median magnitude is ten, the mean is nineteen, and São Paulo alone elects
+seventy. This distribution matters because the mechanical environment faced by
+parties is usually much smaller than the national size of the Chamber suggests.
+This distribution matters because the mechanical environment faced by parties in
+most districts is much smaller than the national size of the Chamber suggests.
+Much of Brazilian proportional representation operates near the lower end of the
+district-magnitude range, where each seat is a relatively large indivisible
+share of the delegation and the effective barrier to representation tends to be
+higher. Larger districts offer a more permissive environment, but because seats
+are allocated independently across states, district-level representational
+shortfalls are not compensated at the national level.
+
+Within each district, voters encounter an open-list election. They may enter the identifying number of an individual candidate or cast a vote for a party label. A candidate vote performs two functions at once. It contributes to the aggregate vote of the party, electoral coalition, or federation through which the candidate competes, and it raises that candidate's position within the relevant open list. A party-label vote contributes to the first calculation but not to the ranking among candidates. That is, votes first determine how many seats an electoral list receives. Nominal votes then determine which candidates within that list take the seats, subject to the individual eligibility requirements in force for the election. A candidate can therefore benefit from votes cast for copartisans or electoral partners, but cannot ordinarily occupy a seat unless the list to which the candidate belongs wins one \parencite{nicolau2006openlist,brasil1997elections}.
+
+
+The count begins by aggregating all valid candidate and party-label votes
+credited to the relevant electoral unit in district $d$. Depending on the
+election, that unit may be a party, a proportional electoral coalition, or a
+party federation. The institutional differences among these arrangements are
+discussed below. The electoral quotient, conventionally denoted by $QE$, is
+obtained by dividing the district's valid proportional-election vote by its
+magnitude and applying the statutory rounding rule. The party quotient then
+divides the vote total of each electoral unit by $QE$ and discards the
+fractional part:
+\[
+QE_d
+=
+\operatorname{round}_{\mathrm{stat}}
+\!\left(\frac{V_d}{M_d}\right),
+\qquad
+QP_{\ell d}
+=
+\left\lfloor
+\frac{v_{\ell d}}{QE_d}
+\right\rfloor .
+\]
+Here $V_d$ is the total valid vote in district $d$, $M_d$ is its district
+magnitude, and $v_{\ell d}$ is the vote credited to electoral unit $\ell$.
+The party quotient determines the unit's initial seat allocation, subject to
+the candidate-level eligibility requirements applicable in that election
+\parencite[arts.~106--108]{codigoEleitoral1965}.
+
+Because the party quotient discards fractional remainders, this first stage
+normally leaves seats unallocated. The remaining seats are distributed
+sequentially through the statutory highest-averages procedure. If electoral
+unit $\ell$ has already been allocated $s_{\ell d}$ seats, its value for the
+next seat is
+\[
+m_{\ell d}
+=
+\frac{v_{\ell d}}{s_{\ell d}+1}.
+\]
+The denominator includes the seat currently being allocated, so
+$m_{\ell d}$ is the unit's average number of votes per seat if it were to
+receive that additional seat. The seat goes to the eligible unit with the
+highest value, its seat total is updated, and the comparison is repeated until
+all seats in the district have been allocated. The resulting priority quotients
+follow the Jefferson--D'Hondt sequence
+$v_{\ell d}/1,v_{\ell d}/2,v_{\ell d}/3,\ldots$. The D'Hondt highest-averages sequence governs the allocation of
+remaining seats, but it operates after the electoral- and party-quotient stage
+and subject to the election-specific eligibility rules described below
+\parencite[art.~109]{codigoEleitoral1965,nicolauSchmitt1995}.
+
+
+The elections differed in the legal thresholds governing access to
+seats and the remainder allocation. In 2014, there was no fixed
+candidate-level threshold, but only parties or proportional coalitions that
+reached the electoral quotient could compete for remaining seats
+\parencite[art.~186, \S 2]{tse2013res23399}. In 2018, candidates ordinarily
+needed at least 10 percent of the electoral quotient to occupy a seat, while
+all parties and coalitions could enter the remainder competition regardless of
+whether they had reached the quotient, provided an eligible candidate
+remained; once no such candidate remained, the final seats were allocated by
+highest averages without that nominal-vote minimum
+\parencite[arts.~7--10]{tse2017res23554}. Under the rules applied in the
+original 2022 allocation, the 10 percent candidate threshold remained for
+initial seats, while the first remainder stage required parties or federations
+to reach 80 percent of the electoral quotient and candidates to reach 20
+percent; the final highest-averages stage retained the party-level requirement
+but not the 20 percent candidate threshold
+\parencite[arts.~8--11]{tse2021res23677}. These changes affected eligibility
+for marginal seats rather than the basic allocation sequence described above.
+
+Moreover, proportional electoral coalitions, or \emph{coligações proporcionais}, were
+part of the 2014 and 2018 elections. They were formed within the electoral
+circumscription, which for the Chamber meant a state or the Federal District. A
+party could consequently enter different proportional arrangements in different
+states, subject to the legal restrictions in force for the election. These were
+not national alliances whose composition automatically carried across all
+twenty-seven contests \parencite{nicolau2006openlist,tse2013res23399,tse2017res23554}. Proportional coalitions member parties
+legally operated as a joint open list when votes were converted into seats.
+Candidate votes and party-label votes credited to any member entered the
+coalition's district total; the quotient and highest-averages calculations then
+assigned seats to the coalition as a whole. Those seats were occupied by the
+highest nominal vote-getters across the combined list, regardless of the member
+party to which they belonged. A candidate from one party could therefore be
+elected partly because votes cast for candidates or labels of another coalition
+member raised the joint total \parencite{nicolau2006openlist,tse2013res23399,tse2017res23554}. However, pooling did not make
+the parties disappear. Candidates remained affiliated with member parties, used
+party identifiers on the ballot, and campaigned in a setting where party labels
+and candidate numbers remained central. The coalition changed the
+pool within which votes were translated into seats; it did not convert its
+members into a single political organization. Nor did it promise a stable
+proportional return to each partner. The number of seats won by the joint list
+was collective, while the distribution of those seats among member parties
+depended on how their candidates ranked in nominal votes across the coalition.
+
+This arrangement has a clear family resemblance to list apparentement because
+several parties combine votes before the seat total is settled. The canonical
+apparentement studied by \textcite{pukelsheimLeutgaeb2013apparentements}, however, is a two-level apportionment: the
+alliance first receives seats collectively, after which those seats are
+apportioned among its component lists. Brazil instead used a single joint open
+list, with candidate nominal votes selecting the winners across party
+boundaries. Vote pooling can improve the electoral position of allied lists,
+while the allocation of the resulting advantage among particular partners is
+highly sensitive to the configuration of votes and alliances and can acquire a
+lottery-like quality. In Brazil, too, vote pooling could improve the electoral prospects of an alliance or of particular member parties, but any member-party gains depended on the distribution of candidate votes within the joint list rather than on a fixed rule allocating bonus seats to coalition partners.
+
+Constitutional reform ended proportional electoral coalitions before the 2022
+general election, and party federations became the available form of multiparty
+pooling in proportional contests
+\parencite{brasil2017ec97,brasil1995parties}. Three federations competed that
+year: Federação Brasil da Esperança, joining PT, PCdoB, and PV; Federação PSDB
+Cidadania; and Federação PSOL REDE
+\parencite{tse2026registeredFederations}. Like the former coligações, a
+federation pooled its members' votes to determine how many seats its common list
+received, while nominal votes determined which candidates occupied those seats.
+The resulting seat totals of the constituent parties were therefore not
+independent proportional allocations from their own vote totals, but ex post
+outcomes of competition within the pooled list.
+
+The principal difference from proportional electoral coalitions lies in the
+federation's durability and organizational scope. A federation operates
+nationally and, in principle, persists for at least four years, whereas the
+former proportional coalitions were temporary electoral arrangements. This
+persistence carries some procedural consequences inside Congress, including
+common representation for certain leadership and committee-allocation purposes,
+but it does not merge the constituent parties: they retain separate identities
+and organizational autonomy
+\parencite{brasil1995parties,tse2021res23670,tse2022federacoes}. Federations
+therefore add another institutional mediation between party votes and the
+party-level seat totals ultimately observed in the Chamber, rather than
+replacing those parties as political actors.
+\parencite{brasil1995parties,tse2021res23670,tse2022federacoes,tse2019res23609}.
+
+
+National proportionality provides a common baseline against which to assess how Brazil’s layered vote-to-seat process generates representational deviations and when those deviations become majority-changing as parties are recombined into coalitions. It treats each party's national share of valid federal-deputy votes as an entitlement to the same share of the Chamber's 513 seats. Under this benchmark, a party receiving $v_i/V$ of the national vote has a proportional quota of $513(v_i/V)$ seats. Brazil's actual system never performs this national allocation. 
+
+Several mediations therefore stand between a party's national vote share and its national seat share. Within each district, finite magnitude, the quotient and highest-averages calculations, legal eligibility thresholds, and the number and relative strength of competing electoral units shape the conversion of votes into seats. Electoral pooling adds a further mediation by changing both the vote total on which seats are allocated and, through the common candidate list, the eventual distribution of those seats among member parties. These arrangements varied across districts in 2014 and 2018 and became nationally fixed through federations in 2022.
+
+The national seat distribution then aggregates twenty-seven independently determined district outcomes without a compensatory tier. Chamber seats are apportioned by population, but the constitutional floor of eight and ceiling of seventy prevent exact population-to-seat equality across states \parencite{samuelsSnyder2001value,brasil1993lc78}. Turnout and valid-vote rates also differ across elections and districts, so a seat can correspond to different numbers of valid votes in different states. Because parties distribute their support unevenly across the country, national vote shares can therefore be assembled from geographically different configurations with different representational consequences. Electoral geography interacts with district seat weights and local competitive conditions before the resulting party seats are summed nationally. The resulting disproportionality need not have a single source: allocation rules, district magnitude, malapportionment and electoral weight, electoral geography, and party competition constitute distinct channels through which party vote and seat shares can diverge \parencite{bochsler2026winners}.
+
+This layered translation occurs in an unusually fragmented party environment. Measured by the Laakso--Taagepera index, the effective numbers of electoral parties were 14.11 in 2014, 18.02 in 2018, and 12.34 in 2022; the corresponding effective numbers of parliamentary parties were 13.33, 16.41, and 9.91 \parencite{laakso1979effective}. The exact number of allocation units was not identical to the number of party labels, especially when district coalitions or national federations pooled votes. Even so, each election produced a Chamber in which legislative majorities had to be assembled across numerous partisan units. Fragmentation makes the political consequences of modest party-level gains and losses depend on how those parties are combined.
+
+The national party seat totals produced by this process enter a presidential
+system in which governing capacity ordinarily depends on multiparty
+arrangements. Brazilian coalitional presidentialism links the presidency to
+combinations of parties across cabinet and Congress: ministries are distributed
+among several parties, while executive--legislative coordination is organized
+through agreements among them
+\parencite{abranches1988presidencialismo,figueiredo2000presidential,pereira2004cost}.
+The Chamber assembled from twenty-seven district elections therefore supplies
+the parliamentary resources from which governing coalitions are constructed.
+Party-level representation is politically consequential not only in isolation,
+but also through the combinations of parties that can command a legislative
+majority.
+
+National proportionality provides an analytical baseline for examining this
+second stage. The realized party seat totals incorporate the effects of rounding,
+highest averages, district magnitude, eligibility requirements, electoral
+pooling, apportionment, turnout, valid-vote variation, electoral geography, and
+district-level competition. Comparing those totals with national proportional
+quotas identifies the positive and negative representational deviations carried
+by each party without attributing them to any single mechanism. Once parties
+are combined into politically relevant coalitions, these deviations may reinforce
+or offset one another. The next section formalizes this aggregation and states
+the condition under which the accumulated deviation carries a vote-minority
+coalition across the Chamber's 257-seat majority threshold.
+
+% ============================================================================
+% NEW SECTION 3
+% ============================================================================
+
+\section{Coalition inversions, domains, and measurement}
+\label{sec:mea}
+
+
+
+The national seat total received by each party need not coincide with the quantity implied by exact national proportionality. A party may finish with a small positive seat deviation, while another finishes with a small negative one. In isolation, either difference may have little political significance. Coalition formation changes the scale of the comparison because each member brings its deviation into the combined party set. Positive and negative deviations may cancel, but they may also reinforce one another. A set of parties can therefore cross the Chamber's 257-seat majority threshold before its combined vote reaches one half of the national total. The complementary set then has more votes but fewer seats. This is the basic mechanism of coalition inversion.
+
+The possibility of coalition inversions under proportional representation is already established by Kurrild-Klitgaard \parencite{kurrild-klitgaard13_elect_inver_coalit_propor_repres} and Miller \parencite{miller14_elect_inver_under_propor_repres}. The present analysis extends this agenda to a distinct institutional setting, where national party seat totals emerge from twenty-seven independent district allocations and several additional electoral mediations, and to coalition domains defined by realized cabinet participation and ideological proximity.
+
+A fragmented legislature permits an enormous number of mathematically possible
+party subsets. An unrestricted search would be exhaustive, but it would place
+politically remote combinations on the same footing as combinations that were
+realized in government or structured by recognizable political proximity. The
+coalition space is therefore restricted in two different ways. Observed cabinets
+identify realized governing party combinations. Ideological connectedness
+supplies a disciplined domain of potential combinations. Taken together, they use coalition inversion as a lens on two different features of the political system: how governing coalitions recombine party-level representational advantages in practice, and where potential vote-minority seat majorities are located within the ideological structure of the legislature.
+
+Cabinet coalitions are substantively meaningful because Brazilian presidents ordinarily govern through multiparty arrangements. Cabinet participation records a party combination that was not merely arithmetically possible but institutionally realized in executive government \parencite{abranches1988presidencialismo,figueiredo2000presidential,pereira2004cost}. The relevant representational question is, thus, whether the members of the party set holding ministries collectively possessed a Chamber majority despite receiving less than half of the valid federal-deputy vote in the election that produced that legislature.
+
+This domain must be followed across the legislative term. Coalitional presidentialism is dynamic: parties enter and leave the government, changing the set represented in cabinet while the underlying election-year vote and seat distribution remains fixed. These transitions generate successive realized combinations of the same party-level differentials. Cabinet participation is used only to delimit those observable governing party sets. This provides a useful setting for studying coalition inversion because changes in inversion status can occur without any change in the underlying electoral result: what changes is the particular combination of parties across which the fixed vote-seat differentials are aggregated. The cabinet sequence therefore reveals whether, and for how long, politically realized recombinations of the same legislature cross the majority threshold without a corresponding vote majority.
+ 
+Observed cabinets reveal which combinations entered government, but they cover
+only a small portion of the majority configurations permitted by the
+legislature. A systematic analysis of potential coalitional majorities therefore
+requires a larger domain. Ideological proximity restricts this combinatorial
+space while and shows whether vote-minority seat majorities can be assembled
+from ideologically coherent blocs and where such seat-efficient majority regions
+lie in the party system. The ideological domain, thus, extends the inversion
+analysis from arbitrary party subsets to politically structured potential
+coalitions.I use Axelrod's connected-coalition criterion as the baseline: an
+admissible coalition must occupy a contiguous interval in the ideological
+ordering \parencite{axelrod1970conflict}. The criterion is not intended as a
+model of Brazilian government formation. It defines a politically structured
+domain of potential coalitions in which ideological distance constrains which
+party combinations are compared.
+
+Within this domain, I focus on minimal connected winning coalitions. A connected
+coalition is minimal winning if it holds at least 257 seats but no proper
+connected subset also holds a majority. Minimality removes larger intervals that
+are winning only because they contain a smaller winning coalition and isolates
+the inclusion frontier at which connected party sets acquire majority status.
+The inversion question can then be asked directly at that frontier: which of
+these ideologically coherent seat majorities still fall short of a national vote
+majority? Exact contiguity is a demanding admissibility condition, particularly
+when party positions are estimated and neighboring parties may occupy similar
+locations. I therefore consider a nested one-gap relaxation that permits one
+party inside the coalition's ideological span to be omitted to assess the
+sensitivity of the ideological-coalition results to the exact no-gap requirement
+while preserving ideological proximity as the organizing principle.
+
+\subsection{Measurement and data}
+
+The coalition mechanism can now be stated formally. Let \(P\) denote the set of parties in a federal-deputy election. For each party \(i\in P\), let \(v_i\) be its national valid vote total and \(s_i\) its Chamber seats. With
+\[
+V=\sum_{i\in P}v_i
+\qquad\text{and}\qquad
+S=513,
+\]
+exact national proportionality assigns party \(i\) the quota
+\[
+q_i=S\frac{v_i}{V}.
+\]
+The party's seat differential is
+\[
+d_i=s_i-q_i.
+\]
+A positive differential means that the party receives more seats than its national vote share implies, while a negative differential means that it receives fewer. Since party seats and party quotas both sum to \(S\), the differentials sum to zero. These positive and negative values are the party contributions that coalition formation combines.
+
+For a coalition \(C\subseteq P\), its vote total, seat total, proportional quota, and seat differential are
+\[
+v_C=\sum_{i\in C}v_i,
+\qquad
+s_C=\sum_{i\in C}s_i,
+\]
+\[
+q_C=S\frac{v_C}{V},
+\qquad
+d_C=s_C-q_C.
+\]
+Because coalition votes, seats, and quotas are obtained by summing over members,
+\[
+d_C
+=s_C-q_C
+=\sum_{i\in C}\left(s_i-q_i\right)
+=\sum_{i\in C}d_i.
+\]
+This equality is central to the argument. The coalition's departure from exact national proportionality is produced by adding the positive and negative differentials of its member parties. A party with a negative contribution can belong to an inverted coalition, provided that the positive contributions elsewhere in the set more than offset it.
+
+A coalition inversion occurs when the party set receives less than half of the national valid federal-deputy vote but controls at least 257 Chamber seats:
+\[
+\frac{v_C}{V}<\frac{1}{2}
+\qquad\text{and}\qquad
+s_C\geq257.
+\]
+For a vote-minority coalition, the seat condition can be written as
+\[
+d_C\geq257-q_C.
+\]
+The right-hand side is the number of seats separating the coalition's exact proportional quota from a Chamber majority. An inversion occurs when the coalition's accumulated positive differential is large enough to close that gap. Since \(C\) and its complement \(\bar C\) partition both the election-year party set and the 513 seats,
+\[
+\frac{v_C}{V}<\frac{1}{2},\ s_C\geq257
+\quad\Longleftrightarrow\quad
+\frac{v_{\bar C}}{V}>\frac{1}{2},\ s_{\bar C}\leq256.
+\]
+The criterion therefore identifies a reversal between the coalition and its complement\footnote{This structure differs from Siaroff's
+\parencite{siaroff2003spurious} distinction between manufactured and
+spurious majorities. A manufactured majority occurs when the vote-leading
+party has less than half of the vote but receives a seat majority; a spurious
+majority occurs when the seat-majority party received fewer votes than another
+party. Coalition inversion necessarily has the stronger reversal structure.
+Because $C$ and its complement $\bar C$ exhaust both votes and seats,
+$v_C<1/2<s_C/S$ implies that $\bar C$ has a vote majority but a seat
+minority. The outcome is therefore analogous simultaneously to a spurious
+majority for $C$ and an artificial minority for $\bar C$. Siaroff's units,
+however, are parties or electoral alliances treated as parties, whereas the
+objects considered here are sets of parties. I therefore retain the term
+\emph{coalition inversion}.}. Throughout the article, \(V\) includes all valid federal-deputy votes rather than only votes cast for seat-winning parties or another restricted vote total.
+
+Representation ratios express the same departures in relative rather than absolute terms \parencite{taagepera1980proportionality}. At the party and coalition levels,
+\[
+R_i=\frac{s_i/S}{v_i/V},
+\qquad
+R_C=\frac{s_C/S}{v_C/V}
+=\frac{s_C}{q_C}
+=1+\frac{d_C}{q_C}.
+\]
+A value of one denotes exact proportionality, a value above one denotes overrepresentation, and a value below one denotes underrepresentation. Parties receiving votes but no seats have \(R_i=0\). The coalition ratio is also the quota-weighted mean of its members' ratios,
+\[
+R_C=\sum_{i\in C}\frac{q_i}{q_C}R_i.
+\]
+The ratios permit comparisons across parties and coalitions of different sizes. The differentials remain the more direct quantities for the majority-threshold question because they measure the relevant departure in seats.
+
+The national coalition differential admits an exact algebraic decomposition. Let \(v_{Cd}\) and \(s_{Cd}\) denote the coalition's votes and attributed seats in district \(d\), and let \(V_d\) and \(S_d\) be the corresponding district totals. The within-district allocation component is
+\[
+A_C=
+\sum_d
+\left(
+ s_{Cd}-S_d\frac{v_{Cd}}{V_d}
+\right),
+\]
+and the between-district weighting component is
+\[
+B_C=
+\sum_d
+S_d\frac{v_{Cd}}{V_d}
+-S\frac{v_C}{V}.
+\]
+Adding the two terms yields
+\[
+d_C=A_C+B_C.
+\]
+The first component compares the coalition's attributed seats in each district with the seats implied by exact proportionality within that district, then sums the deviations nationally. The second compares two proportional benchmarks: the coalition's district vote shares aggregated with the actual distribution of Chamber seats across districts, and the quota obtained by applying exact proportionality once to its national vote share.
+
+The between-district weighting component therefore combines district seat weights, turnout and valid-vote variation, and the geographic distribution of coalition support. Malapportionment can contribute to this term, but it does not exhaust it. The decomposition is descriptive rather than causal. Several electoral mechanisms described in Section~\ref{sec:brazil-system} enter each component, so neither term identifies the independent effect of a particular rule \parencite{bochsler2026winners}. Whereas \textcite{wada24_unified_approac_to_measur_unequal_repres} address the broader decomposition of unequal representation, the present construction is tailored to the coalition differential relevant to majority status. Member-party \(d_i\) values likewise identify positive and negative party contributions to \(d_C\), not party-specific causal effects.
+
+
+
+Axelrod's connected-coalition criterion provides the baseline restriction on
+the potential-coalition space \parencite{axelrod1970conflict}. Let
+\(p_1,\ldots,p_n\) denote the fixed election-year ideological order. For any
+nonempty coalition \(C\), let \(\operatorname{span}(C)\) contain every party
+between its leftmost and rightmost members, and define
+\[
+g(C)=\left|\operatorname{span}(C)\setminus C\right|,
+\qquad
+\mathcal D_k=\{C:g(C)\leq k\}.
+\]
+The quantity \(g(C)\) counts the parties omitted from inside the coalition's
+ideological span. The exact-connected baseline, \(\mathcal D_0\), therefore
+contains only contiguous intervals. The one-gap domain, \(\mathcal D_1\),
+also admits intervals from which a single interior party has been omitted.
+This relaxation preserves ideological proximity as the organizing restriction
+while preventing one intermediate party from determining admissibility.
+Because the underlying party order is held fixed, it tests sensitivity to
+exact connectedness rather than to the measurement of party positions itself.
+
+Within each domain, I focus on the inclusion frontier at which admissible
+coalitions first acquire a Chamber majority. A coalition
+\(C\in\mathcal D_k\) is a minimal seat-majority coalition if
+\[
+s_C\geq257
+\qquad\text{and there is no}\qquad
+C'\subsetneq C
+\quad\text{with}\quad
+C'\in\mathcal D_k
+\quad\text{and}\quad
+s_{C'}\geq257.
+\]
+For \(k=0\), these are Axelrod's minimal connected winning coalitions. For
+\(k=1\), the same criterion is applied within the enlarged one-gap domain.
+Minimality is therefore relative to the admissible domain: a winning proper
+subset outside \(\mathcal D_1\) does not make a coalition nonminimal within
+\(\mathcal D_1\). The inversion analysis then asks which minimal
+seat-majority coalitions also fall short of a national vote majority.
+
+\subsection{Data and operationalization}
+\label{sec:data}
+
+The empirical construction follows the objects defined above. Election records supply party votes and seats, cabinet records delimit realized coalitions, and party classifications delimit the ideologically constrained potential-coalition domain. Each resulting party set is evaluated by its national vote share, seat total, proportional quota, seat differential, representation ratio, and inversion status.
+
+
+
+Vote and seat data for the 2014, 2018, and 2022 federal-deputy elections come from the Tribunal Superior Eleitoral, accessed through the \texttt{electionsBR} package \parencite{electionsbr}.\footnote{The 2022 seat vector uses the official electoral data available when the dataset was frozen. Subsequent judicial decisions produced additional retotalizations and altered a small number of party seats. Those later revisions are not incorporated, so all 2022 claims refer to this fixed data vintage.} The national vote total \(v_i\) includes valid candidate votes and party-label votes credited to party \(i\) under its election-year label.\footnote{For 2014, the vote measure is \texttt{QT\_VOTOS\_NOMINAIS + QT\_VOTOS\_LEGENDA}. For 2018 and 2022, it is \texttt{QT\_VOTOS\_NOMINAIS\_VALIDOS + QT\_TOTAL\_VOTOS\_LEG\_VALIDOS}.}
+
+Party labels and electoral allocation units are not identical in every election. In 2014 and 2018, many district seats emerged from joint open lists formed by proportional electoral coalitions. The elected deputies are subsequently attributed to their member parties, allowing national party vote totals, seat totals, quotas, and differentials to be constructed even though the member parties did not receive separate within-coalition seat allocations. In 2022, federations pooled member-party votes and candidates for electoral allocation. Member-party vote and seat totals are retained because cabinet participation and ideological classifications are observed at the party level. Section~\ref{sec:brazil-system} supplies the institutional details; here the distinction serves only to connect the electoral records to the party-level quantities used in the coalition analysis.
+
+
+
+Cabinet composition is reconstructed from the Brazilian Wikipedia cabinet-member lists for the Dilma Rousseff, Michel Temer, Jair Bolsonaro, and Lula III administrations. The appointment records identify the office, incumbent, party label, entry date, and exit date. A cabinet period is defined as an interval during which the set of parties holding ministries or ministry-level offices remains unchanged. A party's entry or exit begins a new period, even when the corresponding election-year vote and seat vector remains the same.
+
+The 2014 election is linked to cabinet periods from January 1, 2015 through December 31, 2018; the 2018 election to periods from January 1, 2019 through December 31, 2022; and the 2022 election to the observed Lula III period from January 1, 2023 through March 19, 2026. Cabinet labels are harmonized and translated to the party labels used in the election that produced the corresponding Chamber delegation. Coalition votes and seats are then obtained by summing the election-year party totals for the cabinet party set. One-to-one renames, party fusions, and the complete translation tables remain documented in the replication materials.\footnote{Further implementation details are available in the replication repository: \url{https://anonymous.4open.science/r/electoral-inversion-B6B5/README.md}.}
+
+
+
+The ideological coalition domains are constructed from a fixed left--right
+ordering of the parties contesting each election. The 2014 and 2018 orders
+use the party classifications of \textcite{bolognesi2023nova}. For 2022, I
+use the later 2018--2022 classification, operationalized through the 2025
+data release and associated article
+\parencite{bolognesi2025dataverse,bolognesi2026desaparecimento}.
+These classifications supply the election-year party orders used to construct the minimal-connected winning inversions.
+
+\section{Results}
+
+The coalition analysis begins with party-level seat differentials. Table
+\ref{tab:party-diffs} reports selected large positive and negative differentials
+by election.  
+
+\begin{table}[htbp]
+\centering
+\caption{Largest party-level seat differentials by election}
+\label{tab:party-diffs}
+\small
+\input{table_01_party_differential_tabular.tex}
+\begin{flushleft}
+\footnotesize Notes: Positive values indicate that the party received more seats than its national vote quota. The table only reports selected large positive and negative differentials.
+\end{flushleft}
+\end{table}
+
+The pattern is not the same across years. In 2014, the largest positive
+differentials are concentrated in parties that later enter or surround the
+Temer-period coalitions, especially PMDB, PSD, PTB, PR, and PP. In 2018,
+several parties associated with the Bolsonaro congressional support base are
+overrepresented, and the PSC-inclusive coalitions in 2021.3 and 2022.1
+accumulate exactly enough seats to become Chamber majorities. In 2022, PL,
+already the largest party in vote share, has the largest positive differential
+reported in the table,
+followed by UNIÃO, while PP and PSD are also overrepresented. This makes the
+2022 right-side exact-connected interval especially consequential.
+
+Figure~\ref{fig:vote-seat} examines whether party-level representational
+advantages are systematically associated with party size. Each point plots a
+party's representation ratio, $R_i$, against its national federal-deputy vote
+share. The horizontal reference line at $R_i=1$ denotes exact proportionality.
+The profile therefore makes visible whether overrepresentation and
+underrepresentation are concentrated among smaller parties, larger parties, or
+neither.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{party_representation_profile.pdf}
+\caption{Party-level representation profiles, 2014, 2018, and 2022}
+\label{fig:vote-seat}
+\begin{flushleft}
+\footnotesize Notes: The representation ratio is
+$R_i=(s_i/513)/(v_i/V)$. Values above one indicate overrepresentation,
+values below one indicate underrepresentation, and parties receiving votes
+but no seats appear at zero.
+\end{flushleft}
+\end{figure}
+
+The representation profiles do not reveal a stable party-size relationship
+across the three elections. In 2014, representation ratios are dispersed on both
+sides of proportionality across much of the party-size distribution. Relatively
+small parties can be either substantially overrepresented or underrepresented,
+while some of the largest parties also fall below proportionality. A clearer
+size gradient emerges in 2018.In the 2022 data, the pattern is considerably more
+structured: all parties with more than 5 percent of the national vote are
+overrepresented, whereas all parties between 3 and 5 percent are
+underrepresented. Party size therefore becomes increasingly informative about
+the direction of representational advantage over the period, although it does
+not operate as a deterministic rule.
+
+\subsection{Cabinet coalitional inversions}
+\label{sec:cabinets}
+
+Cabinet composition provides the first coalition domain. The relevant object is
+the set of parties actually represented in cabinet during each period, rather
+than a broader legislative support bloc or an election-level governing
+alternative. Changes in ministerial party participation generate successive
+realized party sets within a mandate while the underlying election results
+remain fixed.
+
+Only a small number of cabinet transitions are needed to locate the inversion
+periods.\footnote{Appendix~\ref{app:composition} reports every cabinet period,
+  its translated election-year party composition, and entries and exits relative
+  to the preceding period. The replication materials document one-to-one party
+  renames separately from fusion cases, including the expansion of
+  post-fusion UNIÃO into DEM and PSL for 2018 vote--seat accounting.}
+During the 2014-linked mandate, the two-day 2016.2 inversion appears after PRB
+and PP have left the cabinet party set but before PSD leaves. The later 2017.1
+inversion follows the post-impeachment Temer reconfiguration and the departure
+of PTB, making it substantively distinct from the short 2016 window.
+
+In the 2018-linked mandate, PSC enters on December 9, 2020 and remains in the
+cabinet party set through 2022.1. After NOVO leaves and PP enters, the 2021.3
+configuration reaches exactly 257 seats; the same translated election-space
+party set continues through the separate 2022.1 period. PSC leaves on March 30,
+2022, ending the inversion. The 2022-linked mandate begins with the 2023.1
+inversion; the entry of PP and Republicanos in 2023.2 expands the coalition
+above both the vote and seat majority thresholds.
+
+Table~\ref{tab:cabinet-inversions} integrates the inversion outcomes with their
+accounting decomposition.
+
+\begin{table}[htbp]
+\centering
+\caption{Observed cabinet-period coalition inversions and accounting components}
+\label{tab:cabinet-inversions}
+\footnotesize
+\setlength{\tabcolsep}{2pt}
+\renewcommand{\arraystretch}{1.06}
+\input{table_observed_inversion_decomposition.tex}
+\begin{flushleft}
+  \footnotesize Notes: Vote \% is the coalition's percentage of the national
+  federal-deputy vote for the election linked to the mandate. Seats are held by
+  the translated election-year party set. The differential is
+  \(d_C=s_C-q_C\); \(A_C\) and \(B_C\) are its within-district allocation and
+  between-district weighting components. Components are shown to three
+  decimals; displayed \(B_C\) is the residual \(d_C-A_C\), preserving the
+  identity after rounding. Each row has at least 257 seats and less than half
+  of the vote. The two 2018 rows are distinct cabinet periods
+  with the same translated party set and therefore identical accounting values.
+\end{flushleft}
+\end{table}
+
+The decomposition reveals two cabinet patterns. In 2016.2, the
+within-district and between-district components are both positive and reinforce
+one another. In 2017.1, both 2018-linked periods, and 2023.1, \(A_C\) is
+positive while \(B_C\) is negative, so between-district weighting partly
+offsets the within-district contribution. These are comparative accounting patterns among realized configurations,
+not causal mechanisms. Figure~\ref{fig:vote-seat} further cautions against
+reading the 2014 cases as a mechanical large-party advantage: representation
+ratios in that election vary on both sides of proportionality across parties of
+different sizes.
+
+Figure~\ref{fig:timeline} shows why coalition overrepresentation is much more
+common than coalition inversion. The first two panels trace the vote and seat
+shares used to classify all 24 cabinet periods, while the third plots \(R_C\).
+Twenty-one cabinet-period party sets have \(R_C>1\); the exceptions are the
+2020.2, 2020.4, and 2021.1 Bolsonaro-period configurations. This high frequency
+also clarifies the measure: \(R_C>1\) is equivalent to \(d_C>0\), not to a
+seat majority. The timeline locates the short 2016.2 window, the more durable
+2017.1 Temer inversion, the two PSC-inclusive 2018-linked periods, and the
+initial Lula coalition before cabinet expansion.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.98\textwidth]{observed_coalition_timeline.pdf}
+\caption{Observed cabinet-period coalition vote shares, seat shares, and representation ratios}
+\label{fig:timeline}
+\begin{flushleft}
+\footnotesize Notes: The left panel reports coalition vote shares and marks the
+50 percent vote-majority threshold. The middle panel reports coalition seat
+shares and marks the Chamber-majority threshold of $257/513$. The right panel
+reports the coalition representation ratio and marks exact proportionality at
+$R_C=1$. Values above one indicate coalition overrepresentation but do not by
+themselves imply inversion.
+\end{flushleft}
+\end{figure}
+
+The inversion cases differ sharply in how relative advantage meets the
+threshold. The 2017.1 Temer coalition has \(q_C=256.05\), so exact
+proportionality places it less than one seat below a Chamber majority. Its
+\(d_C=9.95\) implies \(R_C=1.039\) and 266 seats. The short 2016.2
+coalition begins much farther away, with \(q_C=238.73\); its \(d_C=20.27\)
+and \(R_C=1.085\) overcome an 18.27-seat gap. The two 2018 periods are
+knife-edge inversions: \(q_C=242.38\), \(d_C=14.62\), and \(R_C=1.060\)
+place them exactly at 257 seats. The 2023.1 coalition has \(q_C=250.80\),
+\(d_C=12.20\), and \(R_C=1.049\), enough to pass a 6.20-seat gap and reach
+263 seats. \(R_C\) therefore orders the cases by relative representational
+advantage; \(q_C\) and \(d_C\) show whether that advantage is large enough to
+become majority-changing.
+
+Duration disciplines the interpretation. In the mandate following the 2014
+election, 102 of 1461 covered days are inversion days. In the mandate following
+the 2018 election, 238 of 1461 covered days are inversion days: 188 in 2021.3
+and 50 in 2022.1. In the available 2022 window, 255 of 1174 covered days are
+inversion days. The observed pattern is therefore concentrated in a short
+impeachment-transition window and a later Temer period, the PSC-inclusive phase
+after 2018, and the initial cabinet formation after 2022.
+
+
+\subsection{Ideologically constrained potential coalitions}
+\label{sec:ideology}
+
+The exact-connected baseline produces a clear cross-election contrast.
+Minimal connected inversions appear in 2014 and 2022, while every minimal
+connected winning coalition in 2018 also has a national vote majority. The
+one-gap relaxation then asks whether the 2018 null, and the location of the
+2014 and 2022 inversions, depend on requiring the inclusion of every party
+between a coalition's ideological endpoints. Table~\ref{tab:interval-summary}
+places the domain-specific minimal-majority frontiers side by side.
+
+\begin{table}[htbp]
+\centering
+\caption{Ideological-coalition domains by election}
+\label{tab:interval-summary}
+\small
+\input{table_03_ideology_k_gap_summary_tabular.tex}
+
+\end{table}
+
+
+The 2018 null is specific to exact connectedness. Once one omitted interior
+party is admitted, 24 of the 118 minimal seat-majority coalitions invert, led
+by PCdoB--PODE omitting PSDB, with 47.82 percent of the vote and exactly
+257 seats. Minimal inversions also remain present under the relaxation in
+2014 and 2022, where 43 of 88 and 17 of 53 minimal seat-majority coalitions
+invert. Their strongest cases occupy the same PTB--PR and PP--PL spans as
+the exact-connected baseline, although they omit PPL and DC and have
+slightly larger vote deficits. Because \(\mathcal D_1\) is substantially larger
+than \(\mathcal D_0\), the raw counts do not measure a change in inversion
+frequency. They show instead that the principal 2014 and 2022 inversion
+regions do not depend on exact no-gap connectedness, whereas the 2018
+classification does.
+
+The remainder of this section retains the exact-connected baseline.
+Table~\ref{tab:minimal-intervals} reports the six \(k=0\) minimal connected
+inversions and their decomposition; the one-gap cases are not decomposed.
+Full coalition compositions appear in
+Appendix~\ref{app:minimal-connected-winning}.
+
+\begin{table}[htbp]
+\centering
+\caption{Exact-connected (\(k=0\)) minimal interval inversions and accounting components}
+\label{tab:minimal-intervals}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.06}
+\input{table_accounting_minimal_ideological.tex}
+\end{table}
+\FloatBarrier
+
+The four 2014 minimal inversions are broad intervals spanning the center-left
+through the right. All have a
+positive within-district component. Between-district weighting partly offsets
+that component for PSB--PTN, PT DO B--PSDC, and
+SOLIDARIEDADE--PSL, while the two components reinforce one another for
+PTB--PR. No corresponding case appears in 2018 even though many intervals
+reach a seat majority under exact connectedness. As
+Table~\ref{tab:interval-summary} shows, that \(k=0\) null does not extend to
+the one-gap domain.
+
+The two 2022 cases differ from one another as well as from 2014. MDB--UNIÃO is
+a broad interval near the vote-majority boundary, but its accounting structure
+is distinctive: \(A_C<0\) and a larger positive \(B_C\) produces the positive
+national differential. PP--PL is a compact eight-party right and far-right
+interval with 45.35 percent of the vote and 258 seats; both components are
+positive. The table thus exposes qualitatively different accounting structures
+behind the same inversion classification.
+
+The representation-ratio comparison sharpens this difference. The four 2014
+minimal inversions have \(R_C\) between 1.023 and 1.053, so they remain
+relatively close to proportionality even though their seat surpluses suffice to
+cross 257. The two 2022 cases are farther apart. MDB--UNIÃO is
+threshold-adjacent: \(q_C=256.41\), so its quota lies only 0.59 seats below
+257; \(d_C=8.59\) and \(R_C=1.034\) yield 265 seats. PP--PL has
+\(q_C=232.65\), so its quota lies 24.36 seats below 257; \(d_C=25.36\) and
+\(R_C=1.109\) yield 258 seats. The common inversion label therefore covers
+both a near-majority coalition with a modest relative advantage and a coalition
+whose quota lies much farther below the majority threshold.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.31\textwidth]{ideological_interval_heatmap_2014.pdf}\hfill
+\includegraphics[width=.31\textwidth]{ideological_interval_heatmap_2018.pdf}\hfill
+\includegraphics[width=.31\textwidth]{ideological_interval_heatmap_2022.pdf}
+
+\vspace{0.5em}
+{\footnotesize
+\colorbox[HTML]{F0F0F0}{\strut\hspace{0.8em}}\, no seat majority \quad
+\colorbox[HTML]{8ECAE6}{\strut\hspace{0.8em}}\, seat majority \quad
+\colorbox[HTML]{FB8500}{\strut\hspace{0.8em}}\, inversion \quad
+\colorbox[HTML]{C1121F}{\strut\hspace{0.8em}}\, minimal inversion
+}
+
+\caption{Exact-connected (\(k=0\)) ideological interval status by election}
+\label{fig:heatmaps}
+\begin{flushleft}
+\footnotesize Notes: Each matrix enumerates the exact-connected \(k=0\)
+ideological intervals in the election-year party order by start and end index.
+The one-gap \(k=1\) domain is not plotted.
+\end{flushleft}
+\end{figure}
+
+Figure~\ref{fig:heatmaps} places the tabled baseline cases in the full
+exact-connected interval space.
+Blue cells reach a Chamber majority with a vote majority; orange cells are
+inversions; red cells are endpoint-minimal inversions. The 2014 inversions form
+a broad region spanning the center-left through the right. The 2018 panel
+supplies the exact-connected cross-domain null: contiguous ideological blocs
+become seat majorities only after also crossing the vote-majority threshold,
+even though two PSC-inclusive cabinet configurations based on the same election
+invert. It does not describe the \(k=1\) result.
+
+In 2022, the inversion region lies at the right edge of the party order.
+MDB--UNIÃO spans a relatively broad center-right-to-far-right interval, whereas
+PP--PL is already a narrow right-side majority without a vote majority.
+Exact-connected minimal winning intervals that include PT remain broad
+vote-and-seat majorities rather than inversions.
+Appendix~\ref{app:cabinet-interval-bridge}
+documents this distinction in detail: observed cabinets are sparse selections
+from wider ideological spans, not simply the connected intervals plotted here.
+
+
+\subsection{Comparing decomposition patterns across coalition domains}
+\label{sec:decomposition}
+
+Tables~\ref{tab:cabinet-inversions} and \ref{tab:minimal-intervals} make
+coalition differentials directly comparable across realized cabinets and
+ideologically constrained potential coalitions. Because \(d_C=q_C(R_C-1)\),
+\(d_C\) is the absolute seat surplus behind the representation ratio. The
+diagnostics then proceed in two accounting steps: member-party \(d_i\) entries
+show which parties add to or offset that national surplus, and \(A_C\) and
+\(B_C\) divide the same total between within-district allocation and
+between-district weighting.
+
+Party-level diagnostics reveal a further distinction across configurations.
+Every focal inversion combines positive and negative member-party
+differentials, so inversion does not require every coalition member to be
+overrepresented. No single party accounts for a majority of the gross positive
+contribution in any focal case, although one or two parties often lead the
+positive side. In PP--PL, the combined accounting contributions of PL and PP
+equal \AcctPPPLPLPPSharePct\% of the coalition's net \(d_C\), while UNIÃO is
+the second-largest individual positive contributor. The shared 2018 cabinet
+vector is more mixed: its positive total is distributed across five parties,
+and the coalition still inverts with PSL at
+\(d_i=\AcctCabinetTwentyEighteenPSLDifferential\). These are ex post
+accounting patterns, not party-specific causal effects. Appendix~
+\ref{app:party-contributions} reports the complete focal-case diagnostics.
+
+Three patterns appear. First, the components reinforce one another when
+\(A_C>0\) and \(B_C>0\). This occurs in cabinet period 2016.2, the 2014
+PTB--PR interval, and the 2022 PP--PL interval. Second, a positive
+within-district component is partly
+offset by negative between-district weighting in 2017.1, both 2018 cabinet
+periods, 2023.1, and three of the four 2014 ideological inversions. The shared
+2018 cabinet vector has \(A_C=19.07\) and \(B_C=-4.45\), illustrating how a
+substantial positive within-district term can coexist with a smaller national
+differential.
+
+Third, MDB--UNIÃO has the qualitatively different pattern
+\(A_C<0,B_C>0\): its \(-1.29\)-seat within-district component is more than
+offset by a \(9.88\)-seat between-district component. This is the clearest case
+of between-district dominance, while PP--PL is the clearest 2022 case of
+reinforcement. These are comparative accounting patterns, not causal
+mechanisms. In particular, \(B_C\) jointly reflects district seat weights,
+turnout and valid-vote differences, and coalition vote geography.
+
+
+\section{Discussion}
+\label{sec:disc}
+
+The analysis compares coalition inversions across two politically defined
+domains in a proportional system institutionally different from the principal
+cases in the existing literature. The first domain follows the parties actually
+represented in cabinet as composition changes during a mandate. The second
+enumerates potential coalitions restricted by ideological proximity, first
+under exact connectedness and then under a nested one-gap relaxation. The same
+party vote--seat distribution can therefore be evaluated under realized and
+structured potential recombinations.
+
+The distinction matters because coalition inversion is
+configuration-dependent. Under exact connectedness, the 2018-linked mandate
+provides the sharpest within-election contrast: two PSC-inclusive cabinet
+periods reach exactly 257 seats without a vote majority, while no ideological
+interval inverts. That null is sensitive to the no-gap restriction, however:
+the one-gap domain contains a \(\mathcal D_1\)-minimal inversion,
+PCdoB--PODE omitting PSDB, with 47.82 percent of the vote and 257 seats. By
+contrast, the substantive locations of
+the strongest 2014 and 2022 ideological inversions are robust. Their one-gap
+counterparts retain the PTB--PR and PP--PL spans, respectively, while omitting
+one intermediate party and becoming slightly stronger. Observed cabinets and
+ideologically constrained potential coalitions are therefore complementary
+objects, not interchangeable definitions of the same coalition domain.
+
+The party representation profiles also show why coalition inversion should not
+be reduced to one stable party-size bias. In 2014, overrepresentation and
+underrepresentation are distributed across parties of different sizes. In the
+2022 data, larger parties are more consistently overrepresented, but coalition
+outcomes still depend on which positive and negative party differentials are
+combined. The political consequence of a fixed electoral result is realized
+through the party sets that organize legislative and governing majorities.
+
+At the coalition level, \(R_C\) provides the bridge between party
+representation and majority status. It is a quota-weighted aggregation of the
+member-party ratios, not a simple count of overrepresented parties. The cabinet
+timeline shows that relative advantage is common: 21 of 24 party sets have
+\(R_C>1\), but only five invert. Majority-changing advantage depends jointly
+on the size of \(R_C-1\) and on \(q_C\), because the latter fixes how many
+surplus seats are needed to reach 257. The contrast between the
+threshold-adjacent MDB--UNIÃO interval and the more strongly overrepresented
+PP--PL interval makes this distinction especially clear.
+
+The decomposition of the exact-connected baseline adds a second comparative
+result. The within-district component is positive in all five observed cabinet
+inversions and in five of the six endpoint-minimal ideological inversions.
+Between-district weighting does
+not have a uniform role: it reinforces \(A_C\) in 2016.2, PTB--PR, and PP--PL,
+but offsets a positive \(A_C\) in the other cabinet configurations and three
+2014 ideological cases. MDB--UNIÃO is the important exception in the other
+direction, with a negative within-district component more than offset by a
+positive between-district component. The balance between the two terms thus
+differs across coalition configurations even when every row satisfies the same
+inversion criterion.
+
+These comparisons locate national differentials in the accounting without
+assigning causal responsibility. \(B_C\) is not pure malapportionment; it
+combines district seat weights, turnout and valid-vote differences, and
+coalition vote geography. Likewise, party contributions in 2014 and 2018 are ex
+post accounting attributions in elections where seats were often allocated
+through joint electoral lists. A large positive or negative party or district
+entry does not establish that the unit caused an inversion.
+
+Brazil's multiple sources of disproportionality do not undermine the
+aggregation argument, but they delimit its interpretation. The analysis does
+not show that district magnitude, malapportionment, turnout, electoral
+coalitions, federations, thresholds, or rounding individually produced an
+inversion. It shows that the realized party differentials generated by this
+institutional environment can accumulate across particular political sets and
+cross a discontinuous majority threshold. In a pure-PR benchmark the
+whole-number problem is sufficient for this possibility; in Brazil it is one
+potential source among several.
+
+Institutional complexity therefore weakens a monocausal claim but strengthens
+the case for studying the coalition transformation itself. Party differentials
+that appear modest or politically inconsequential in isolation may reinforce
+one another inside one coalition, cancel inside another, and leave a third just
+below 257 seats. The relevant contribution is not a claim that Brazil reveals
+a new source of disproportionality. It is the demonstration that ordinary
+differentials from several sources acquire a distinct institutional consequence
+when parties are recombined into realized or constrained potential majorities.
+
+This limited claim nevertheless places the Brazilian cases within the broader
+literature on paradoxes and tradeoffs under proportional representation. Party-level
+proportionality does not settle the majority status of every post-electoral
+party set. Coalition inversions identify the narrower circumstance in which the
+ordinary vote--seat translation, once aggregated across a politically relevant
+set, yields a legislative majority without a corresponding national vote
+majority \parencite{van1993paradoxes,kurrild2008voting,
+kaminski18_spoil_effec_propor_repres_system,
+FlisGrofmanKaminski2025Introduction}.
+
+Two further qualifications remain. The one-gap relaxation weakens exact
+connectedness while holding the same estimated party order fixed. It therefore
+addresses whether one intermediate rank mechanically determines admissibility,
+but it does not incorporate uncertainty in the ideology estimates themselves;
+alternative placements may change endpoints, spans, or marginal cases. In
+addition, the vote share of a cabinet or potential coalition is the sum of votes
+cast for parties later grouped into that set, not a direct vote for the
+coalition. The criterion measures coalitional representation; it does not
+measure voter endorsement, legislative discipline, roll-call support, or
+portfolio bargaining. The analysis identifies a representational condition,
+not its public reception or normative legitimacy.
+
+\section{Conclusion}
+
+This article extends the literature on coalition inversions by following
+cabinet composition across legislative terms, comparing those realized party
+sets with ideologically constrained potential coalitions, and examining both in
+a multidistrict proportional system without national compensation. Party-level
+deviations can aggregate into politically consequential coalition
+differentials, but whether they change majority status depends on coalition
+configuration.
+
+The empirical comparison is not uniform across elections or domains. Five
+observed cabinet periods invert: two linked to the 2014 election, two
+PSC-inclusive periods linked to 2018, and the initial Lula cabinet linked to
+2022. Under exact connectedness, ideological inversions appear in 2014 and
+2022 but not in 2018, and PP--PL provides a compact right-side inversion in
+2022. The one-gap relaxation preserves the strongest 2014 and 2022 inversion
+spans, with slightly larger vote deficits, and produces a minimal inversion in
+2018, showing that the ideological null is sensitive to the exact no-gap
+restriction.
+
+The coalition representation ratio clarifies the threshold logic. Most observed
+cabinet coalitions are overrepresented, but only five combine that advantage
+with a vote minority and a seat majority. \(R_C\) measures relative advantage,
+\(d_C\) measures its absolute seat value, and \(q_C\) determines the
+coalition's proportional distance from 257. Coalition inversion is therefore
+not synonymous with overrepresentation. It is the subset of overrepresented
+configurations in which the accumulated seat surplus is majority-changing.
+
+Brazil's multiple sources of disproportionality do not undermine the
+aggregation argument, but they delimit its interpretation. The analysis does
+not show that district magnitude, malapportionment, turnout, electoral
+coalitions, federations, thresholds, or rounding individually produced an
+inversion. It shows that the realized party differentials generated by this
+institutional environment can accumulate across particular political sets and
+cross a discontinuous majority threshold. In a pure-PR benchmark the
+whole-number problem is sufficient for this possibility; in Brazil it is one
+potential source among several.
+
+Institutional complexity therefore weakens a monocausal claim but strengthens
+the case for studying the coalition transformation itself. Party differentials
+that appear modest or politically inconsequential in isolation may reinforce
+one another inside one coalition, cancel inside another, and leave a third just
+below 257 seats. The relevant contribution is not a claim that Brazil reveals
+a new source of disproportionality. It is the demonstration that ordinary
+differentials from several sources acquire a distinct institutional consequence
+when parties are recombined into realized or constrained potential majorities.
+
+\section*{Statements and Declarations}  
+
+\textbf{Funding.} No funding was received to assist with the preparation of this manuscript.
+
+\textbf{Competing interests.} The author has no competing interests to declare that are relevant to the content of this article.
+
+\textbf{Author contribution.} The author is the sole author and was responsible for conceptualization, methodology, formal analysis, software, investigation, data curation, visualization, and writing.
+
+\textbf{Data availability.} For peer review, the data and replication materials are available in an anonymized repository: \url{https://anonymous.4open.science/r/electoral-inversion-B6B5/README.md}. For final publication, the analysis uses public election data from Brazil's Tribunal Superior Eleitoral and cabinet/party classification inputs documented in the replication repository.
+
+\textbf{Code availability.} For peer review, the code necessary to reproduce the analysis is available in an anonymized repository: \url{https://anonymous.4open.science/r/electoral-inversion-B6B5/README.md}. For final publication, the replication code is available at the public repository after acceptance.
+
+\textbf{Ethics approval.} This study uses publicly available aggregate electoral, cabinet, and party-classification data. No new human participants were recruited by the author. 
+
+\textbf{Consent to participate.} Not applicable. This study uses publicly available aggregate and documentary data.
+
+\textbf{Consent for publication.} Not applicable. This study uses publicly available aggregate and documentary data.
+
+\textbf{AI assistance.} ChatGPT was used for copy-editing and to assist with extracting data from Wikipedia. All data used in the analysis were checked by the author.
+
+% VERIFY before submission: all statements and declarations should be confirmed by the author.
+
+\printbibliography
+
+
+\appendix
+
+
+\section{Accounting diagnostics}
+\label{app:accounting-diagnostics}
+
+The retained objects are complementary accounting diagnostics rather than a
+single nested decomposition. Party contributions identify which coalition
+members add to or offset \(d_C\). The \(A_C\) and \(B_C\) terms partition the
+coalition differential into within-district allocation and between-district
+weighting, while district electoral weights provide a separate institutional
+diagnostic. These quantities are descriptive and do not identify causal
+effects.
+
+\subsection{Party contributions to coalition differentials}
+\label{app:party-contributions}
+
+Table~\ref{tab:coalition-party-contributions} reports the member-party
+composition of \(d_C\) for the ten unique focal electoral configurations. The
+complete machine-readable output retains both 2018 cabinet periods separately
+and includes all five cabinet inversions and all fourteen exact-connected
+\(k=0\) ideological inversions included in the baseline decomposition
+pipeline. The two 2018 periods appear once in the table because
+their translated election-year party contribution vectors are exactly
+identical.
+
+\input{table_coalition_party_contributions.tex}
+\FloatBarrier
+
+\subsection{District electoral weights}
+
+The neutral district-weight diagnostic compares each district's seats per valid
+vote with the national rate:
+\[
+w_d
+=
+\frac{S_d/V_d}{S/V}
+=
+\frac{S_d/S}{V_d/V}.
+\]
+Figure~\ref{fig:district-electoral-weight} shows an interpretable but only
+moderate inverse relationship between district magnitude and electoral weight.
+São Paulo is the unique 70-seat, lowest-weight district in all three elections,
+whereas the eleven eight-seat districts span values below the national average
+to more than five times it. Magnitude alone therefore does not define a
+homogeneous weighting category, and the plot is not coalition-specific.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{district_electoral_weight_by_magnitude.pdf}
+\caption{District electoral weight by district magnitude}
+\label{fig:district-electoral-weight}
+\begin{flushleft}
+\footnotesize Notes: Each point is a state or the Federal District. Electoral
+weight \(w_d=1\) is the national seats-per-valid-vote rate; the vertical scale
+is logarithmic. Labels identify all 8--10-seat districts and the two lowest and
+highest weights in each election. This is a measurement diagnostic, not an
+estimate of a district-magnitude effect or a coalition-specific contribution to
+\(B_C\).
+\end{flushleft}
+\end{figure}
+\FloatBarrier
+
+\section{Cabinet periods and composition}
+\label{app:composition}
+
+\input{table_appendix_cabinet_composition.tex}
+
+
+\section{Exact-connected minimal winning ideological intervals}
+\label{app:minimal-connected-winning}
+
+Table \ref{tab:minimal-connected-winning-intervals} reports all
+minimal connected winning intervals in the baseline \(k=0\) ideology domain.
+These are
+contiguous intervals that reach the Chamber majority threshold and cease to do
+so when either endpoint is removed. The table is broader than Table
+\ref{tab:minimal-intervals}, which reports only minimal connected interval
+inversions. The distinction matters because a minimal connected winning interval
+may have both a vote majority and a seat majority, while an interval inversion
+has a seat majority without a vote majority.
+
+\input{table_appendix_minimal_connected_winning_intervals.tex}
+
+
+\section{Cabinet coalitions and ideological intervals}
+\label{app:cabinet-interval-bridge}
+
+All references to ideological intervals, connected closures, and minimal
+connected coalitions in this appendix section concern the exact-connected
+\(k=0\) baseline. The one-gap result is summarized separately in
+Table~\ref{tab:interval-summary}.
+
+Table \ref{tab:cabinet-interval-bridge} compares observed cabinet coalitions
+with the ideological intervals that contain or approximate them. The bridge
+table keeps two operations separate: cabinet periods are defined from the party
+labels observed in the cabinet data, while ideological closures and vote-seat
+calculations use the translated election-year party set. The interval analysis
+therefore remains tied to the Chamber delegation produced by each election.
+The connected closure of a cabinet is the smallest no-gap ideological interval
+containing all cabinet parties. Gaps are parties inside that closure that are
+not members of the cabinet coalition. The final columns report the closest
+minimal connected winning interval and, where one exists, the closest minimal
+connected inversion. This table links the observed coalition analysis to the
+interval analysis by showing whether realized cabinet coalitions are compact
+ideological blocs or sparse selections from a wider ideological span.
+
+\input{table_appendix_cabinet_interval_bridge.tex}
+
+The first result is that no observed cabinet coalition is itself a contiguous
+ideological interval. Every cabinet period has gaps inside its connected closure.
+The smallest number of gaps is eight, and several cabinet periods have more than
+fifteen. This means that Brazilian cabinet coalitions are not simply connected
+ideological blocs translated into government. They are selective coalitions: party
+sets assembled from a wider ideological span while omitting many parties that
+lie between their leftmost and rightmost members.
+
+This matters for the interpretation of cabinet inversions. The observed cabinet
+inversions are sparse coalitions, but their connected closures are not inversions.
+All connected closures in Table \ref{tab:cabinet-interval-bridge} are
+vote-and-seat majorities. The 2016.2 cabinet, for example, has 46.54 percent of
+the vote and 259 seats, but its connected closure runs from PCdoB to PR and
+contains 20 parties. That closure has 77.61 percent of the vote and 408 seats.
+The inversion therefore does not come from a compact left-to-right ideological
+bloc. It comes from a selective cabinet coalition that retains a seat majority
+while omitting thirteen parties inside its ideological span.
+
+The same logic applies to the more durable Temer-period inversion. The 2017.1
+cabinet contains DEM, PMDB, PP, PPS, PSB, PSD, PSDB, and PV. Its connected
+closure runs from PSB to DEM, contains 25 parties, and has seventeen gaps. The
+observed cabinet has 49.91 percent of the vote and 266 seats, while the full
+PSB--DEM closure has 78.42 percent of the vote and 409 seats. The cabinet
+inversion is therefore not a connected ideological majority. It is a sparse
+center-to-right cabinet coalition located near the connected inversion region
+identified in the interval analysis. Its closest minimal connected winning
+interval is PSB--PTN, which is itself an inversion with 48.92 percent of the vote
+and 260 seats.
+
+The Dilma coalitions have a different ideological profile from the later
+Temer coalitions. They are also sparse, but they are left-anchored. The cabinet
+sets before Temer include PT, PCdoB, and PDT while extending to parties such
+as PMDB, PSD, PR, PP, and PTB. Their closures run from PCdoB to either PR or
+PP, and their gap structure contains many center, center-right, and right parties
+that are not cabinet members. The impeachment transition changes this structure.
+From 2016.3 to 2016.4, PCdoB, PDT, PT, and PR leave, while PSB, PPS, PV, PSD,
+PSDB, PP, and DEM enter. In the ideology classification, the parties leaving are
+concentrated on the left and center-left, with one right party, while the parties
+entering are concentrated in the center, right, and far right. The cabinet remains
+punctured, but its ideological anchor shifts rightward.
+
+The ideology diagnostics in the table confirm this transition. On the project's
+ideology scale, the average unweighted cabinet ideology rises from the
+pre-Temer sequence to the post-impeachment Temer sequence. The transition from
+2016.3 to 2016.4 alone increases the unweighted cabinet ideology mean by 1.53
+points and the seat-weighted mean by 1.49 points. This is the substantive
+difference between the two sparse coalition types. The pre-Temer coalitions are
+left-anchored and broad. The Temer coalitions are center-to-right and broad.
+Both are non-contiguous, but they occupy different regions of the ideological
+order.
+
+The Bolsonaro-period cabinets provide a domain contrast. They are more
+ideologically concentrated on the right and far right, and their connected
+closures are narrower than the 2014 and 2022 closures. The PSC-inclusive
+2021.3 and 2022.1 cabinets each have 47.25 percent of the vote and exactly 257
+seats, so both observed coalitions are inversions. Their connected closure,
+PSD--DEM, contains seventeen parties and eight gaps, has 57.37 percent of the
+vote and 292 seats, and is therefore a vote-and-seat majority. The closest
+minimal connected winning interval is PSDB--DEM, which has 51.52 percent of the
+vote and 257 seats. Thus, the 2018 mandate contains observed cabinet inversions
+but no exact-connected ideological-interval inversion: the sparse realized
+party set and its connected closure have different majority classifications.
+The one-gap inversion reported in Table~\ref{tab:interval-summary} is a distinct
+sensitivity result.
+
+
+The 2023.1 Lula cabinet returns to a left-anchored structure, but it is not a
+compact left coalition. It contains PSOL, PCdoB, PT, PDT, PSB, REDE, MDB,
+PSD, and UNIÃO. Its connected closure runs from PSOL to UNIÃO, contains 26
+parties, and has seventeen gaps. The observed cabinet is an inversion, with
+48.89 percent of the vote and 263 seats, but its connected closure has 80.64
+percent of the vote and 407 seats. The closest minimal connected winning
+interval is PT--PP, a broad vote-and-seat majority with 57.86 percent of the
+vote and 284 seats. The closest minimal connected inversion is MDB--UNIÃO,
+which lies to the right of the cabinet's left anchor.
+
+This comparison is crucial for interpreting the 2022 result. The Lula cabinet is
+a realized inversion, but it is not the compact connected inversion revealed by
+the interval search. The compact connected inversion is PP--PL: an eight-party
+right/far-right interval with 45.35 percent of the vote and 258 seats. The
+observed Lula coalition reaches a seat majority through a broad and sparse
+cross-ideological cabinet arrangement. The exact-connected interval analysis shows
+that the most compact vote-minority seat-majority bloc in the same Chamber is
+located on the right.
+
+The two analyses therefore meet at a specific structural point. Cabinet
+coalitions identify realized governing party sets. Connected intervals identify
+the seat-vote geometry of ideological blocs. The cabinet-to-interval comparison
+shows that realized cabinets may draw on seat asymmetries without being
+connected blocs themselves. In 2014, the pre-Temer coalitions are sparse and
+left-anchored, while the Temer coalitions are sparse and shifted rightward. In
+2018, two right-side cabinets reach exactly 257 seats without a vote majority,
+while their connected closures have both vote and seat majorities. In 2022, the
+Lula cabinet is a broad realized inversion, while the compact connected
+inversion lies on the right. The gap between cabinet coalitions and connected
+intervals is therefore not a nuisance. It shows how Brazil's coalition
+presidentialism combines sparse cabinet construction with an ideological
+distribution in which seat-efficient connected blocs are often located elsewhere.
+
+
+
+
+
+\end{document}

@@ -45,3 +45,7 @@ processing/Processing/data/*
 /reports/
 /scraping/links_wikipedia.md
 /test_scripts/
+
+# Superseded local R&R manuscript sources
+/writing/submission_inversions_review/manuscript/main.tex
+/writing/submission_inversions_review/manuscript/refs.bib
