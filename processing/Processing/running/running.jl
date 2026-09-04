@@ -392,7 +392,7 @@ function validate_ideology_k_gap_summary_table!(display_df, source_df)
         :election,
         :k,
         :minimal_seat_majority_coalitions,
-        :inversions,
+        :minimal_inversions,
         :strongest_inversion_coalition,
         :strongest_inversion_vote_share,
         :strongest_inversion_vote_share_pct,
@@ -423,11 +423,16 @@ function validate_ideology_k_gap_summary_table!(display_df, source_df)
         sum(Int.(source_domain.minimal_seat_majority)) == Int(row.minimal_seat_majority_coalitions) || error(
             "Ideology k-gap summary changed minimal-majority count for $(row.election)/k=$(row.k).",
         )
-        sum(Int.(source_domain.inversion)) == Int(row.inversions) || error(
-            "Ideology k-gap summary changed inversion count for $(row.election)/k=$(row.k).",
+        minimal_inversion_domain = source_domain[
+            (source_domain.minimal_seat_majority .== true) .&
+            (source_domain.inversion .== true),
+            :,
+        ]
+        nrow(minimal_inversion_domain) == Int(row.minimal_inversions) || error(
+            "Ideology k-gap summary changed minimal-inversion count for $(row.election)/k=$(row.k).",
         )
 
-        strongest = strongest_inversion_selection(source_domain)
+        strongest = strongest_inversion_selection(minimal_inversion_domain)
         if strongest === nothing
             String(row.strongest_inversion_coalition) == "None" || error(
                 "Ideology k-gap summary must report None for $(row.election)/k=$(row.k).",
@@ -619,7 +624,7 @@ function ideology_k_gap_summary_tabular_latex(df)
     io = IOBuffer()
     println(io, raw"\begin{tabularx}{\textwidth}{@{}rrcc>{\raggedright\arraybackslash}X@{}}")
     println(io, raw"\toprule")
-    println(io, "Election & \\(k\\) & Minimal seat-majority coalitions & Inversions & Strongest inversion " * repeat("\\", 2))
+    println(io, "Election & \\(k\\) & Minimal seat-majority coalitions & Minimal inversions & Strongest minimal inversion " * repeat("\\", 2))
     println(io, raw"\midrule")
     for row in eachrow(df)
         strongest_cell = if String(row.strongest_inversion_coalition) == "None"
@@ -633,7 +638,7 @@ function ideology_k_gap_summary_tabular_latex(df)
         println(
             io,
             "$(row.election) & $(row.k) & $(row.minimal_seat_majority_coalitions) & " *
-            "$(row.inversions) & $(strongest_cell) \\\\",
+            "$(row.minimal_inversions) & $(strongest_cell) \\\\",
         )
     end
     println(io, raw"\bottomrule")
@@ -1987,13 +1992,18 @@ function build_k_gap_summary(all_domains)
                 (all_domains.k .== k),
                 :,
             ]
-            strongest = strongest_inversion_selection(domain)
+            minimal_inversion_domain = domain[
+                (domain.minimal_seat_majority .== true) .&
+                (domain.inversion .== true),
+                :,
+            ]
+            strongest = strongest_inversion_selection(minimal_inversion_domain)
             if strongest === nothing
                 push!(rows, (
                     election = Int(year),
                     k = Int(k),
                     minimal_seat_majority_coalitions = sum(Int.(domain.minimal_seat_majority)),
-                    inversions = sum(Int.(domain.inversion)),
+                    minimal_inversions = nrow(minimal_inversion_domain),
                     strongest_inversion_coalition = "None",
                     strongest_inversion_vote_share = missing,
                     strongest_inversion_vote_share_pct = missing,
@@ -2012,7 +2022,7 @@ function build_k_gap_summary(all_domains)
                 election = Int(year),
                 k = Int(k),
                 minimal_seat_majority_coalitions = sum(Int.(domain.minimal_seat_majority)),
-                inversions = sum(Int.(domain.inversion)),
+                minimal_inversions = nrow(minimal_inversion_domain),
                 strongest_inversion_coalition = String(selected.coalition_label),
                 strongest_inversion_vote_share = Float64(selected.vote_share),
                 strongest_inversion_vote_share_pct = 100.0 * Float64(selected.vote_share),
@@ -2121,7 +2131,7 @@ ideology_k_gap_summary_csv_path = write_artifact_csv(
     joinpath(tables_dir, "ideology_k_gap_summary.csv"),
     ideology_k_gap_summary,
     "table",
-    "Six-row k=0/k=1 ideological-coalition robustness summary.",
+    "Six-row k=0/k=1 ideological-coalition minimal-frontier sensitivity summary.",
 )
 ideology_k_gap_summary_from_csv = CSV.read(ideology_k_gap_summary_csv_path, DataFrame)
 validate_csv_roundtrip!(
@@ -2131,7 +2141,7 @@ validate_csv_roundtrip!(
         :election,
         :k,
         :minimal_seat_majority_coalitions,
-        :inversions,
+        :minimal_inversions,
         :strongest_inversion_coalition,
         :strongest_inversion_vote_share,
         :strongest_inversion_vote_share_pct,
@@ -2149,7 +2159,7 @@ ideology_k_gap_summary_latex_path = write_artifact_text(
     joinpath(latex_dir, "table_03_ideology_k_gap_summary_tabular.tex"),
     ideology_k_gap_summary_tabular_latex(ideology_k_gap_summary_from_csv),
     "latex",
-    "CSV-driven tabularx for the six-row manuscript robustness summary.";
+    "CSV-driven tabularx for the six-row manuscript minimal-frontier sensitivity summary.";
     rows = nrow(ideology_k_gap_summary_from_csv),
     columns = 5,
 )

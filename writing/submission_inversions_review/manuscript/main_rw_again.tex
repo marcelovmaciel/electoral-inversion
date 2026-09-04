@@ -131,16 +131,26 @@ support is distributed unevenly across the country. Several institutional and
 geographical mediations therefore stand between a party's national vote share
 and its final national seat share \parencite{nicolau2006openlist,samuelsSnyder2001value,bochsler2026winners}.
 
-This institutional structure changes the substantive problem relative to
-Miller's purified benchmark. Party-level deviations are no longer produced only
-by rounding a single national allocation. They emerge as the national outcome of
-twenty-seven district-level translations operating under heterogeneous
-conditions. The organizing question is therefore: when do these party-level
-deviations combine so that a politically meaningful set of parties holds a
-legislative majority without a national vote majority? The contribution lies in
-extending the established inversion result to this multidistrict setting and
-showing how the resulting party-level seat differentials can aggregate across
-coalitions and change majority status.
+This institutional structure changes the sources of deviation without
+changing the national proportionality benchmark. I retain the comparison
+between seat shares and shares of the total vote used by
+\textcite{miller14_elect_inver_under_propor_repres}, with all valid
+federal-deputy votes included regardless of whether the parties receiving
+them obtain seats. Restricting the denominator to votes for seat-winning
+parties would instead evaluate representation conditional on which parties
+entered the Chamber. The question here concerns the national outcome of
+the entire vote-to-seat process, including electoral exclusion. The
+benchmark therefore measures departures from national proportionality
+without presuming that those departures are unintended or unjustified.
+
+Party-level deviations emerge from twenty-seven district-level
+translations operating under heterogeneous conditions, rather than only
+from rounding a single national allocation. The organizing question is
+therefore: when do these deviations combine so that a politically
+meaningful set of parties holds a legislative majority without a national
+vote majority? The contribution lies in showing how the resulting
+party-level seat differentials aggregate across coalitions and change
+majority status.
 
 The Chamber contains an enormous number of mathematically possible party
 subsets, most of which have little political meaning. Realized cabinet
@@ -355,7 +365,13 @@ replacing those parties as political actors.
 \parencite{brasil1995parties,tse2021res23670,tse2022federacoes,tse2019res23609}.
 
 
-National proportionality provides a common baseline against which to assess how Brazil’s layered vote-to-seat process generates representational deviations and when those deviations become majority-changing as parties are recombined into coalitions. It treats each party's national share of valid federal-deputy votes as an entitlement to the same share of the Chamber's 513 seats. Under this benchmark, a party receiving $v_i/V$ of the national vote has a proportional quota of $513(v_i/V)$ seats. Brazil's actual system never performs this national allocation. 
+National proportionality provides a common baseline against which to assess how
+Brazil’s layered vote-to-seat process generates representational deviations and
+when those deviations become majority-changing as parties are recombined into
+coalitions. If \(v_i\) is the national valid vote total credited to party \(i\)
+and \(V\) is the corresponding total for all parties, including those that win
+no seats, the party's reference quota is \(513v_i/V\) seats. Brazil's actual
+system never performs this national allocation.
 
 Several mediations therefore stand between a party's national vote share and its national seat share. Within each district, finite magnitude, the quotient and highest-averages calculations, legal eligibility thresholds, and the number and relative strength of competing electoral units shape the conversion of votes into seats. Electoral pooling adds a further mediation by changing both the vote total on which seats are allocated and, through the common candidate list, the eventual distribution of those seats among member parties. These arrangements varied across districts in 2014 and 2018 and became nationally fixed through federations in 2022.
 
@@ -442,25 +458,22 @@ party inside the coalition's ideological span to be omitted to assess the
 sensitivity of the ideological-coalition results to the exact no-gap requirement
 while preserving ideological proximity as the organizing principle.
 
-\subsection{Measurement and data}
+\subsection{Measurement }
 
-The coalition mechanism can now be stated formally. Let \(P\) denote the set of parties in a federal-deputy election. For each party \(i\in P\), let \(v_i\) be its national valid vote total and \(s_i\) its Chamber seats. With
-\[
-V=\sum_{i\in P}v_i
-\qquad\text{and}\qquad
-S=513,
-\]
-exact national proportionality assigns party \(i\) the quota
+Let \(P\) denote the set of all parties contesting a federal-deputy
+election, including those that win no seats. For each party \(i\in P\),
+let \(v_i\) be its national total of valid candidate and party-label
+votes and \(s_i\) its Chamber seats. With \(V=\sum_{i\in P}v_i\) denoting
+the total valid federal-deputy vote and \(S=513\), exact national
+proportionality assigns party \(i\) the quota
 \[
 q_i=S\frac{v_i}{V}.
 \]
-The party's seat differential is
-\[
-d_i=s_i-q_i.
-\]
-A positive differential means that the party receives more seats than its national vote share implies, while a negative differential means that it receives fewer. Since party seats and party quotas both sum to \(S\), the differentials sum to zero. These positive and negative values are the party contributions that coalition formation combines.
 
-For a coalition \(C\subseteq P\), its vote total, seat total, proportional quota, and seat differential are
+The party's seat differential is \(d_i=s_i-q_i.\) A positive differential means
+that the party receives more seats than its national vote share implies, while a
+negative differential means that it receives fewer. Since party seats and party
+quotas both sum to \(S\), the differentials sum to zero. For a coalition \(C\subseteq P\), its vote total, seat total, proportional quota, and seat differential are
 \[
 v_C=\sum_{i\in C}v_i,
 \qquad
@@ -478,32 +491,34 @@ d_C
 =\sum_{i\in C}\left(s_i-q_i\right)
 =\sum_{i\in C}d_i.
 \]
-This equality is central to the argument. The coalition's departure from exact national proportionality is produced by adding the positive and negative differentials of its member parties. A party with a negative contribution can belong to an inverted coalition, provided that the positive contributions elsewhere in the set more than offset it.
 
-A coalition inversion occurs when the party set receives less than half of the national valid federal-deputy vote but controls at least 257 Chamber seats:
-\[
-\frac{v_C}{V}<\frac{1}{2}
-\qquad\text{and}\qquad
-s_C\geq257.
-\]
-For a vote-minority coalition, the seat condition can be written as
-\[
-d_C\geq257-q_C.
-\]
-The right-hand side is the number of seats separating the coalition's exact proportional quota from a Chamber majority. An inversion occurs when the coalition's accumulated positive differential is large enough to close that gap. Since \(C\) and its complement \(\bar C\) partition both the election-year party set and the 513 seats,
-\[
-\frac{v_C}{V}<\frac{1}{2},\ s_C\geq257
+The coalition's departure from exact national proportionality is produced by
+adding the positive and negative differentials of its member parties. A party
+with a negative contribution can belong to an inverted coalition, provided that
+the positive contributions elsewhere in the set more than offset it.
+
+A coalition inversion occurs when the party set receives less than half of the
+national valid federal-deputy vote but controls at least 257 Chamber seats:
+\(\frac{v_C}{V}<\frac{1}{2}\) and \(s_C\geq257.\)
+
+For a coalition receiving less than half of the national vote, the
+seat-majority condition can be written as
+\(d_C \geq 257-q_C.\)
+The right-hand side is the number of seats separating the coalition's exact
+proportional quota from a Chamber majority. An inversion occurs when the
+coalition's accumulated seat differential is large enough to bridge that gap.
+Since \(C\) and its complement \(\bar C\) partition both the
+election-year party set and the 513 seats,
+\(\frac{v_C}{V}<\frac{1}{2},\ s_C\geq257
 \quad\Longleftrightarrow\quad
-\frac{v_{\bar C}}{V}>\frac{1}{2},\ s_{\bar C}\leq256.
-\]
-The criterion therefore identifies a reversal between the coalition and its complement\footnote{This structure differs from Siaroff's
+\frac{v_{\bar C}}{V}>\frac{1}{2},\ s_{\bar C}\leq256.\) The criterion therefore identifies a reversal between the coalition and its complement\footnote{This structure differs from Siaroff's
 \parencite{siaroff2003spurious} distinction between manufactured and
 spurious majorities. A manufactured majority occurs when the vote-leading
 party has less than half of the vote but receives a seat majority; a spurious
 majority occurs when the seat-majority party received fewer votes than another
 party. Coalition inversion necessarily has the stronger reversal structure.
 Because $C$ and its complement $\bar C$ exhaust both votes and seats,
-$v_C<1/2<s_C/S$ implies that $\bar C$ has a vote majority but a seat
+$v_C/V<1/2<s_C/S$ implies that $\bar C$ has a vote majority but a seat
 minority. The outcome is therefore analogous simultaneously to a spurious
 majority for $C$ and an artificial minority for $\bar C$. Siaroff's units,
 however, are parties or electoral alliances treated as parties, whereas the
@@ -511,81 +526,110 @@ objects considered here are sets of parties. I therefore retain the term
 \emph{coalition inversion}.}. Throughout the article, \(V\) includes all valid federal-deputy votes rather than only votes cast for seat-winning parties or another restricted vote total.
 
 Representation ratios express the same departures in relative rather than absolute terms \parencite{taagepera1980proportionality}. At the party and coalition levels,
+% \[
+% R_i=\frac{s_i/S}{v_i/V},
+% \qquad
+% R_C=\frac{s_C/S}{v_C/V}
+% =\frac{s_C}{q_C}
+% =1+\frac{d_C}{q_C}
+% =\sum_{i\in C}\frac{q_i}{q_C}R_i.
+% \]
+
 \[
-R_i=\frac{s_i/S}{v_i/V},
+R_i=\frac{s_i/S}{v_i/V}=\frac{s_i}{q_i},
 \qquad
 R_C=\frac{s_C/S}{v_C/V}
 =\frac{s_C}{q_C}
-=1+\frac{d_C}{q_C}.
+=1+\frac{d_C}{q_C}
+=\sum_{i\in C}\frac{q_i}{q_C}R_i.
 \]
-A value of one denotes exact proportionality, a value above one denotes overrepresentation, and a value below one denotes underrepresentation. Parties receiving votes but no seats have \(R_i=0\). The coalition ratio is also the quota-weighted mean of its members' ratios,
-\[
-R_C=\sum_{i\in C}\frac{q_i}{q_C}R_i.
-\]
-The ratios permit comparisons across parties and coalitions of different sizes. The differentials remain the more direct quantities for the majority-threshold question because they measure the relevant departure in seats.
+A value of one denotes exact proportionality, a value above one denotes overrepresentation, and a value below one denotes underrepresentation. Parties receiving votes but no seats have \(R_i=0\).The ratios permit comparisons across parties and coalitions of different sizes. The differentials remain the more direct quantities for the majority-threshold question because they measure the relevant departure in seats.
 
-The national coalition differential admits an exact algebraic decomposition. Let \(v_{Cd}\) and \(s_{Cd}\) denote the coalition's votes and attributed seats in district \(d\), and let \(V_d\) and \(S_d\) be the corresponding district totals. The within-district allocation component is
+
+The national coalition differential can be decomposed by adding and subtracting
+the seats that exact proportionality would assign to the coalition separately
+within each district:
 \[
-A_C=
+\begin{aligned}
+d_C
+&=
+\left[
 \sum_d
 \left(
- s_{Cd}-S_d\frac{v_{Cd}}{V_d}
-\right),
+s_{Cd}-S_d\frac{v_{Cd}}{V_d}
+\right)
+\right]
++
+\left[
+\left(
+\sum_d S_d\frac{v_{Cd}}{V_d}
+\right)
+-
+\left(
+S\frac{v_C}{V}
+\right)
+\right].
+\end{aligned}
 \]
-and the between-district weighting component is
-\[
-B_C=
-\sum_d
-S_d\frac{v_{Cd}}{V_d}
--S\frac{v_C}{V}.
-\]
-Adding the two terms yields
-\[
-d_C=A_C+B_C.
-\]
-The first component compares the coalition's attributed seats in each district with the seats implied by exact proportionality within that district, then sums the deviations nationally. The second compares two proportional benchmarks: the coalition's district vote shares aggregated with the actual distribution of Chamber seats across districts, and the quota obtained by applying exact proportionality once to its national vote share.
+The first term compares the coalition's actual seats in each district with the
+number implied by its vote share in that district. I denote it the
+within-district component, \(A_C\).  The other component is the
+between-district component, \(B_C\). It's first term sums the
+coalition's proportional quota in each district. The second is the quota implied
+by the coalition's share of the national valid vote. These quantities need not
+coincide because districts differ in the number of seats they contribute
+relative to the number of valid votes cast in them. Thus, \(B_C\) depends on the
+geographic distribution of coalition support across districts with different
+electoral weights. Support concentrated in districts whose share of Chamber
+seats exceeds their share of the national valid vote raises the sum of district
+quotas relative to the national quota, while support concentrated in districts
+with the opposite weighting lowers it.
 
-The between-district weighting component therefore combines district seat weights, turnout and valid-vote variation, and the geographic distribution of coalition support. Malapportionment can contribute to this term, but it does not exhaust it. The decomposition is descriptive rather than causal. Several electoral mechanisms described in Section~\ref{sec:brazil-system} enter each component, so neither term identifies the independent effect of a particular rule \parencite{bochsler2026winners}. Whereas \textcite{wada24_unified_approac_to_measur_unequal_repres} address the broader decomposition of unequal representation, the present construction is tailored to the coalition differential relevant to majority status. Member-party \(d_i\) values likewise identify positive and negative party contributions to \(d_C\), not party-specific causal effects.
+Thus, \(d_C=A_C+B_C\). In Brazil, \(A_C\) can reflect the mechanisms that
+operate within each district when votes are converted into seats: finite district
+magnitude, the electoral-quotient and highest-averages calculations, the
+year-specific eligibility rules for parties and candidates, and the pooling of
+votes through proportional electoral coalitions in 2014 and 2018 and party
+federations in 2022. These mechanisms determine how the coalition's actual
+district seats depart from its district-level proportional quotas. By contrast,
+\(B_C\) arises from differences in electoral weight across districts and the
+geographic distribution of coalition support: district apportionment, turnout,
+and valid-vote variation determine how many seats correspond to a given number
+of votes in each district, while coalition geography determines whether its
+support is concentrated in relatively more or less heavily weighted districts.
+Neither component isolates the independent effect of any one mechanism; the
+decomposition locates the coalition differential within or between districts
+rather than providing a causal decomposition of its institutional sources
+\parencite{bochsler2026winners}.
 
 
+\textcite{axelrod1970conflict} connected-coalition criterion provides the baseline restriction on the
+potential-coalition space. Let \(p_1,\ldots,p_n\) denote the fixed election-year
+ideological order. A coalition is connected when its members form a contiguous
+interval in this ordering. I focus first on minimal connected winning
+coalitions: connected coalitions with at least 257 seats for which no proper
+connected subset also retains a Chamber majority. Thus, for a connected
+coalition \(C\), \(s_C\geq257\) {and there is no connected} \(C'\subsetneq C\)
+such that \(s_{C'}\geq257.\)
 
-Axelrod's connected-coalition criterion provides the baseline restriction on
-the potential-coalition space \parencite{axelrod1970conflict}. Let
-\(p_1,\ldots,p_n\) denote the fixed election-year ideological order. For any
-nonempty coalition \(C\), let \(\operatorname{span}(C)\) contain every party
-between its leftmost and rightmost members, and define
-\[
-g(C)=\left|\operatorname{span}(C)\setminus C\right|,
-\qquad
-\mathcal D_k=\{C:g(C)\leq k\}.
-\]
-The quantity \(g(C)\) counts the parties omitted from inside the coalition's
-ideological span. The exact-connected baseline, \(\mathcal D_0\), therefore
-contains only contiguous intervals. The one-gap domain, \(\mathcal D_1\),
-also admits intervals from which a single interior party has been omitted.
-This relaxation preserves ideological proximity as the organizing restriction
-while preventing one intermediate party from determining admissibility.
-Because the underlying party order is held fixed, it tests sensitivity to
-exact connectedness rather than to the measurement of party positions itself.
 
-Within each domain, I focus on the inclusion frontier at which admissible
-coalitions first acquire a Chamber majority. A coalition
-\(C\in\mathcal D_k\) is a minimal seat-majority coalition if
-\[
-s_C\geq257
-\qquad\text{and there is no}\qquad
-C'\subsetneq C
-\quad\text{with}\quad
-C'\in\mathcal D_k
-\quad\text{and}\quad
-s_{C'}\geq257.
-\]
-For \(k=0\), these are Axelrod's minimal connected winning coalitions. For
-\(k=1\), the same criterion is applied within the enlarged one-gap domain.
-Minimality is therefore relative to the admissible domain: a winning proper
-subset outside \(\mathcal D_1\) does not make a coalition nonminimal within
-\(\mathcal D_1\). The inversion analysis then asks which minimal
-seat-majority coalitions also fall short of a national vote majority.
+Exact connectedness is a demanding restriction, however, because excluding one
+intermediate party makes an otherwise nearby combination inadmissible. I
+therefore add a nested one-gap relaxation. For any nonempty coalition \(C\), let
+\(\operatorname{span}(C)\) contain every party between its leftmost and
+rightmost members, and define
+\(g(C)=\left|\operatorname{span}(C)\setminus C\right|,\) and
+\(\mathcal D_k=\{C:g(C)\leq k\}.\) The exact-connected baseline is therefore
+\(\mathcal D_0\), while \(\mathcal D_1\) additionally permits one party inside
+the coalition's ideological span to be omitted. Within \(\mathcal D_1\), I again
+retain only coalitions that are minimal relative to the admissible domain:
+\(s_C\geq257\) and there is no \(C'\subsetneq C\) with \(C'\in\mathcal D_1\) and
+\(s_{C'}\geq257.\) These are the one-gap minimal winning coalitions. Because the
+ideological order itself is held fixed, the relaxation tests sensitivity to
+exact connectedness. The inversion analysis then asks, in each domain (\(k=0\)
+and \(k=1\)), which minimal winning coalitions also fall short of a national
+vote majority.
+
 
 \subsection{Data and operationalization}
 \label{sec:data}
