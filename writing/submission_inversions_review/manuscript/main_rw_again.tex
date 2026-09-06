@@ -457,6 +457,7 @@ locations. I therefore consider a nested one-gap relaxation that permits one
 party inside the coalition's ideological span to be omitted to assess the
 sensitivity of the ideological-coalition results to the exact no-gap requirement
 while preserving ideological proximity as the organizing principle.
+ 
 
 \subsection{Measurement }
 
@@ -573,17 +574,21 @@ S\frac{v_C}{V}
 \]
 The first term compares the coalition's actual seats in each district with the
 number implied by its vote share in that district. I denote it the
-within-district component, \(A_C\).  The other component is the
-between-district component, \(B_C\). It's first term sums the
-coalition's proportional quota in each district. The second is the quota implied
-by the coalition's share of the national valid vote. These quantities need not
-coincide because districts differ in the number of seats they contribute
-relative to the number of valid votes cast in them. Thus, \(B_C\) depends on the
-geographic distribution of coalition support across districts with different
-electoral weights. Support concentrated in districts whose share of Chamber
-seats exceeds their share of the national valid vote raises the sum of district
-quotas relative to the national quota, while support concentrated in districts
-with the opposite weighting lowers it.
+within-district component, \(A_C\). The other component is the between-district
+component, \(B_C\). It's first term sums the coalition's proportional quota in
+each district. The second is the quota implied by the coalition's share of the
+national valid vote. These quantities need not coincide because districts differ
+in the number of seats they contribute relative to the number of valid votes
+cast in them. Thus, \(B_C\) depends on the geographic distribution of coalition
+support across districts with different electoral weights. Support concentrated
+in districts whose share of Chamber seats exceeds their share of the national
+valid vote raises the sum of district quotas relative to the national quota,
+while support concentrated in districts with the opposite weighting lowers it.
+For comparisons across coalitions of different electoral sizes, the two
+components can also be expressed relative to the coalition's proportional quota:
+\(R_C-1=\frac{A_C}{q_C}+\frac{B_C}{q_C}.\) This expresses the within- and
+between-district contributions to the coalition's relative departure from
+proportionality.
 
 Thus, \(d_C=A_C+B_C\). In Brazil, \(A_C\) can reflect the mechanisms that
 operate within each district when votes are converted into seats: finite district
@@ -689,17 +694,12 @@ with the national vote-majority threshold.
 \section{Results}
 \label{sec:party}
 
-The 2014 election distributed representational gains and losses across
-parties that subsequently entered different governing combinations.
-PMDB received 8.13 seats above its national proportional quota, the
-largest positive differential that year. PSD and PTB received another
-4.55 and 4.37 seats above their quotas, respectively. These gains
-coexisted with deficits of 4.43 seats for PSDB and 4.20 for PSOL.
-Parties with substantial positive differentials thus stood alongside
-underrepresented parties in the same national seat distribution.
+In the 2014 election PMDB received 8.13 seats above its national proportional
+quota, the largest positive differential that year. PSD and PTB received another
+4.55 and 4.37 seats above their quotas, respectively. These gains coexisted with
+deficits of 4.43 seats for PSDB and 4.20 for PSOL.
 
-The same basic structure appears in 2018, but with a different partisan
-distribution. PP, PR, and MDB received positive differentials of 8.76, 5.72,
+In 2018, PP, PR, and MDB received positive differentials of 8.76, 5.72,
 and 5.60 seats, while PSL and NOVO fell 7.70 and 6.35 seats below their
 national quotas. PSL is especially instructive: it received the largest national
 vote total but also the largest negative seat differential. This is not
@@ -710,19 +710,16 @@ consequence of even moderate underrepresentation. Electoral size therefore
 helps determine the magnitude of a party's contribution, while the direction
 of that contribution depends on how its votes are translated across districts.
 
-The 2022 election displays a different configuration. Positive differentials
-are concentrated among several of the largest parties: PL received 13.78
-seats above its national proportional quota and UNIÃO another 11.10, while
-PT and PP gained 6.94 and 6.24 seats, respectively. These large absolute
-surpluses reflect both electoral size and overrepresentation. Since
-\(d_i=q_i(R_i-1)\), a party with a large proportional quota can contribute
-many seats to the positive or negative side of the national differential even
-when its relative departure from proportionality is moderate. In 2022, the
-largest parties happened predominantly to lie on the positive side of this
-relationship, placing substantial seat surpluses inside many of the coalition
-combinations available in the new Chamber.\footnote{The complete
-party-level vote shares, quotas, differentials, and representation ratios can
-be found in the replication repository.}
+In the 2022 election positive differentials are even more concentrated among
+largest parties: PL received 13.78 seats above its national proportional quota
+and UNIÃO another 11.10, while PT and PP gained 6.94 and 6.24 seats,
+respectively. These large absolute surpluses reflect both electoral size and
+overrepresentation. Since \(d_i=q_i(R_i-1)\), a party with a large proportional
+quota can contribute many seats to the positive or negative side of the national
+differential even when its relative departure from proportionality is moderate.
+In 2022, the largest parties happened predominantly to lie on the positive side
+of this relationship, placing substantial seat surpluses inside many of the
+coalition combinations available in the new Chamber.\footnote{The complete party-level vote shares, quotas, differentials, and representation ratios can be found in the replication repository.}
 
 Figure~\ref{fig:vote-seat} makes this relationship between electoral size and
 relative representation visible across elections. In 2014, the two largest
@@ -831,16 +828,34 @@ the vote. Whereas PSC's departure ended the Bolsonaro-period inversion
 by removing the seat majority, this expansion ends the Lula-period
 inversion by supplying a vote majority as well.
 
-The within-district component is positive in every cabinet inversion.
-In the two-day 2016.2 configuration, its 15.74-seat contribution is
-reinforced by 4.53 seats from between-district weighting. In the other
-four periods, between-district weighting instead offsets part of the
-within-district gain. The offset is largest in the two 2018-linked
-periods, where \(A_C=19.07\) and \(B_C=-4.45\), leaving a national
-differential of 14.62 seats. Most cabinet inversions therefore combine
-a positive within-district differential with unfavorable
-between-district weighting, rather than drawing an advantage from
-both components.
+The within-district component is positive in every cabinet inversion, but this
+pattern is not specific to inversions. Reconstructing the decomposition across
+the full cabinet sequence yields \(A_C>0\) in all twenty-four periods, whereas
+\(B_C>0\) in only six. This asymmetry is consistent with the parties selected
+into government. Cabinet coalitions disproportionately combine larger parties,
+and electorally substantial parties repeatedly supply some of the largest
+positive \(A_i\) contributions. No comparable pattern appears for \(B_i\):
+its sign depends on how party support is distributed across districts with
+different electoral weights. Cabinet formation therefore tends to accumulate
+positive within-district contributions, while the between-district
+contributions of the same parties can either reinforce or offset that
+advantage.
+
+The five inverted cabinet periods correspond to four distinct
+configurations, all with a large positive \(A_C\), but the role of
+\(B_C\) differs across them. In 2016.2, \(A_C=15.74\) raises the
+coalition from its proportional quota of 238.73 to 254.47 seats, still
+short of a Chamber majority; the additional \(B_C=4.53\) is therefore
+necessary to carry it across the 257-seat threshold. In the 2017.1,
+2018-linked, and 2023.1 configurations, by contrast, \(A_C\) alone is
+large enough to pass the threshold, while negative between-district
+weighting reduces the resulting seat advantage. The largest offset
+occurs in the shared 2018 vector, where \(A_C=19.07\) and
+\(B_C=-4.45\), leaving exactly 257 seats. The recurring feature of the
+cabinet inversions is therefore a large positive within-district
+component, although whether it is sufficient by itself depends on the
+configuration.
+
 
 The full cabinet sequence places these five inversions within a much
 more widespread pattern of overrepresentation.
@@ -1002,50 +1017,59 @@ Appendix~\ref{app:cabinet-interval-bridge}
 documents this distinction in detail: observed cabinets are sparse selections
 from wider ideological spans, not simply the connected intervals plotted here.
 
-
 \subsection{Comparing decomposition patterns across coalition domains}
 \label{sec:decomposition}
 
-Tables~\ref{tab:cabinet-inversions} and \ref{tab:minimal-intervals} make
-coalition differentials directly comparable across realized cabinets and
-ideologically constrained potential coalitions. Because \(d_C=q_C(R_C-1)\),
-\(d_C\) is the absolute seat surplus behind the representation ratio. The
-decomposition then proceeds in two steps: member-party \(d_i\) entries
-show which parties add to or offset that national surplus, and \(A_C\) and
-\(B_C\) divide the same total between within-district allocation and
-between-district weighting.
+The member-party decomposition helps explain the persistent positive
+within-district component of cabinet coalitions. Cabinets repeatedly combine
+large parties carrying substantial positive \(A_i\) contributions. In the
+shared 2018 cabinet configuration, for example, PP and PR contribute
+\(7.32\) and \(6.37\) seats to \(A_C\). In the initial 2023 cabinet,
+UNIÃO and PT contribute \(9.36\) and \(9.07\) seats. Because these
+contributions are summed when parties enter the same cabinet, the selection
+of such parties systematically raises the coalition's within-district
+component. This pattern extends beyond the inverted configurations:
+\(A_C\) is positive in all twenty-four observed cabinet periods.
 
-Party-level diagnostics reveal a further distinction across configurations.
-Every focal inversion combines positive and negative member-party
-differentials, so inversion does not require every coalition member to be
-overrepresented. No single party accounts for a majority of the gross positive
-contribution in any focal case, although one or two parties often lead the
-positive side. In PP--PL, the combined party contributions of PL and PP
-equal \AcctPPPLPLPPSharePct\% of the coalition's net \(d_C\), while UNIÃO is
-the second-largest individual positive contributor. The shared 2018 cabinet
-vector is more mixed: its positive total is distributed across five parties,
-and the coalition still inverts with PSL at
-\(d_i=\AcctCabinetTwentyEighteenPSLDifferential\). These are ex post
-patterns of party contributions, not party-specific causal effects. Appendix~
-\ref{app:party-contributions} reports the complete focal-case diagnostics.
+The between-district component behaves differently because its sign depends
+on the geographic distribution of each party's support across districts with
+different electoral weights. Large parties can therefore contribute
+substantially in either direction. PSL contributes \(-5.28\) seats to
+\(B_C\) in the shared 2018 cabinet vector, while PT contributes
+\(-2.13\) in the initial 2023 cabinet despite its large positive contribution
+to \(A_C\). Between-district weighting is positive in only six of the
+twenty-four cabinet periods. The same parties that build the within-district
+advantage therefore need not provide a corresponding between-district
+advantage.
 
-Three patterns appear. First, the components reinforce one another when
-\(A_C>0\) and \(B_C>0\). This occurs in cabinet period 2016.2, the 2014
-PTB--PR interval, and the 2022 PP--PL interval. Second, a positive
-within-district component is partly
-offset by negative between-district weighting in 2017.1, both 2018 cabinet
-periods, 2023.1, and three of the four 2014 ideological inversions. The shared
-2018 cabinet vector has \(A_C=19.07\) and \(B_C=-4.45\), illustrating how a
-substantial positive within-district term can coexist with a smaller national
-differential.
+The positive cabinet \(A_C\) values are also accumulated across many
+districts rather than produced by only a few exceptional state results.
+Among the four distinct inverted cabinet configurations, between eighteen
+and twenty-two of the twenty-seven districts contribute positively to
+\(A_C\). The three largest positive district contributions account for
+between 26.3 and 45.1 percent of the positive total, and between twelve
+and fifteen districts are required to account for 90 percent. The balance
+differs across configurations, but in each case the national within-district
+advantage combines positive contributions from much of the country.
 
-Third, MDB--UNIÃO has the qualitatively different pattern
-\(A_C<0,B_C>0\): its \(-1.29\)-seat within-district component is more than
-offset by a \(9.88\)-seat between-district component. This is the clearest case
-of between-district dominance, while PP--PL is the clearest 2022 case of
-reinforcement. These are comparative decomposition patterns, not causal
-mechanisms. In particular, \(B_C\) jointly reflects district seat weights,
-turnout and valid-vote differences, and coalition vote geography.
+The ideological-coalition results show that this positive \(A_C\) structure
+is not implied by inversion itself. The 2022 MDB--UNIÃO interval inverts
+with \(A_C=-1.29\) and \(B_C=9.88\), so favorable between-district
+weighting more than compensates for a negative within-district component.
+The one-gap domain supplies further inversions with the same sign structure.
+Potential ideological coalitions can therefore reach a vote-minority seat
+majority through a route that does not characterize the observed cabinets.
+
+The comparison identifies a systematic difference between the two coalition
+domains. Realized cabinets repeatedly assemble parties whose within-district
+contributions sum to a positive \(A_C\), and this advantage itself accumulates
+across many district elections. Between-district weighting has no comparable
+directional pattern and usually reduces rather than enlarges the cabinet
+advantage. Ideologically constrained coalitions demonstrate that the reverse
+combination is possible. Coalition inversion can be sustained primarily by
+either component; what distinguishes the observed cabinet configurations is
+the persistent accumulation of positive within-district contributions from
+the particular parties selected into government.
 
 
 \section{Discussion}
@@ -1252,6 +1276,46 @@ identical.
 
 \input{table_coalition_party_contributions.tex}
 \FloatBarrier
+
+\subsection{District contributions to cabinet inversions}
+\label{app:cabinet-district-contributions}
+
+Table~\ref{tab:cabinet-district-components} summarizes the district
+contributions to \(A_C\) in the four distinct cabinet inversions.
+Positive and negative sums are calculated separately across districts.
+Concentration is measured relative to the positive sum,
+\(\sum_d\max(A_{Cd},0)\), before subtracting negative contributions.
+
+\begin{table}[htbp]
+\centering
+\caption{District contributions to the within-district component of
+cabinet inversions}
+\label{tab:cabinet-district-components}
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{llcrrrr}
+\toprule
+Election & Period &
+\shortstack{Districts\\positive/negative} &
+\shortstack{Positive\\sum} &
+\shortstack{Negative\\sum} &
+\shortstack{Top three\\share (\%)} &
+\shortstack{Districts\\for 90\%} \\
+\midrule
+2014 & 2016.2          & 20/7 & 20.42 & -4.67 & 45.1 & 13 \\
+2014 & 2017.1          & 20/7 & 15.96 & -4.69 & 34.1 & 14 \\
+2018 & 2021.3/2022.1   & 22/5 & 21.96 & -2.89 & 26.3 & 15 \\
+2022 & 2023.1          & 18/9 & 20.84 & -7.64 & 37.4 & 12 \\
+\bottomrule
+\end{tabular}
+\begin{flushleft}
+\footnotesize Notes: Sums are measured in seats. Concentration columns
+refer to positive district contributions only.
+\end{flushleft}
+\end{table}
+\FloatBarrier
+
 
 \subsection{District electoral weights}
 
