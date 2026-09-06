@@ -584,13 +584,17 @@ support across districts with different electoral weights. Support concentrated
 in districts whose share of Chamber seats exceeds their share of the national
 valid vote raises the sum of district quotas relative to the national quota,
 while support concentrated in districts with the opposite weighting lowers it.
+
+Thus, \(d_C=A_C+B_C\).
 For comparisons across coalitions of different electoral sizes, the two
 components can also be expressed relative to the coalition's proportional quota:
-\(R_C-1=\frac{A_C}{q_C}+\frac{B_C}{q_C}.\) This expresses the within- and
-between-district contributions to the coalition's relative departure from
-proportionality.
+\[
+R_C-1=\frac{A_C}{q_C}+\frac{B_C}{q_C}.
+\]
+This expresses the within- and between-district contributions to the coalition's
+relative departure from proportionality.
 
-Thus, \(d_C=A_C+B_C\). In Brazil, \(A_C\) can reflect the mechanisms that
+In Brazil, \(A_C\) can reflect the mechanisms that
 operate within each district when votes are converted into seats: finite district
 magnitude, the electoral-quotient and highest-averages calculations, the
 year-specific eligibility rules for parties and candidates, and the pooling of
@@ -1060,16 +1064,34 @@ The one-gap domain supplies further inversions with the same sign structure.
 Potential ideological coalitions can therefore reach a vote-minority seat
 majority through a route that does not characterize the observed cabinets.
 
-The comparison identifies a systematic difference between the two coalition
-domains. Realized cabinets repeatedly assemble parties whose within-district
-contributions sum to a positive \(A_C\), and this advantage itself accumulates
-across many district elections. Between-district weighting has no comparable
-directional pattern and usually reduces rather than enlarges the cabinet
-advantage. Ideologically constrained coalitions demonstrate that the reverse
-combination is possible. Coalition inversion can be sustained primarily by
-either component; what distinguishes the observed cabinet configurations is
-the persistent accumulation of positive within-district contributions from
-the particular parties selected into government.
+\newpage
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{cross_domain_components.pdf}
+\caption{Within-district and between-district contributions across coalition domains}
+\label{fig:cross-domain-components}
+\begin{flushleft}
+\footnotesize Notes: Components are expressed as percentages of each coalition's
+proportional quota. Colors identify election years and outlined points are
+coalition inversions. Cabinet configurations are counted once for each distinct
+election-year party set. Panel B reports minimal connected winning coalitions
+in the exact-connected (\(k=0\)) domain. The dashed line marks \(R_C=1\).
+\end{flushleft}
+\end{figure}
+\FloatBarrier
+
+Figure~\ref{fig:cross-domain-components} summarizes this contrast after
+accounting for differences in coalition size. Every observed cabinet
+configuration remains on the positive side of the within-district component,
+whereas minimal connected winning coalitions occupy both sides of that boundary.
+The cabinet inversions are also not concentrated at the largest within-district
+values: several non-inverted cabinets receive a larger within-district
+contribution relative to their proportional quota. What distinguishes the
+realized cabinet domain is therefore not unusually large within-district
+advantage among its inversions, but the persistence of a positive within-district
+contribution across cabinet configurations. The connected-coalition domain
+shows that other combinations are possible, including inversions in which
+favorable between-district weighting offsets a within-district shortfall.
 
 
 \section{Discussion}

@@ -48,20 +48,26 @@ This writes figure PDFs under:
 writing/submission_inversions_review/manuscript/
 ```
 
+The figure runner also regenerates `cross_domain_components.pdf` from the
+audited cabinet and ideological registries under `output/paper/` and exact
+party/district accounting under the sibling `output/decomposition/` directory.
+The shared extractor is `processing/Processing/decomposition/cross_domain_components.py`;
+manuscript production does not require the exploratory report.
+
 4. Compile the manuscript.
 
 ```bash
 cd writing/submission_inversions_review/manuscript
-latexmk -pdf -interaction=nonstopmode main.tex
+latexmk -pdf -interaction=nonstopmode main_rw_again.tex
 ```
 
 The compiled manuscript is:
 
 ```text
-writing/submission_inversions_review/manuscript/main.pdf
+writing/submission_inversions_review/manuscript/main_rw_again.pdf
 ```
 
-The source at `writing/submission_inversions_review/manuscript/main.tex` is the
+The source at `writing/submission_inversions_review/manuscript/main_rw_again.tex` is the
 authoritative current manuscript. `writing/main.tex` is retained only as a
 legacy draft and should not be used to build the submission.
 

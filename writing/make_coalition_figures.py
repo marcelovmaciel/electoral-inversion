@@ -4,7 +4,10 @@ Generate the figures used in the coalition-inversions manuscripts.
 
 Figure 2 and the accounting figures consume full-precision inputs computed by
 Julia. Python performs presentation-only date, percentage, and layout
-formatting after validating the frozen empirical case lists.
+formatting after validating the frozen empirical case lists. The cross-domain
+figure uses the shared production decomposition extractor to aggregate audited
+party/district accounting against the cabinet and minimal-winning registries.
+Its accounting inputs live under the sibling output/decomposition directory.
 
 Expected input tree:
   <artifact-root>/figure_data/party_vote_share_vs_seat_share.csv
@@ -23,6 +26,7 @@ Outputs:
   inversion_decomposition_components.pdf
   accounting_state_weighting_anatomy.pdf
   district_electoral_weight_by_magnitude.pdf
+  cross_domain_components.pdf
 """
 
 from __future__ import annotations
@@ -37,6 +41,7 @@ from matplotlib.colors import ListedColormap, BoundaryNorm
 from matplotlib.dates import DateFormatter
 
 import make_district_electoral_weight_diagnostic as district_weight_diagnostic
+from make_cross_domain_components import save_cross_domain_components
 
 
 DEFAULT_REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -768,6 +773,7 @@ def generate_figures(artifact_root: Path, figure_dir: Path) -> list[Path]:
     outputs.append(
         save_district_electoral_weight_by_magnitude(artifact_root, figure_dir)
     )
+    outputs.append(save_cross_domain_components(artifact_root, figure_dir))
     return outputs
 
 
