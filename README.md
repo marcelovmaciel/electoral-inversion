@@ -71,6 +71,15 @@ The source at `writing/submission_inversions_review/manuscript/main_rw_again.tex
 authoritative current manuscript. `writing/main.tex` is retained only as a
 legacy draft and should not be used to build the submission.
 
+The decomposition rebuild also produces permanent party-size/cabinet
+accounting diagnostics. The existing party accounting panel gains normalized
+A/B components and cabinet participation counts/days. Descriptive summaries,
+22 distinct-set decompositions, and links to all 23 unchanged cabinet
+observations are documented in
+[`processing/Processing/decomposition/report/README.md`](processing/Processing/decomposition/report/README.md#permanent-party-size-and-cabinet-diagnostics).
+They enter the central accounting report and are not manuscript tables or
+figures. The 5% national-vote benchmark is descriptive only.
+
 ## Data Inputs
 
 The replication workflow uses these input locations:

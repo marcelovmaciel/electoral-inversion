@@ -221,6 +221,10 @@ coalition_periods = recompute_coalition_periods(
     party_baseline = party_baseline,
 )
 outputs = decompose_inversions(coalition_periods, accounting_by_year)
+full_accounting = build_full_accounting_outputs(accounting_by_year)
+party_size_diagnostics = build_party_size_diagnostics!(
+    full_accounting.parties, coalition_periods, accounting_by_year,
+)
 manifest = write_decomposition_outputs(OUTPUT_ROOT, coalition_periods, outputs)
 
 ideological_regression = validate_ideological_counts(ideological_intervals)
@@ -233,6 +237,9 @@ case_registry = build_inversion_case_registry(
 )
 accounting_integration = build_accounting_integration(case_registry, accounting_by_year)
 integration_artifacts = write_accounting_integration_outputs(OUTPUT_ROOT, accounting_integration)
+party_size_artifacts = write_party_size_diagnostic_outputs(
+    OUTPUT_ROOT, full_accounting, party_size_diagnostics,
+)
 
 
 input_paths = [
@@ -241,6 +248,7 @@ input_paths = [
     ideology_input_path,
     joinpath(DECOMPOSITION_DIR, "CoalitionDecomposition.jl"),
     joinpath(DECOMPOSITION_DIR, "IntermediateAccountingReport.jl"),
+    joinpath(DECOMPOSITION_DIR, "PartySizeDiagnostics.jl"),
     joinpath(DECOMPOSITION_DIR, "AccountingIntegration.jl"),
     joinpath(DECOMPOSITION_DIR, "run_decomposition.jl"),
     joinpath(PROCESSING_ROOT, "psc_baseline_repair", "POST_PSC_BASELINE.md"),
@@ -264,7 +272,7 @@ sort!(input_manifest, :path)
 input_manifest_path = joinpath(OUTPUT_ROOT, "audit", "decomposition_input_manifest.csv")
 CSV.write(input_manifest_path, input_manifest)
 
-manifest = append_output_manifest_rows!(vcat(integration_artifacts, [
+manifest = append_output_manifest_rows!(vcat(integration_artifacts, party_size_artifacts, [
     (
         path = "audit/ideological_regression.csv",
         artifact_type = "audit",
@@ -297,6 +305,9 @@ println("Ideological regression:")
 show(stdout, MIME("text/plain"), ideological_regression; allrows = true, allcols = true)
 println()
 println("Generated accounting-integration artifacts: ", length(integration_artifacts))
+println("Party-size diagnostics: ", nrow(party_size_diagnostics.parties), " party-elections; ",
+    nrow(party_size_diagnostics.period_linkage), " unchanged cabinet observations; ",
+    nrow(party_size_diagnostics.cabinet_sets), " distinct translated sets.")
 println("Focal accounting vectors: ", nrow(accounting_integration.focal.total))
 println("Generated decomposition artifacts: ", nrow(manifest))
 println("Synchronized paper artifacts: ", nrow(paper_additions))
