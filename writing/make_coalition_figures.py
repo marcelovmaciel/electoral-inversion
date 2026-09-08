@@ -56,12 +56,11 @@ ELECTION_LABELS = {
     2018: "2018 election",
     2022: "2022 election",
 }
-EXPECTED_PERIOD_COUNTS = {2014: 8, 2018: 13, 2022: 3}
+EXPECTED_PERIOD_COUNTS = {2014: 8, 2018: 12, 2022: 3}
 EXPECTED_INVERSION_KEYS = (
     (2014, "2016.2"),
     (2014, "2017.1"),
-    (2018, "2021.3"),
-    (2018, "2022.1"),
+    (2018, "2021.3/2022.1"),
     (2022, "2023.1"),
 )
 EXPECTED_IDEOLOGICAL_COUNTS = {
@@ -75,8 +74,8 @@ EXPECTED_STATE_WEIGHTING_CASES = (
     ("cabinet/2014/2016.2", "Cabinet 2014/2016.2"),
     ("cabinet/2014/2017.1", "Cabinet 2014/2017.1"),
     (
-        "cabinet/2018/shared-2021.3-2022.1",
-        "Cabinet 2018/2021.3 and 2022.1 (shared vector)",
+        "cabinet/2018/2021.3/2022.1",
+        "Cabinet 2018/2021.3/2022.1",
     ),
     ("cabinet/2022/2023.1", "Cabinet 2022/2023.1"),
     ("ideological/2014/11-24", "Ideological 2014/PTB-PR"),
@@ -207,8 +206,8 @@ def load_observed_coalition_timeline(artifact_root: Path) -> pd.DataFrame:
         observed, input_path, "coalition_inversion"
     )
 
-    if len(observed) != 24:
-        raise ValueError(f"Expected 24 observed cabinet periods in {input_path}; found {len(observed)}")
+    if len(observed) != 23:
+        raise ValueError(f"Expected 23 observed cabinet periods in {input_path}; found {len(observed)}")
     if observed.duplicated(["election_year", "period"]).any():
         raise ValueError(f"Duplicate election/period rows in {input_path}")
     actual_period_counts = observed.groupby("election_year").size().to_dict()
@@ -340,7 +339,7 @@ def load_inversion_decomposition_components(artifact_root: Path) -> pd.DataFrame
     pivoted.columns.name = None
     if len(pivoted) != len(EXPECTED_INVERSION_KEYS):
         raise ValueError(
-            f"Expected five unique decomposition coalitions in {input_path}; found {len(pivoted)}"
+            f"Expected four unique decomposition coalitions in {input_path}; found {len(pivoted)}"
         )
     residual = pivoted["A_C"] + pivoted["B_C"] - pivoted["d_C"]
     if not np.allclose(residual, 0.0, atol=ACCOUNTING_ATOL, rtol=ACCOUNTING_RTOL):
@@ -638,7 +637,8 @@ def save_inversion_decomposition_components(artifact_root: Path, figure_dir: Pat
     ax.set_xlabel("Seat contribution")
     ax.set_title("Accounting decomposition of observed coalition inversions")
     ax.grid(True, axis="x", linewidth=0.35, alpha=0.35)
-    ax.legend(frameon=False, fontsize=8, loc="best")
+    ax.legend(frameon=False, fontsize=8, loc="upper center",
+              bbox_to_anchor=(0.5, -0.20), ncol=2)
 
     output = figure_dir / "inversion_decomposition_components.pdf"
     fig.tight_layout()

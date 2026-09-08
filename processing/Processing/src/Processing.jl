@@ -22,6 +22,7 @@ include("party_classification_2023.jl")
 include("party_classification.jl")
 include("code.jl")
 include("analysis_runner_core.jl")
+include("cabinet_period_coalescing.jl")
 include("representation_profile.jl")
 #include("overengineered_code.jl")
 

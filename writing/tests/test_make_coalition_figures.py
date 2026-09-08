@@ -114,8 +114,8 @@ class StateWeightingAnatomyRegressions(unittest.TestCase):
 class CoalitionFigureOutputRegressions(unittest.TestCase):
     def test_actual_artifacts_have_frozen_empirical_counts(self) -> None:
         observed = figures.load_observed_coalition_timeline(ARTIFACT_ROOT)
-        self.assertEqual(len(observed), 24)
-        self.assertEqual(int(observed["coalition_inversion"].sum()), 5)
+        self.assertEqual(len(observed), 23)
+        self.assertEqual(int(observed["coalition_inversion"].sum()), 4)
 
         ideological = figures.load_ideological_interval_heatmap(ARTIFACT_ROOT)
         actual_counts = {
@@ -128,7 +128,7 @@ class CoalitionFigureOutputRegressions(unittest.TestCase):
         self.assertEqual(actual_counts, figures.EXPECTED_IDEOLOGICAL_COUNTS)
 
         decomposition = figures.load_inversion_decomposition_components(ARTIFACT_ROOT)
-        self.assertEqual(len(decomposition), 5)
+        self.assertEqual(len(decomposition), 4)
 
         anatomy = figures.load_accounting_state_weighting_anatomy(ARTIFACT_ROOT)
         self.assertEqual(len(anatomy), 7)

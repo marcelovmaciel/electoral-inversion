@@ -25,15 +25,13 @@ const EXPECTED_TOTAL_SEATS = 513
 const EXPECTED_INVERSION_KEYS = [
     (2014, "2016.2"),
     (2014, "2017.1"),
-    (2018, "2021.3"),
-    (2018, "2022.1"),
+    (2018, "2021.3/2022.1"),
     (2022, "2023.1"),
 ]
 const EXPECTED_INVERSION_COALITIONS = Dict(
     (2014, "2016.2") => sort(["PCdoB", "PDT", "PMDB", "PR", "PSD", "PT", "PTB"]),
     (2014, "2017.1") => sort(["DEM", "PMDB", "PP", "PPS", "PSB", "PSD", "PSDB", "PV"]),
-    (2018, "2021.3") => sort(["DEM", "PATRIOTA", "PP", "PR", "PRB", "PSC", "PSD", "PSDB", "PSL"]),
-    (2018, "2022.1") => sort(["DEM", "PATRIOTA", "PP", "PR", "PRB", "PSC", "PSD", "PSDB", "PSL"]),
+    (2018, "2021.3/2022.1") => sort(["DEM", "PATRIOTA", "PP", "PR", "PRB", "PSC", "PSD", "PSDB", "PSL"]),
     (2022, "2023.1") => sort(["MDB", "PCdoB", "PDT", "PSB", "PSD", "PSOL", "PT", "REDE", "UNIÃO"]),
 )
 
@@ -473,6 +471,7 @@ function recompute_coalition_periods(
             election_year = year,
             coalition_year = Int(source.coalition_year),
             cabinet_period = string(source.period),
+            source_periods = String(source.source_periods),
             period_start = Date(string(source.period_start)),
             period_end = Date(string(source.period_end)),
             period_days = Int(source.period_days),
@@ -557,7 +556,7 @@ end
 """
     decompose_inversions(coalition_periods, accounting_by_year)
 
-Calculate A_C and B_C for exactly the five corrected observed inversions, plus
+Calculate A_C and B_C for exactly the four observed inversions, plus
 the full member-party d_i vector and state-level contributions. All internal
 identities are checked with exact rational arithmetic; decimal residuals are
 also checked under ACCOUNTING_ATOL/ACCOUNTING_RTOL for output regressions.
@@ -596,6 +595,7 @@ function decompose_inversions(coalition_periods::DataFrame, accounting_by_year::
                 coalition_id = String(coalition.coalition_id),
                 election_year = year,
                 cabinet_period = period,
+                source_periods = String(coalition.source_periods),
                 coalition_parties = String(coalition.coalition_parties),
                 electoral_unit = district,
                 v_Cd = values.v_Cd,
@@ -638,6 +638,7 @@ function decompose_inversions(coalition_periods::DataFrame, accounting_by_year::
                 coalition_id = String(coalition.coalition_id),
                 election_year = year,
                 cabinet_period = period,
+                source_periods = String(coalition.source_periods),
                 coalition_parties = String(coalition.coalition_parties),
                 party = String(member.party),
                 v_i = Int(member.votes),
@@ -662,6 +663,7 @@ function decompose_inversions(coalition_periods::DataFrame, accounting_by_year::
             election_year = year,
             coalition_year = Int(coalition.coalition_year),
             cabinet_period = period,
+            source_periods = String(coalition.source_periods),
             period_start = coalition.period_start,
             period_end = coalition.period_end,
             period_days = Int(coalition.period_days),
@@ -692,6 +694,7 @@ function decompose_inversions(coalition_periods::DataFrame, accounting_by_year::
                 coalition_id = String(coalition.coalition_id),
                 election_year = year,
                 cabinet_period = period,
+                source_periods = String(coalition.source_periods),
                 check_name = check_name,
                 exact_pass = residual == 0.0,
                 floating_residual = residual,
@@ -789,7 +792,7 @@ end
 
 function decomposition_latex(data::DataFrame)
     nrow(data) == length(EXPECTED_INVERSION_KEYS) || error(
-        "Observed-inversion presentation requires exactly five rows.",
+        "Observed-inversion presentation requires exactly four rows.",
     )
     presented_keys = [
         (Int(row.election_year), string(row.cabinet_period)) for row in eachrow(data)
@@ -887,19 +890,19 @@ function write_decomposition_outputs(output_root::AbstractString, coalition_peri
         "raw/inversion_decomposition.csv",
         outputs.decomposition,
         "raw",
-        "Exact-audited A_C/B_C decomposition for the five observed inversions.",
+        "Exact-audited A_C/B_C decomposition for the four observed inversions.",
     )
     record_csv(
         "raw/inversion_party_contributions.csv",
         outputs.party_contributions,
         "raw",
-        "Full party-level d_i, A_i, and B_i vectors for the five observed inversions.",
+        "Full party-level d_i, A_i, and B_i vectors for the four observed inversions.",
     )
     record_csv(
         "raw/inversion_district_contributions.csv",
         outputs.district_contributions,
         "raw",
-        "State-level a_Cd and b_Cd contributions for the five observed inversions.",
+        "State-level a_Cd and b_Cd contributions for the four observed inversions.",
     )
     decomposition_table_path = record_csv(
         "tables/table_observed_inversion_decomposition.csv",
@@ -932,7 +935,7 @@ function write_decomposition_outputs(output_root::AbstractString, coalition_peri
         (
             "latex/table_observed_inversion_decomposition.tex",
             decomposition_latex(decomposition_from_csv),
-            "Portrait manuscript tabularx for the five observed cabinet inversions and their accounting components.",
+            "Portrait manuscript tabularx for the four observed cabinet inversions and their accounting components.",
             nrow(decomposition_from_csv),
             9,
         ),

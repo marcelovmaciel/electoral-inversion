@@ -45,14 +45,14 @@ input_manifest = required_csv(joinpath(OUTPUT_ROOT_TEST, "audit", "decomposition
 ideological = required_csv(joinpath(PAPER_ROOT_TEST, "raw", "ideological_interval_metrics.csv"))
 psc_baseline = required_csv(joinpath(PAPER_ROOT_TEST, "raw", "cabinet_coalition_metrics.csv"))
 
-test_result = @testset "PSC-correct five-case coalition decomposition" begin
+test_result = @testset "PSC-correct four-case coalition decomposition" begin
     expected_keys = Set(EXPECTED_INVERSION_KEYS)
     inversion_periods = coalition_periods[coalition_periods.coalition_inversion .== true, :]
-    @test nrow(coalition_periods) == 24
+    @test nrow(coalition_periods) == 23
     @test key_set(inversion_periods, :cabinet_period) == expected_keys
     @test key_set(decomposition, :cabinet_period) == expected_keys
-    @test nrow(decomposition) == 5
-    @test nrow(district_contributions) == 5 * 27
+    @test nrow(decomposition) == 4
+    @test nrow(district_contributions) == 4 * 27
     @test !((2018, "2022.2") in key_set(decomposition, :cabinet_period))
 
     observed_latex = CoalitionDecomposition.decomposition_latex(decomposition)
@@ -64,8 +64,7 @@ test_result = @testset "PSC-correct five-case coalition decomposition" begin
     @test !occursin("\\(q_C\\)", observed_latex)
     @test !occursin("\\(r_C\\)", observed_latex)
     @test !occursin("Threshold", observed_latex)
-    @test occursin("2021.3", observed_latex)
-    @test occursin("2022.1", observed_latex)
+    @test occursin("2021.3/2022.1", observed_latex)
 
     # CSV B_C stays at full precision; only its manuscript display is the exact
     # three-decimal residual of the independently rounded d_C and A_C entries.
@@ -139,11 +138,15 @@ test_result = @testset "PSC-correct five-case coalition decomposition" begin
     end
 
     cases_2018 = decomposition[decomposition.election_year .== 2018, :]
-    @test nrow(cases_2018) == 2
+    @test nrow(cases_2018) == 1
+    @test only(cases_2018.source_periods) == "[\"2021.3\",\"2022.1\"]"
+    @test only(cases_2018.period_start) == Date(2021, 8, 4)
+    @test only(cases_2018.period_end) == Date(2022, 3, 29)
+    @test only(cases_2018.period_days) == 238
     @test all(cases_2018.s_C .== 257)
     @test all(isapprox.(cases_2018.vote_share_pct, 47.2469; atol = 0.0001, rtol = 0.0))
 
-    @test nrow(identity_checks) == 20
+    @test nrow(identity_checks) == 16
     @test all(identity_checks.exact_pass)
     @test all(String.(identity_checks.status) .== "PASS")
     @test all(abs.(identity_checks.floating_residual) .<= ACCOUNTING_ATOL)

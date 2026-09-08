@@ -252,7 +252,7 @@ def _validate_float_identities(frame, audit, scope):
 
 def build_cross_domain_components(artifact_root: Path, domains=("cabinet", "k=0"), *,
                                   decomposition_root: Path | None = None) -> pd.DataFrame:
-    """Return distinct coalition components, with audit metadata in ``attrs``.
+    """Return coalition-observation components, with audit metadata in ``attrs``.
 
     ``artifact_root`` is the production paper-output directory. Exact accounting
     defaults to its sibling ``decomposition`` directory, as in the main runner.
@@ -270,27 +270,26 @@ def build_cross_domain_components(artifact_root: Path, domains=("cabinet", "k=0"
     rows, chronological_periods, registry_rows = [], 0, 0
     if "cabinet" in domains:
         source = audit.read(artifact_root / "raw/cabinet_coalition_metrics.csv")
-        periods = defaultdict(list)
-        audit.exact(len({(r["election_year"], r["period"]) for r in source}), len(source), "unique chronological periods")
-        for row in sorted(source, key=lambda r: (int(r["election_year"]), r["period_start"])):
-            periods[int(row["election_year"]), frozenset(audit.parties(row["parties"]))].append(row)
+        audit.exact(len({(r["election_year"], r["period"]) for r in source}), len(source),
+                    "unique cabinet observations")
         chronological_periods = len(source)
-        audit.exact(chronological_periods, 24, "24 chronological cabinet periods")
-        for index, ((year, member_set), spells) in enumerate(periods.items(), 1):
-            names = tuple(sorted(member_set))
+        audit.exact(chronological_periods, 23, "23 cabinet observations")
+        for row in sorted(source, key=lambda r: (int(r["election_year"]), r["period_start"])):
+            year = int(row["election_year"])
+            names = tuple(sorted(audit.parties(row["parties"])))
             values = _coalition_values(data[year], names, audit)
-            labels = "; ".join(r["period"] for r in spells)
-            vector_id = f"V{index:02d}"
-            for row in spells:
-                audit.exact(values["inversion"], audit.truth(row["coalition_inversion"]), "cabinet inversion flag")
-                audit.exact(data[year]["V"], int(row["national_vote_total"]), "cabinet vote denominator")
-                for actual, column in (("votes", "votes"), ("seats", "seats"), ("q_C", "quota"),
-                                       ("d_C", "seat_diff"), ("R_C", "representation_ratio"), ("vote_share", "vote_share")):
-                    audit.close(values[actual], row[column], "cabinet registry " + actual, "cabinet_regression")
-            rows.append(dict(domain="cabinet", election=year, configuration_id=f"cabinet/{year}/{vector_id}",
-                             display_label=labels.replace("; ", "/"), cabinet_periods_if_applicable=labels,
-                             party_set="; ".join(names), repeated_vector_count=len(spells), start_party="", end_party="",
-                             omitted_party="", k="", source_coalition_id=vector_id, party_count=len(names),
+            audit.exact(values["inversion"], audit.truth(row["coalition_inversion"]), "cabinet inversion flag")
+            audit.exact(data[year]["V"], int(row["national_vote_total"]), "cabinet vote denominator")
+            for actual, column in (("votes", "votes"), ("seats", "seats"), ("q_C", "quota"),
+                                   ("d_C", "seat_diff"), ("R_C", "representation_ratio"), ("vote_share", "vote_share")):
+                audit.close(values[actual], row[column], "cabinet registry " + actual, "cabinet_regression")
+            period = row["period"]
+            rows.append(dict(domain="cabinet", election=year, configuration_id=f"cabinet/{year}/{period}",
+                             display_label=period, cabinet_periods_if_applicable=period,
+                             source_periods=row["source_periods"], period_start=row["period_start"],
+                             period_end=row["period_end"], period_days=int(row["period_days"]),
+                             party_set="; ".join(names), repeated_vector_count=1, start_party="", end_party="",
+                             omitted_party="", k="", source_coalition_id=period, party_count=len(names),
                              is_strongest_inversion=False, **values))
     requested_k = {int(domain[-1]) for domain in domains if domain.startswith("k=")}
     if requested_k:
@@ -328,11 +327,11 @@ def build_cross_domain_components(artifact_root: Path, domains=("cabinet", "k=0"
         subset = frame[frame.domain == domain]
         count = dict(domain=domain, configurations=len(subset), inversions=int(subset.inversion.sum()))
         counts.append(count)
-        expected = {"cabinet": (22, 4), "k=0": (20, 6), "k=1": (259, 84)}[domain]
+        expected = {"cabinet": (23, 4), "k=0": (20, 6), "k=1": (259, 84)}[domain]
         audit.exact((count["configurations"], count["inversions"]), expected, domain + ": configuration/inversion counts")
     if "cabinet" in domains:
         cabinet = frame[frame.domain == "cabinet"]
-        audit.exact(int(cabinet.repeated_vector_count.sum()), chronological_periods, "all cabinet periods retained")
+        audit.exact(int(cabinet.repeated_vector_count.sum()), chronological_periods, "all canonical cabinet observations retained")
         audit.exact(set(cabinet.loc[cabinet.inversion, "display_label"]),
                     {"2016.2", "2017.1", "2021.3/2022.1", "2023.1"}, "distinct cabinet inversion labels")
     _validate_float_identities(frame, audit, "float_identity")

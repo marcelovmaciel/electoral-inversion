@@ -115,10 +115,11 @@ Manuscript compilation requires a LaTeX installation with `latexmk`.
 
 After running the main analysis, the high-level replication results should be:
 
-- observed cabinet inversion periods: 5
+- observed cabinet observations: 23 (from 24 historical periods)
+- observed cabinet inversion periods: 4
 - 2014 cabinet inversions: `2016.2`, `2017.1`
-- 2018 cabinet inversions: `2021.3`, `2022.1` (47.2469 percent of the vote and
-  exactly 257 seats in each period)
+- 2018 cabinet inversions: `2021.3/2022.1` (2021-08-04 through 2022-03-29,
+  238 days, 47.2469 percent of the vote, and exactly 257 seats)
 - 2022 cabinet inversion: `2023.1`
 - exact-connected (\(k=0\)) ideological inversions: 2014 = 8, 2018 = 0,
   2022 = 6
@@ -146,6 +147,18 @@ The k-gap outputs are:
 
 ## Tests
 
+The manuscript cabinet output combines adjacent periods only when their translated
+election-year party sets match. Original IDs are preserved as JSON in
+`source_periods`; uncombined translated rows and before/after counts are saved
+under `output/paper/diagnostics/`. The current sample guard permits only
+`2021.3 + 2022.1`.
+
+Run its regression checks after generating the analysis outputs:
+
+```bash
+julia -O0 --startup-file=no --project=processing/Processing processing/Processing/test/test_cabinet_period_coalescing.jl
+```
+
 Run the focused decomposition suite from the repository root:
 
 ```bash
@@ -157,7 +170,7 @@ Run the focused ideological-domain suite with:
     julia -O0 --startup-file=no --project=processing/Processing processing/Processing/test/test_ideological_interval_coalitions.jl
 
 This focused suite is the empirical gate for the decomposition and checks the
-five-case registry, coalition compositions, district accounting identities, and
+four-case registry, coalition compositions, district accounting identities, and
 party contribution identities against the corrected PSC baseline. The
 repository-wide Julia suite is not the gate for this revision: under Julia
 1.12.2 its normal invocation has exhibited a compiler crash, and a separate

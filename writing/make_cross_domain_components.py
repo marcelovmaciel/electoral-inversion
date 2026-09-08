@@ -27,13 +27,13 @@ CABINET_LABEL_POSITIONS = {
 
 
 def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
-    """Draw only distinct cabinets and all exact-connected minimal winners."""
+    """Draw cabinet periods and all exact-connected minimal winners."""
     data = data.loc[data.domain.isin(DOMAINS)].copy()
     if data.duplicated(['domain', 'configuration_id']).any():
         raise ValueError('Duplicate cross-domain configuration.')
     counts = {domain: (len(group), int(group.inversion.sum()))
               for domain, group in data.groupby('domain')}
-    if counts != {'cabinet': (22, 4), 'k=0': (20, 6)}:
+    if counts != {'cabinet': (23, 4), 'k=0': (20, 6)}:
         raise ValueError(f'Cross-domain configuration/inversion counts changed: {counts}')
     for lhs, rhs in (
         (data.d_C, data.A_C + data.B_C),
@@ -55,7 +55,7 @@ def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
         'pdf.fonttype': 42, 'ps.fonttype': 42,
     }):
         fig, axes = plt.subplots(1, 2, figsize=(7.6, 4.5), sharex=True, sharey=True)
-        titles = ('A  Observed cabinet configurations',
+        titles = ('A  Observed cabinet periods',
                   'B  Minimal connected winning coalitions')
         for ax, domain, title in zip(axes, DOMAINS, titles):
             group = data.loc[data.domain == domain]
@@ -78,8 +78,9 @@ def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
             ax.yaxis.set_major_locator(MultipleLocator(2))
             ax.tick_params(labelsize=9)
             ax.set_title(title, fontsize=10, loc='left', pad=29)
+            unit = 'periods' if domain == 'cabinet' else 'configurations'
             ax.text(0, 1.045,
-                    f'{len(group)} configurations; {int(group.inversion.sum())} inversions',
+                    f'{len(group)} {unit}; {int(group.inversion.sum())} inversions',
                     transform=ax.transAxes, fontsize=9.5, va='bottom')
 
         def label(ax, row, text, position):

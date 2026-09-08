@@ -775,8 +775,8 @@ function cabinet_composition_appendix_latex(df)
     io = IOBuffer()
     println(io, raw"\begin{landscape}")
     println(io, raw"\scriptsize")
-    println(io, raw"\setlength{\tabcolsep}{1pt}")
-    println(io, raw"\renewcommand{\arraystretch}{1.08}")
+    println(io, raw"\setlength{\tabcolsep}{0.7pt}")
+    println(io, raw"\renewcommand{\arraystretch}{1.00}")
     println(io)
     println(io, raw"\begin{longtable}{|l|l|l|r|r|r|r|l|L{0.28\linewidth}|L{0.105\linewidth}|L{0.105\linewidth}|}")
     println(io, "\\caption{Cabinet-period composition and transitions after cabinet-label harmonization and election-year label translation}\\label{tab:full-cabinet-composition}\\\\")
@@ -1500,7 +1500,28 @@ end
 observed_cabinet_coalitions_2014 = build_observed_coalition_table(party_summary_2014, 2014, coalitions_for_2014_election)
 observed_cabinet_coalitions_2018 = build_observed_coalition_table(party_summary_2018, 2018, coalitions_for_2018_election)
 observed_cabinet_coalitions_2022 = build_observed_coalition_table(party_summary_2022, 2022, coalitions_for_2022_election)
-observed_cabinet_coalitions_all_years = vcat(observed_cabinet_coalitions_2014, observed_cabinet_coalitions_2018, observed_cabinet_coalitions_2022; cols = :union)
+# Preserve the translated historical rows for audit before coalescing observations.
+cabinet_coalitions_before_coalescing = vcat(observed_cabinet_coalitions_2014, observed_cabinet_coalitions_2018, observed_cabinet_coalitions_2022; cols = :union)
+nrow(cabinet_coalitions_before_coalescing) == 24 || error("Cabinet chronology regression failed: expected 24 translated historical periods.")
+observed_cabinet_coalitions_all_years = Processing.coalesce_adjacent_cabinet_periods(
+    cabinet_coalitions_before_coalescing;
+    expected_merges = Set([(2018, ("2021.3", "2022.1"))]),
+)
+observed_cabinet_coalitions_2014 = observed_cabinet_coalitions_all_years[observed_cabinet_coalitions_all_years.election_year .== 2014, :]
+observed_cabinet_coalitions_2018 = observed_cabinet_coalitions_all_years[observed_cabinet_coalitions_all_years.election_year .== 2018, :]
+observed_cabinet_coalitions_2022 = observed_cabinet_coalitions_all_years[observed_cabinet_coalitions_all_years.election_year .== 2022, :]
+write_artifact_csv(joinpath(diagnostics_dir, "cabinet_coalitions_before_coalescing.csv"), cabinet_coalitions_before_coalescing, "diagnostic", "Translated historical cabinet rows before adjacent equal-party-set coalescing.")
+coalescing_audit = NamedTuple[]
+for year in analysis_years
+    before = cabinet_coalitions_before_coalescing[cabinet_coalitions_before_coalescing.election_year .== year, :]
+    after = observed_cabinet_coalitions_all_years[observed_cabinet_coalitions_all_years.election_year .== year, :]
+    days_before = sum(before.days_overlapping_mandate[before.coalition_inversion])
+    days_after = sum(after.days_overlapping_mandate[after.coalition_inversion])
+    days_before == days_after || error("Cabinet coalescing changed inversion days for $(year).")
+    sum(before.period_days) == sum(after.period_days) || error("Cabinet coalescing changed covered days for $(year).")
+    push!(coalescing_audit, (election_year = year, observations_before = nrow(before), observations_after = nrow(after), inversions_before = count(before.coalition_inversion), inversions_after = count(after.coalition_inversion), inversion_days_before = days_before, inversion_days_after = days_after))
+end
+write_artifact_csv(joinpath(diagnostics_dir, "cabinet_period_coalescing.csv"), DataFrame(coalescing_audit), "diagnostic", "Cabinet observation counts and unchanged inversion days after adjacent equal-party-set coalescing; source IDs remain in source_periods.")
 validate_coalition_accounting!(observed_cabinet_coalitions_2014, party_seat_differentials_2014; domain = "cabinet", id_columns = (:election_year, :period))
 validate_coalition_accounting!(observed_cabinet_coalitions_2018, party_seat_differentials_2018; domain = "cabinet", id_columns = (:election_year, :period))
 validate_coalition_accounting!(observed_cabinet_coalitions_2022, party_seat_differentials_2022; domain = "cabinet", id_columns = (:election_year, :period))
@@ -1508,9 +1529,9 @@ validate_coalition_accounting!(observed_cabinet_coalitions_2022, party_seat_diff
 observed_cabinet_inversions_only = observed_cabinet_coalitions_all_years[observed_cabinet_coalitions_all_years.coalition_inversion .== true, :]
 cabinet_coalition_focal_cases = build_cabinet_focal_cases(observed_cabinet_coalitions_all_years)
 
-nrow(observed_cabinet_coalitions_all_years) == 24 || error("Cabinet regression failed: expected 24 periods after the dated PSC repair.")
-nrow(observed_cabinet_inversions_only) == 5 || error("Cabinet regression failed: expected 5 inversions after the dated PSC repair.")
-expected_period_counts = Dict(2014 => 8, 2018 => 13, 2022 => 3)
+nrow(observed_cabinet_coalitions_all_years) == 23 || error("Cabinet regression failed: expected 23 periods after coalescing.")
+nrow(observed_cabinet_inversions_only) == 4 || error("Cabinet regression failed: expected 4 inversions after coalescing.")
+expected_period_counts = Dict(2014 => 8, 2018 => 12, 2022 => 3)
 for (year, expected_count) in expected_period_counts
     actual_count = nrow(observed_cabinet_coalitions_all_years[observed_cabinet_coalitions_all_years.election_year .== year, :])
     actual_count == expected_count || error("Cabinet regression failed for $(year): expected $(expected_count) periods, found $(actual_count).")
@@ -1519,8 +1540,7 @@ end
 expected_observed_keys = Set([
     (2014, "2016.2"),
     (2014, "2017.1"),
-    (2018, "2021.3"),
-    (2018, "2022.1"),
+    (2018, "2021.3/2022.1"),
     (2022, "2023.1"),
 ])
 observed_keys = Set(zip(observed_cabinet_inversions_only.election_year, observed_cabinet_inversions_only.period))
@@ -1536,7 +1556,7 @@ write_artifact_csv(joinpath(raw_dir, "observed_cabinet_coalitions_2014.csv"), ob
 write_artifact_csv(joinpath(raw_dir, "observed_cabinet_coalitions_2018.csv"), observed_cabinet_coalitions_2018, "raw", "Observed cabinet-period coalition metrics for the 2018 election.")
 write_artifact_csv(joinpath(raw_dir, "observed_cabinet_coalitions_2022.csv"), observed_cabinet_coalitions_2022, "raw", "Observed cabinet-period coalition metrics for the 2022 election.")
 write_artifact_csv(joinpath(raw_dir, "cabinet_coalition_metrics.csv"), observed_cabinet_coalitions_all_years, "raw", "Full-precision observed cabinet-period coalition accounting metrics for all elections.")
-write_artifact_csv(joinpath(raw_dir, "cabinet_coalition_focal_cases.csv"), cabinet_coalition_focal_cases, "raw", "All five observed cabinet inversions, with Julia-generated display values.")
+write_artifact_csv(joinpath(raw_dir, "cabinet_coalition_focal_cases.csv"), cabinet_coalition_focal_cases, "raw", "All four observed cabinet inversions, with Julia-generated display values.")
 write_artifact_csv(joinpath(raw_dir, "observed_cabinet_inversions_only.csv"), observed_cabinet_inversions_only, "raw", "Observed cabinet-period coalition inversions only.")
 write_artifact_csv(joinpath(raw_dir, "observed_cabinet_duration_summary.csv"), observed_cabinet_duration_summary, "raw", "Observed cabinet coverage and inversion duration summary.")
 
@@ -1545,6 +1565,7 @@ function observed_display_table(df)
         df,
         :election_year,
         :period,
+        :source_periods,
         :period_start,
         :period_end,
         :period_days,
@@ -1579,6 +1600,7 @@ function cabinet_composition_table(df)
         push!(rows, (
             election_year = year,
             period = string(row.period),
+            source_periods = String(row.source_periods),
             period_start = row.period_start,
             period_end = row.period_end,
             period_days = Int(row.period_days),
@@ -1626,7 +1648,7 @@ cabinet_inversion_table_from_csv = CSV.read(cabinet_inversion_table_csv_path, Da
 validate_cabinet_inversion_table!(cabinet_inversion_table_from_csv, observed_cabinet_inversions_only)
 cabinet_inversion_tabular_path = write_artifact_text(joinpath(latex_dir, "table_02_cabinet_inversion_tabular.tex"), cabinet_inversion_tabular_latex(cabinet_inversion_table_from_csv), "latex", "CSV-driven tabularx for manuscript Table 2."; rows = nrow(cabinet_inversion_table_from_csv), columns = 9)
 sync_review_latex_asset(cabinet_inversion_tabular_path)
-nrow(cabinet_coalition_focal_cases) == 5 || error("Cabinet focal regression failed: expected exactly the five observed inversions.")
+nrow(cabinet_coalition_focal_cases) == 4 || error("Cabinet focal regression failed: expected exactly the four observed inversions.")
 all(cabinet_coalition_focal_cases.focal_case_type .== "observed_inversion") || error("Cabinet focal cases must all be observed inversions.")
 focal_keys = Set(zip(cabinet_coalition_focal_cases.election_year, cabinet_coalition_focal_cases.period))
 focal_keys == expected_observed_keys || error(
@@ -1634,7 +1656,7 @@ focal_keys == expected_observed_keys || error(
 )
 row_2016_2 = only(eachrow(observed_cabinet_inversions_only[(observed_cabinet_inversions_only.election_year .== 2014) .& (observed_cabinet_inversions_only.period .== "2016.2"), :]))
 row_2016_2.period_days <= 2 || error("2014 period 2016.2 should be ultra-short, found $(row_2016_2.period_days) days.")
-println("Observed cabinet pattern validated: 2014/2016.2, 2014/2017.1, 2018/2021.3, 2018/2022.1, and 2022/2023.1 inversions.")
+println("Observed cabinet pattern validated: 2014/2016.2, 2014/2017.1, 2018/2021.3/2022.1, and 2022/2023.1 inversions.")
 
 # =============================================================================
 # BLOCK 10. IDEOLOGY ORDERING
@@ -2659,6 +2681,7 @@ function build_cabinet_interval_bridge(cabinets, party_summary_all, ideology_ord
         row = Dict{Symbol,Any}()
         row[:election_year] = year
         row[:cabinet_period] = String(cab.period)
+        row[:source_periods] = String(cab.source_periods)
         row[:period_start] = cab.period_start
         row[:period_end] = cab.period_end
         row[:days] = Int(cab.period_days)
@@ -2732,7 +2755,7 @@ function build_cabinet_interval_bridge(cabinets, party_summary_all, ideology_ord
     end
 
     ordered_cols = Symbol[
-        :election_year, :cabinet_period, :period_start, :period_end, :days, :cabinet_status,
+        :election_year, :cabinet_period, :source_periods, :period_start, :period_end, :days, :cabinet_status,
         :cabinet_vote_share, :cabinet_vote_share_pct, :cabinet_seats, :cabinet_seat_diff,
         :cabinet_n_parties, :cabinet_parties, :unmapped_cabinet_parties,
         :cabinet_min_ideology_index, :cabinet_max_ideology_index, :cabinet_leftmost_party,
@@ -2857,7 +2880,7 @@ write_artifact_csv(joinpath(tables_dir, "table_07_audit_vote_columns_crosswalk.c
 print_block("BLOCK 13. FIGURE-INPUT DATA")
 party_vote_share_vs_seat_share = select(party_seat_differentials_all_years, :election_year, :party, :votes, :national_vote_total, :vote_share, :seats, :seat_share, :quota, :seat_diff, :representation_ratio)
 ideological_interval_heatmap = select(ideological_intervals_all_years, :election_year, :start_index, :end_index, :start_party, :end_party, :interval_size, :vote_share, :seat_share, :seats, :seat_diff, :majority_status, :coalition_inversion, :minimal_ideological_interval_inversion)
-observed_coalition_timeline = select(observed_cabinet_coalitions_all_years, :election_year, :coalition_year, :period, :period_start, :period_end, :period_days, :days_overlapping_mandate, :parties, :votes, :national_vote_total, :vote_share, :seats, :seat_share, :quota, :seat_diff, :required_diff, :representation_ratio, :vote_majority, :seat_majority, :majority_status, :coalition_inversion)
+observed_coalition_timeline = select(observed_cabinet_coalitions_all_years, :election_year, :coalition_year, :period, :source_periods, :period_start, :period_end, :period_days, :days_overlapping_mandate, :parties, :votes, :national_vote_total, :vote_share, :seats, :seat_share, :quota, :seat_diff, :required_diff, :representation_ratio, :vote_majority, :seat_majority, :majority_status, :coalition_inversion)
 write_artifact_csv(joinpath(figure_data_dir, "party_vote_share_vs_seat_share.csv"), party_vote_share_vs_seat_share, "figure_data", "Party vote share versus seat share figure input.")
 write_artifact_csv(joinpath(figure_data_dir, "ideological_interval_heatmap.csv"), ideological_interval_heatmap, "figure_data", "Ideological interval heatmap figure input.")
 write_artifact_csv(joinpath(figure_data_dir, "observed_coalition_timeline.csv"), observed_coalition_timeline, "figure_data", "Observed cabinet coalition timeline used by Figure 2.")
@@ -2901,6 +2924,6 @@ println()
 println("Validated empirical pattern:")
 println("- Total seats are 513 in 2014, 2018, and 2022.")
 println("- Party-level sum(seat_diff) is approximately zero by year.")
-println("- Observed cabinet inversions include 2014/2016.2, 2014/2017.1, 2018/2021.3, 2018/2022.1, and 2022/2023.1.")
+println("- Observed cabinet inversions include 2014/2016.2, 2014/2017.1, 2018/2021.3/2022.1, and 2022/2023.1.")
 println("- Ideological interval inversions exist in 2014 and 2022, not in 2018.")
 println("- Minimal ideological interval inversions counts match: 2014=4, 2018=0, 2022=2.")

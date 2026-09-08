@@ -10,4 +10,5 @@ using Processing
     include("test_ideological_interval_coalitions.jl")
     include("test_representation_profile.jl")
     include("test_psc_baseline_repair.jl")
+    include("test_cabinet_period_coalescing.jl")
 end
