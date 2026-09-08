@@ -1,5 +1,6 @@
 using Test
 using DataFrames
+using CSV
 
 const _PROCESSING_MODULE_FILE_INTERVALS = joinpath(@__DIR__, "..", "src", "Processing.jl")
 
@@ -140,6 +141,111 @@ end
                     candidate_members = Set(split(candidate.coalition_id, "|"))
                     length(candidate_members) < length(members) && issubset(candidate_members, members)
                 end
+            end
+        end
+
+        @testset "membership summary counts actual members within each minimal domain" begin
+            parties = ["A", "B", "C"]
+            # B receives votes and no seats. It belongs to the D0 minimal majority,
+            # but is omitted from the smaller D1 minimal majority, which inverts.
+            domains = [Processing.ideological_k_gap_coalitions(
+                _summary(parties, [20, 60, 20], [2, 0, 2]), _ideology(parties); k = k,
+            ) for k in (0, 1)]
+            registry = vcat([d[d.minimal_seat_majority, :] for d in domains]...)
+            registry.election = fill(2000, nrow(registry))
+            summary = Processing.build_k_gap_membership_summary(reverse(registry))
+            @test summary.k == [0, 1]
+            @test summary.minimal_seat_majority_coalitions == [1, 1]
+            @test summary.minimal_inversions == [0, 1]
+            @test summary.non_inverted_minimal_majorities == [1, 0]
+            @test summary.non_inverted_members_median[1] == 3
+            @test summary.inverted_members_median[2] == 2
+            @test ismissing(summary.inverted_members_median[1])
+            @test ismissing(summary.non_inverted_members_median[2])
+            @test registry.party_count == [3, 2]
+            @test registry.right_index[2] - registry.left_index[2] + 1 == 3
+            @test Processing.validate_k_gap_membership_summary!(summary, registry)
+            @test_throws ErrorException Processing.validate_k_gap_membership_regression!(summary)
+            @test isequal(Processing.build_k_gap_membership_summary(registry), summary)
+
+            span_count = copy(registry)
+            span_count.party_count[2] = 3
+            @test_throws ErrorException Processing.build_k_gap_membership_summary(span_count)
+            for count in (0, -1, 2.5, 2.0)
+                invalid = copy(registry)
+                invalid.party_count = Any[3, count]
+                @test_throws ErrorException Processing.build_k_gap_membership_summary(invalid)
+            end
+            for (column, value) in ((:inversion, false), (:parties, "A, B, C"),
+                                    (:coalition_id, "A|A"), (:coalition_id, "A|"),
+                                    (:omitted_party, "A"), (:gap_count, 0),
+                                    (:minimal_seat_majority, false))
+                invalid = copy(registry)
+                invalid[2, column] = value
+                @test_throws ErrorException Processing.build_k_gap_membership_summary(invalid)
+            end
+            @test_throws ErrorException Processing.build_k_gap_membership_summary(vcat(registry, registry[1:1, :]))
+            for column in (:minimal_seat_majority_coalitions, :minimal_inversions,
+                           :non_inverted_minimal_majorities, :inverted_members_median,
+                           :inverted_members_min, :inverted_members_max)
+                invalid = copy(summary)
+                invalid[2, column] += 1
+                @test_throws ErrorException Processing.validate_k_gap_membership_summary!(invalid, registry)
+            end
+            @test_throws ErrorException Processing.validate_k_gap_membership_summary!(reverse(summary), registry)
+
+            stats = Processing.coalition_membership_statistics([8, 15])
+            @test stats == (median = 11.5, min = 8, max = 15)
+            @test Processing.coalition_membership_statistics([12, 14, 16]).median == 14
+            @test Processing.coalition_membership_cell(stats...) == "11.5 [8--15]"
+            @test Processing.coalition_membership_cell(14.0, 11, 19) == "14 [11--19]"
+            @test Processing.coalition_membership_cell(missing, missing, missing) == "None"
+            @test_throws ErrorException Processing.coalition_membership_cell(missing, 1, 2)
+            latex = Processing.ideology_k_gap_summary_latex(summary)
+            @test occursin(raw"\begin{table}[htbp]", latex)
+            @test occursin(raw"\end{table}", latex)
+            @test occursin(raw"\label{tab:interval-summary}", latex)
+            @test occursin("2000 & 0 & 1 & 0 & None & 3 [3--3]", latex)
+            @test occursin("2000 & 1 & 1 & 1 & 2 [2--2] & None", latex)
+            @test !occursin("strongest", lowercase(latex))
+            @test !occursin("r_C", latex)
+            @test occursin("parties receiving votes but no seats", latex)
+            table_rows = filter(line -> occursin(" & ", line), split(latex, '\n'))
+            @test length(table_rows) == nrow(summary) + 2
+            @test all(line -> endswith(line, repeat("\\", 2)), table_rows)
+
+            mktemp() do path, io
+                close(io)
+                CSV.write(path, summary)
+                roundtrip = CSV.read(path, DataFrame)
+                @test Processing.validate_k_gap_membership_summary!(roundtrip, registry)
+                @test Processing.ideology_k_gap_summary_latex(roundtrip) == latex
+            end
+        end
+
+        @testset "audited membership rows from the authoritative production registry" begin
+            registry_path = joinpath(@__DIR__, "..", "output", "paper", "raw",
+                                     "ideology_k_gap_minimal_majorities.csv")
+            if isfile(registry_path)
+                registry = CSV.read(registry_path, DataFrame)
+                summary = Processing.build_k_gap_membership_summary(registry)
+                @test Processing.validate_k_gap_membership_summary!(summary, registry)
+                @test Processing.validate_k_gap_membership_regression!(summary)
+                @test nrow(summary) == 6
+                @test collect(zip(summary.election, summary.k)) == [
+                    (2014, 0), (2014, 1), (2018, 0), (2018, 1), (2022, 0), (2022, 1)]
+                empty_inversions = registry[(registry.election .== 2018) .&
+                    (registry.k .== 0) .& registry.inversion, :]
+                @test isempty(empty_inversions)
+                @test occursin("2018 & 0 & 8 & 0 & None & 16.5 [15--20]",
+                               Processing.ideology_k_gap_summary_latex(summary))
+                @test_throws ErrorException Processing.validate_k_gap_membership_regression!(summary[1:5, :])
+                @test_throws ErrorException Processing.validate_k_gap_membership_regression!(reverse(summary))
+                altered = copy(summary)
+                altered.inverted_members_median[1] += 1
+                @test_throws ErrorException Processing.validate_k_gap_membership_regression!(altered)
+            else
+                @test_skip "Generate paper outputs to check the audited membership registry."
             end
         end
 

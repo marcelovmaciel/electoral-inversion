@@ -152,7 +152,33 @@ The k-gap outputs are:
     processing/Processing/output/paper/tables/ideology_k_gap_summary.csv
     processing/Processing/output/paper/diagnostics/ideology_k_gap_checks.csv
     processing/Processing/output/paper/diagnostics/ideology_k_gap_strongest_inversion_ties.csv
-    processing/Processing/output/paper/latex/table_03_ideology_k_gap_summary_tabular.tex
+    processing/Processing/output/paper/latex/table_03_ideology_k_gap_summary.tex
+
+The summary CSV retains its existing diagnostic columns and appends
+`non_inverted_minimal_majorities` and `inverted_members_{median,min,max}` /
+`non_inverted_members_{median,min,max}`. These numeric statistics are calculated
+once from `raw/ideology_k_gap_minimal_majorities.csv`, using `party_count`
+validated against the canonical `coalition_id` and `parties` lists. Membership
+includes parties receiving votes but no seats and excludes omitted interior
+parties. Minimality is evaluated separately within each domain; the two minimal
+sets are not assumed to be nested. Empty subsets have missing numeric statistics
+and render as `None`.
+
+The runner checks registry reconciliation and all six audited membership rows
+before rendering the complete table float (caption, label, six columns, and
+notes). With `SYNC_REVIEW_ASSETS=true`, it synchronizes
+`table_03_ideology_k_gap_summary.tex` into
+`writing/submission_inversions_review/manuscript/`, where the generated asset is
+tracked. The authoritative manuscript, `main_rw_again.tex`, includes this float
+with a single `\input{table_03_ideology_k_gap_summary.tex}`. The former tabular-only
+asset is no longer produced; local copies may remain for superseded drafts.
+
+Run the focused ideological-domain tests before regenerating the paper outputs:
+
+```bash
+julia -O0 --startup-file=no --project=processing/Processing processing/Processing/test/test_ideological_interval_coalitions.jl
+ALLOW_OVERWRITE=true SYNC_REVIEW_ASSETS=true julia -O0 --startup-file=no --project=processing/Processing processing/Processing/running/running.jl
+```
 
 ## Tests
 

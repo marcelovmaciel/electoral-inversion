@@ -720,32 +720,6 @@ function write_party_representation_appendix(df)
     return path
 end
 
-function ideology_k_gap_summary_tabular_latex(df)
-    io = IOBuffer()
-    println(io, raw"\begin{tabularx}{\textwidth}{@{}rrcc>{\raggedright\arraybackslash}X@{}}")
-    println(io, raw"\toprule")
-    println(io, "Election & \\(k\\) & Minimal seat-majority coalitions & Minimal inversions & Strongest minimal inversion " * repeat("\\", 2))
-    println(io, raw"\midrule")
-    for row in eachrow(df)
-        strongest_cell = if String(row.strongest_inversion_coalition) == "None"
-            "None"
-        else
-            "$(latex_escape(row.strongest_inversion_coalition)); " *
-            "$(fmt2(row.strongest_inversion_vote_share_pct))\\%; " *
-            "$(row.strongest_inversion_seats) seats; " *
-            "\\(r_C=$(fmt2(row.strongest_inversion_r_C))\\)"
-        end
-        println(
-            io,
-            "$(row.election) & $(row.k) & $(row.minimal_seat_majority_coalitions) & " *
-            "$(row.minimal_inversions) & $(strongest_cell) \\\\",
-        )
-    end
-    println(io, raw"\bottomrule")
-    println(io, raw"\end{tabularx}")
-    return String(take!(io))
-end
-
 function ideology_order_appendix_latex(df)
     io = IOBuffer()
     println(io, raw"\begin{longtable}{rrlllrl}")
@@ -2125,59 +2099,60 @@ function validate_nested_domains!(d0, d1, year)
     return true
 end
 
-function build_k_gap_summary(all_domains)
+function build_k_gap_summary(all_domains, membership_summary)
     rows = NamedTuple[]
-    for year in analysis_years
-        for k in (0, 1)
-            domain = all_domains[
-                (all_domains.election .== year) .&
-                (all_domains.k .== k),
-                :,
-            ]
-            minimal_inversion_domain = domain[
-                (domain.minimal_seat_majority .== true) .&
-                (domain.inversion .== true),
-                :,
-            ]
-            strongest = strongest_inversion_selection(minimal_inversion_domain)
-            if strongest === nothing
-                push!(rows, (
-                    election = Int(year),
-                    k = Int(k),
-                    minimal_seat_majority_coalitions = sum(Int.(domain.minimal_seat_majority)),
-                    minimal_inversions = nrow(minimal_inversion_domain),
-                    strongest_inversion_coalition = "None",
-                    strongest_inversion_vote_share = missing,
-                    strongest_inversion_vote_share_pct = missing,
-                    strongest_inversion_seats = missing,
-                    strongest_inversion_r_C = missing,
-                    strongest_inversion_vote_deficit_pp = missing,
-                    diagnostic_admissible_coalitions = nrow(domain),
-                    diagnostic_exact_strength_tie_count = 0,
-                    diagnostic_exact_strength_tied_coalitions = "",
-                ))
-                continue
-            end
-            selected = strongest.selected
-            has_exact_tie = nrow(strongest.exact_ties) > 1
+    for membership_row in eachrow(membership_summary)
+        year, k = membership_row.election, membership_row.k
+        domain = all_domains[
+            (all_domains.election .== year) .&
+            (all_domains.k .== k),
+            :,
+        ]
+        minimal_inversion_domain = domain[
+            (domain.minimal_seat_majority .== true) .&
+            (domain.inversion .== true),
+            :,
+        ]
+        strongest = strongest_inversion_selection(minimal_inversion_domain)
+        if strongest === nothing
             push!(rows, (
                 election = Int(year),
                 k = Int(k),
-                minimal_seat_majority_coalitions = sum(Int.(domain.minimal_seat_majority)),
-                minimal_inversions = nrow(minimal_inversion_domain),
-                strongest_inversion_coalition = String(selected.coalition_label),
-                strongest_inversion_vote_share = Float64(selected.vote_share),
-                strongest_inversion_vote_share_pct = 100.0 * Float64(selected.vote_share),
-                strongest_inversion_seats = Int(selected.seats),
-                strongest_inversion_r_C = Float64(selected.r_C),
-                strongest_inversion_vote_deficit_pp = Float64(selected.vote_deficit_pp),
+                minimal_seat_majority_coalitions = membership_row.minimal_seat_majority_coalitions,
+                minimal_inversions = membership_row.minimal_inversions,
+                strongest_inversion_coalition = "None",
+                strongest_inversion_vote_share = missing,
+                strongest_inversion_vote_share_pct = missing,
+                strongest_inversion_seats = missing,
+                strongest_inversion_r_C = missing,
+                strongest_inversion_vote_deficit_pp = missing,
                 diagnostic_admissible_coalitions = nrow(domain),
-                diagnostic_exact_strength_tie_count = has_exact_tie ? nrow(strongest.exact_ties) : 0,
-                diagnostic_exact_strength_tied_coalitions = has_exact_tie ? join(String.(strongest.exact_ties.coalition_label), " | ") : "",
+                diagnostic_exact_strength_tie_count = 0,
+                diagnostic_exact_strength_tied_coalitions = "",
             ))
+            continue
         end
+        selected = strongest.selected
+        has_exact_tie = nrow(strongest.exact_ties) > 1
+        push!(rows, (
+            election = Int(year),
+            k = Int(k),
+            minimal_seat_majority_coalitions = membership_row.minimal_seat_majority_coalitions,
+            minimal_inversions = membership_row.minimal_inversions,
+            strongest_inversion_coalition = String(selected.coalition_label),
+            strongest_inversion_vote_share = Float64(selected.vote_share),
+            strongest_inversion_vote_share_pct = 100.0 * Float64(selected.vote_share),
+            strongest_inversion_seats = Int(selected.seats),
+            strongest_inversion_r_C = Float64(selected.r_C),
+            strongest_inversion_vote_deficit_pp = Float64(selected.vote_deficit_pp),
+            diagnostic_admissible_coalitions = nrow(domain),
+            diagnostic_exact_strength_tie_count = has_exact_tie ? nrow(strongest.exact_ties) : 0,
+            diagnostic_exact_strength_tied_coalitions = has_exact_tie ? join(String.(strongest.exact_ties.coalition_label), " | ") : "",
+        ))
     end
     result = DataFrame(rows)
+    membership_columns = select(membership_summary, Not([:minimal_seat_majority_coalitions, :minimal_inversions]))
+    result = leftjoin(result, membership_columns; on = [:election, :k], validate = (true, true))
     sort!(result, [:election, :k])
     return result
 end
@@ -2259,21 +2234,29 @@ ideology_k_gap_coalitions = vcat(
 sort!(ideology_k_gap_coalitions, [:election, :k, :left_index, :right_index, :gap_count, :omitted_party])
 ideology_k_gap_minimal_majorities = ideology_k_gap_coalitions[ideology_k_gap_coalitions.minimal_seat_majority .== true, :]
 ideology_k_gap_inversions = ideology_k_gap_coalitions[ideology_k_gap_coalitions.inversion .== true, :]
-ideology_k_gap_summary = build_k_gap_summary(ideology_k_gap_coalitions)
 ideology_k_gap_checks = DataFrame(ideology_k_gap_check_rows)
 ideology_k_gap_ties = strongest_tie_diagnostic(ideology_k_gap_coalitions)
 
 write_artifact_csv(joinpath(raw_dir, "ideology_k_gap_coalitions.csv"), ideology_k_gap_coalitions, "raw", "All k=0 and k=1 ideological coalitions with full-precision metrics and domain-relative minimality.")
-write_artifact_csv(joinpath(raw_dir, "ideology_k_gap_minimal_majorities.csv"), ideology_k_gap_minimal_majorities, "raw", "All domain-relative minimal seat-majority coalitions for k=0 and k=1.")
+ideology_k_gap_registry_path = write_artifact_csv(joinpath(raw_dir, "ideology_k_gap_minimal_majorities.csv"), ideology_k_gap_minimal_majorities, "raw", "All domain-relative minimal seat-majority coalitions for k=0 and k=1.")
 write_artifact_csv(joinpath(raw_dir, "ideology_k_gap_inversions.csv"), ideology_k_gap_inversions, "raw", "All strict vote-minority seat-majority inversions in the full k=0 and k=1 domains.")
 write_artifact_csv(joinpath(diagnostics_dir, "ideology_k_gap_checks.csv"), ideology_k_gap_checks, "diagnostic", "Fail-loud domain, arithmetic, minimality, nesting, and baseline regression checks for k=0 and k=1.")
 write_artifact_csv(joinpath(diagnostics_dir, "ideology_k_gap_strongest_inversion_ties.csv"), ideology_k_gap_ties, "diagnostic", "Exact strongest-inversion ties retained before the party-count tiebreak.")
+
+# The serialized domain-minimal registry is the authoritative membership source.
+ideology_k_gap_registry = CSV.read(ideology_k_gap_registry_path, DataFrame)
+validate_csv_roundtrip!(ideology_k_gap_registry, ideology_k_gap_minimal_majorities,
+    propertynames(ideology_k_gap_minimal_majorities), "K-gap minimal-majority registry")
+ideology_k_gap_membership_summary = Processing.build_k_gap_membership_summary(ideology_k_gap_registry)
+Processing.validate_k_gap_membership_summary!(ideology_k_gap_membership_summary, ideology_k_gap_registry)
+Processing.validate_k_gap_membership_regression!(ideology_k_gap_membership_summary)
+ideology_k_gap_summary = build_k_gap_summary(ideology_k_gap_coalitions, ideology_k_gap_membership_summary)
 
 ideology_k_gap_summary_csv_path = write_artifact_csv(
     joinpath(tables_dir, "ideology_k_gap_summary.csv"),
     ideology_k_gap_summary,
     "table",
-    "Six-row k=0/k=1 ideological-coalition minimal-frontier sensitivity summary.",
+    "Six-row domain-minimal counts and actual coalition membership summaries, with strongest-case diagnostics retained.",
 )
 ideology_k_gap_summary_from_csv = CSV.read(ideology_k_gap_summary_csv_path, DataFrame)
 validate_csv_roundtrip!(
@@ -2297,13 +2280,15 @@ validate_csv_roundtrip!(
     "Ideology k-gap summary table",
 )
 validate_ideology_k_gap_summary_table!(ideology_k_gap_summary_from_csv, ideology_k_gap_coalitions)
+Processing.validate_k_gap_membership_summary!(ideology_k_gap_summary_from_csv, ideology_k_gap_registry)
+Processing.validate_k_gap_membership_regression!(ideology_k_gap_summary_from_csv)
 ideology_k_gap_summary_latex_path = write_artifact_text(
-    joinpath(latex_dir, "table_03_ideology_k_gap_summary_tabular.tex"),
-    ideology_k_gap_summary_tabular_latex(ideology_k_gap_summary_from_csv),
+    joinpath(latex_dir, "table_03_ideology_k_gap_summary.tex"),
+    Processing.ideology_k_gap_summary_latex(ideology_k_gap_summary_from_csv),
     "latex",
-    "CSV-driven tabularx for the six-row manuscript minimal-frontier sensitivity summary.";
+    "Complete CSV-driven table float: domain-minimal winning coalitions and membership by inversion status.";
     rows = nrow(ideology_k_gap_summary_from_csv),
-    columns = 5,
+    columns = 6,
 )
 sync_review_latex_asset(ideology_k_gap_summary_latex_path)
 println("Ideology k-gap summary:")
