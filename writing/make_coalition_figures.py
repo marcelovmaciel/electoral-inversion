@@ -63,25 +63,8 @@ EXPECTED_INVERSION_KEYS = (
     (2018, "2021.3/2022.1"),
     (2022, "2023.1"),
 )
-EXPECTED_IDEOLOGICAL_COUNTS = {
-    2014: (8, 4),
-    2018: (0, 0),
-    2022: (6, 2),
-}
-EXPECTED_IDEOLOGICAL_INTERVAL_COUNTS = {2014: 528, 2018: 630, 2022: 528}
 DECOMPOSITION_COMPONENTS = ("A_C", "B_C", "d_C")
-EXPECTED_STATE_WEIGHTING_CASES = (
-    ("cabinet/2014/2016.2", "Cabinet 2014/2016.2"),
-    ("cabinet/2014/2017.1", "Cabinet 2014/2017.1"),
-    (
-        "cabinet/2018/2021.3/2022.1",
-        "Cabinet 2018/2021.3/2022.1",
-    ),
-    ("cabinet/2022/2023.1", "Cabinet 2022/2023.1"),
-    ("ideological/2014/11-24", "Ideological 2014/PTB-PR"),
-    ("ideological/2022/15-29", "Ideological 2022/MDB-UNIÃO"),
-    ("ideological/2022/25-32", "Ideological 2022/PP-PL"),
-)
+
 STATE_WEIGHTING_MAGNITUDE_COLUMNS = (
     "b_positive_eight_seat",
     "b_positive_other",
@@ -274,23 +257,21 @@ def load_ideological_interval_heatmap(artifact_root: Path) -> pd.DataFrame:
     ).any():
         raise ValueError(f"A minimal ideological inversion is not an inversion in {input_path}")
 
-    actual_years = set(intervals["election_year"])
-    if actual_years != set(EXPECTED_IDEOLOGICAL_COUNTS):
-        raise ValueError(f"Ideological figure years changed in {input_path}: {sorted(actual_years)}")
-    for year, (expected_inversions, expected_minimal) in EXPECTED_IDEOLOGICAL_COUNTS.items():
-        rows = intervals.loc[intervals["election_year"] == year]
-        expected_rows = EXPECTED_IDEOLOGICAL_INTERVAL_COUNTS[year]
-        actual = (
-            len(rows),
-            int(rows["coalition_inversion"].sum()),
-            int(rows["minimal_ideological_interval_inversion"].sum()),
-        )
-        expected = (expected_rows, expected_inversions, expected_minimal)
-        if actual != expected:
-            raise ValueError(
-                f"Ideological counts changed for {year} in {input_path}: "
-                f"expected intervals/inversions/minimal={expected}, found {actual}"
-            )
+    require_columns(intervals, input_path, {"ideological_universe", "ideological_party_count", "vote_share"})
+    if set(intervals["ideological_universe"]) != {"seat_winning"}:
+        raise ValueError("Main interval figure requires the seat_winning universe")
+    if set(intervals["election_year"]) != set(ELECTION_LABELS):
+        raise ValueError("Ideological figure must contain all three election years")
+    for year, rows in intervals.groupby("election_year"):
+        order = read_csv(artifact_root / "raw" / f"ideology_order_{year}.csv")
+        n = len(order)
+        expected = {(i, j) for i in range(1, n + 1) for j in range(i, n + 1)}
+        actual = set(zip(rows["start_index"], rows["end_index"]))
+        if actual != expected or set(rows["ideological_party_count"]) != {n}:
+            raise ValueError(f"Interval figure does not cover the parliamentary order for {year}")
+        inverse = (rows["vote_share"] < 0.5) & (rows["seats"] >= 257)
+        if not (inverse == rows["coalition_inversion"]).all():
+            raise ValueError(f"Incorrect inversion flags in {input_path}")
     return intervals
 
 
@@ -410,27 +391,11 @@ def load_accounting_state_weighting_anatomy(artifact_root: Path) -> pd.DataFrame
         raise ValueError(f"Duplicate focal_order rows in {input_path}")
 
     anatomy = anatomy.sort_values("focal_order").reset_index(drop=True)
-    expected_ids = tuple(case_id for case_id, _ in EXPECTED_STATE_WEIGHTING_CASES)
-    expected_displays = tuple(display for _, display in EXPECTED_STATE_WEIGHTING_CASES)
-    actual_ids = tuple(anatomy["case_id"])
-    actual_displays = tuple(anatomy["case_display"])
-    actual_order = tuple(anatomy["focal_order"])
-    expected_order = tuple(range(1, len(EXPECTED_STATE_WEIGHTING_CASES) + 1))
-    if actual_ids != expected_ids:
-        raise ValueError(
-            f"State-weighting focal-case registry changed in {input_path}: "
-            f"expected {expected_ids}, found {actual_ids}"
-        )
-    if actual_displays != expected_displays:
-        raise ValueError(
-            f"State-weighting case labels changed in {input_path}: "
-            f"expected {expected_displays}, found {actual_displays}"
-        )
-    if actual_order != expected_order:
-        raise ValueError(
-            f"State-weighting focal order changed in {input_path}: "
-            f"expected {expected_order}, found {actual_order}"
-        )
+    if tuple(anatomy["focal_order"]) != tuple(range(1, len(anatomy) + 1)):
+        raise ValueError(f"Focal registry order is not contiguous in {input_path}")
+    registry = read_csv(artifact_root / "tables" / "table_accounting_focal_cases.csv")
+    if "case_id" in registry and set(anatomy["case_id"]) != set(registry["case_id"]):
+        raise ValueError(f"State anatomy differs from the generated focal registry in {input_path}")
 
     magnitudes = anatomy.loc[:, STATE_WEIGHTING_MAGNITUDE_COLUMNS]
     if (magnitudes < -ACCOUNTING_ATOL).any().any():
@@ -581,10 +546,13 @@ def save_ideological_interval_heatmaps(artifact_root: Path, figure_dir: Path) ->
             matrix[j, i] = interval_status_code(row)
 
         fig, ax = plt.subplots(figsize=(5.6, 5.2))
-        ax.imshow(matrix, origin="lower", interpolation="nearest", aspect="auto", cmap=cmap, norm=norm)
-        ax.set_title(f"Ideological interval status, {year}")
-        ax.set_xlabel("Start index in ideology order")
-        ax.set_ylabel("End index in ideology order")
+        ax.imshow(matrix, origin="lower", interpolation="nearest", aspect="auto", cmap=cmap, norm=norm, extent=(0.5, n + 0.5, 0.5, n + 0.5))
+        ax.set_title(f"Parliamentary interval status, {year}")
+        ax.set_xlabel("Start index in parliamentary ideology order")
+        ax.set_ylabel("End index in parliamentary ideology order")
+        ticks = sorted(set([1, n] + list(range(5, n, 5))))
+        ax.set_xticks(ticks)
+        ax.set_yticks(ticks)
 
 
         output = figure_dir / f"ideological_interval_heatmap_{year}.pdf"

@@ -19,6 +19,7 @@ include(joinpath(DECOMPOSITION_DIR, "IntermediateAccountingReport.jl"))
 using .IntermediateAccountingReport
 include(joinpath(DECOMPOSITION_DIR, "AccountingIntegration.jl"))
 using .AccountingIntegration
+include(joinpath(DECOMPOSITION_DIR, "DualUniverseAccounting.jl"))
 
 const PAPER_ROOT = joinpath(PROCESSING_ROOT, "output", "paper")
 const OUTPUT_ROOT = joinpath(PROCESSING_ROOT, "output", "decomposition")
@@ -161,6 +162,7 @@ function sync_decomposition_to_paper!(manifest::DataFrame)
             "table_accounting_gross_components.tex",
             "table_accounting_selected_party_geography.tex",
             "table_accounting_minimal_ideological.tex",
+            "table_accounting_minimal_ideological_all_parties.tex",
             "table_coalition_party_contributions.tex",
         )
         for filename in review_filenames
@@ -241,16 +243,25 @@ party_size_artifacts = write_party_size_diagnostic_outputs(
     OUTPUT_ROOT, full_accounting, party_size_diagnostics,
 )
 
+robustness_artifacts, dual_universe_paper_artifacts = DualUniverseAccounting.write_dual_universe_outputs(
+    PAPER_ROOT, OUTPUT_ROOT, coalition_periods, accounting_by_year,
+)
+
 
 input_paths = [
     observed_path,
     party_path,
     ideology_input_path,
+    joinpath(PAPER_ROOT, "raw", "ideological_interval_metrics_all_parties.csv"),
+    joinpath(DECOMPOSITION_DIR, "DualUniverseAccounting.jl"),
+    joinpath(DECOMPOSITION_DIR, "cross_domain_components.py"),
     joinpath(DECOMPOSITION_DIR, "CoalitionDecomposition.jl"),
     joinpath(DECOMPOSITION_DIR, "IntermediateAccountingReport.jl"),
     joinpath(DECOMPOSITION_DIR, "PartySizeDiagnostics.jl"),
     joinpath(DECOMPOSITION_DIR, "AccountingIntegration.jl"),
     joinpath(DECOMPOSITION_DIR, "run_decomposition.jl"),
+    joinpath(DECOMPOSITION_DIR, "report", "intermediate_accounting_report.tex"),
+    joinpath(DECOMPOSITION_DIR, "report", "build_report.sh"),
     joinpath(PROCESSING_ROOT, "psc_baseline_repair", "POST_PSC_BASELINE.md"),
     joinpath(PROCESSING_ROOT, "psc_baseline_repair", "post_psc_baseline_manifest.csv"),
 ]
@@ -272,7 +283,20 @@ sort!(input_manifest, :path)
 input_manifest_path = joinpath(OUTPUT_ROOT, "audit", "decomposition_input_manifest.csv")
 CSV.write(input_manifest_path, input_manifest)
 
-manifest = append_output_manifest_rows!(vcat(integration_artifacts, party_size_artifacts, [
+# Reuse the loaded exact accounting panels for every standalone diagnostic
+# report output. This keeps the main rebuild complete without rereading TSE
+# inputs or repeating the both-universe enumeration/export stage.
+report_cases = decompose_case_registry(case_registry, accounting_by_year)
+validate_cabinet_compatibility!(report_cases, outputs)
+report_rankings = build_case_rankings(report_cases)
+report_manifest = write_intermediate_report_outputs(
+    OUTPUT_ROOT, full_accounting, case_registry, report_cases, report_rankings;
+    input_manifest = input_manifest,
+    party_size_diagnostics = party_size_diagnostics,
+)
+
+
+manifest = append_output_manifest_rows!(vcat(integration_artifacts, party_size_artifacts, robustness_artifacts, [
     (
         path = "audit/ideological_regression.csv",
         artifact_type = "audit",
@@ -293,6 +317,7 @@ manifest = append_output_manifest_rows!(vcat(integration_artifacts, party_size_a
 
 prune_stale_accounting_artifacts!(OUTPUT_ROOT, Set(String.(manifest.path)))
 paper_additions = sync_decomposition_to_paper!(manifest)
+update_manifest!(joinpath(PAPER_ROOT, "artifact_manifest.csv"), vcat(paper_additions, dual_universe_paper_artifacts))
 
 println("Recovered inversion cases:")
 for row in eachrow(outputs.decomposition)

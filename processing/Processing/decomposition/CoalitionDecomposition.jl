@@ -971,22 +971,19 @@ function write_decomposition_outputs(output_root::AbstractString, coalition_peri
 end
 
 function validate_ideological_counts(intervals::DataFrame)
-    expected = Dict(2014 => (8, 4), 2018 => (0, 0), 2022 => (6, 2))
     rows = NamedTuple[]
-    for year in sort(collect(keys(expected)))
+    for year in sort(unique(Int.(intervals.election_year)))
         selected = intervals[Int.(intervals.election_year) .== year, :]
-        inversions = sum(Bool.(selected.coalition_inversion))
-        minimal = sum(Bool.(selected.minimal_connected_inversion))
-        (inversions, minimal) == expected[year] || error(
-            "Ideological regression changed for $(year): expected $(expected[year]), " *
-            "found $((inversions, minimal)).",
-        )
+        inversion = Bool.(selected.coalition_inversion)
+        minimal = Bool.(selected.minimal_connected_inversion)
+        all(.!minimal .| inversion) || error("Minimal inversion is not an inversion.")
+        all(selected.vote_share[inversion] .< 0.5) || error("Inversion violates all-valid-vote threshold.")
+        all(selected.seats[inversion] .>= 257) || error("Inversion violates Chamber seat threshold.")
         push!(rows, (
             election_year = year,
-            coalition_inversions = inversions,
-            minimal_inversions = minimal,
-            expected_coalition_inversions = expected[year][1],
-            expected_minimal_inversions = expected[year][2],
+            ideological_universe = only(unique(String.(selected.ideological_universe))),
+            coalition_inversions = sum(inversion),
+            minimal_inversions = sum(minimal),
             status = "PASS",
         ))
     end

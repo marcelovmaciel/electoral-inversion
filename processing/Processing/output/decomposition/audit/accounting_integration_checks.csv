@@ -1,0 +1,13 @@
+scope,check_name,actual,expected,status
+accounting_integration,focal_state_rows,216,216,PASS
+accounting_integration,gross_component_rows,48,48,PASS
+accounting_integration,state_weighting_rows,8,8,PASS
+accounting_integration,selected_party_rows,17,17,PASS
+accounting_integration,district_electoral_weight_rows,81,81,PASS
+accounting_integration,minimal_ideological_cases,7,7,PASS
+accounting_integration,coalition_party_contribution_rows,179,179,PASS
+accounting_integration,coalition_party_contribution_cases,16,16,PASS
+accounting_integration,coalition_party_contribution_focal_cases,11,11,PASS
+accounting_integration,coalition_party_contribution_checks,16,16,PASS
+accounting_integration,state_weighting_gross_identity,8 exact closures,8 exact closures,PASS
+accounting_integration,coalition_party_contribution_validations,16 complete case audits,16 complete case audits,PASS

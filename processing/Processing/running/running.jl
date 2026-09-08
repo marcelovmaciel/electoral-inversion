@@ -48,6 +48,8 @@ artifact_manifest_path = joinpath(paper_output_root, "artifact_manifest.csv")
 review_manuscript_dir = joinpath(repo_root, "writing", "submission_inversions_review", "manuscript")
 
 analysis_years = [2014, 2018, 2022]
+ideological_universes = (:seat_winning, :all_parties)
+primary_ideological_universe = :seat_winning
 expected_total_seats = 513
 expected_national_vote_totals = Dict(
     2014 => 97_355_354,
@@ -1685,7 +1687,7 @@ function build_ideology_order(year, summary_df, classification_2023, classificat
 end
 
 function ideology_order_output(year, ideology_df)
-    out = select(ideology_df, :ordinal_position, :SG_PARTIDO => :party, :classification_label, :ideology_value_numeric, :ideology_source, :source_party_raw)
+    out = select(ideology_df, :ideological_universe, :ordinal_position, :original_ordinal_position, :SG_PARTIDO => :party, :classification_label, :ideology_value_numeric, :ideology_source, :source_party_raw)
     out[!, :election_year] = fill(Int(year), nrow(out))
     sort!(out, [:election_year, :ordinal_position])
     return out
@@ -1694,10 +1696,26 @@ end
 ideology_order_2014_base = build_ideology_order(2014, party_summary_2014, classification_2023, classification_2025)
 ideology_order_2018_base = build_ideology_order(2018, party_summary_2018, classification_2023, classification_2025)
 ideology_order_2022_base = build_ideology_order(2022, party_summary_2022, classification_2023, classification_2025)
+party_summaries = Dict(2014 => party_summary_2014, 2018 => party_summary_2018, 2022 => party_summary_2022)
+full_ideology_orders = Dict(2014 => ideology_order_2014_base, 2018 => ideology_order_2018_base, 2022 => ideology_order_2022_base)
+ideology_orders = Dict{Tuple{Int,Symbol},DataFrame}()
+for universe in ideological_universes, year in analysis_years
+    ordered = Processing.ideological_party_order(party_summaries[year], full_ideology_orders[year]; universe = universe)
+    ideology_orders[(year, universe)] = ordered
+end
+ideology_order_2014_base = ideology_orders[(2014, primary_ideological_universe)]
+ideology_order_2018_base = ideology_orders[(2018, primary_ideological_universe)]
+ideology_order_2022_base = ideology_orders[(2022, primary_ideological_universe)]
 ideology_order_2014 = ideology_order_output(2014, ideology_order_2014_base)
 ideology_order_2018 = ideology_order_output(2018, ideology_order_2018_base)
 ideology_order_2022 = ideology_order_output(2022, ideology_order_2022_base)
 ideology_order_all_years = vcat(ideology_order_2014, ideology_order_2018, ideology_order_2022; cols = :union)
+ideology_order_all_parties = vcat([ideology_order_output(year, ideology_orders[(year, :all_parties)]) for year in analysis_years]...)
+for year in analysis_years
+    out = ideology_order_all_parties[ideology_order_all_parties.election_year .== year, :]
+    write_artifact_csv(joinpath(raw_dir, "ideology_order_$(year)_all_parties.csv"), out, "raw", "All-party robustness ideological order; original estimates and rank preserved.")
+end
+write_artifact_csv(joinpath(raw_dir, "ideology_order_all_years_all_parties.csv"), ideology_order_all_parties, "raw", "Full all-party robustness order.")
 println("2014 ideology order: ", join(String.(ideology_order_2014.party), ", "))
 println("2018 ideology order: ", join(String.(ideology_order_2018.party), ", "))
 println("2022 ideology order: ", join(String.(ideology_order_2022.party), ", "))
@@ -1740,13 +1758,14 @@ sync_review_latex_asset(ideology_order_latex_path)
 
 print_block("BLOCK 11. IDEOLOGICALLY CONTIGUOUS NO-GAP COALITIONS")
 
-function build_ideological_intervals(year, summary_df, ideology_df)
-    raw = Processing.ideological_interval_coalitions(summary_df, ideology_df)
-    expected_rows = nrow(ideology_df) * (nrow(ideology_df) + 1) ÷ 2
+function build_ideological_intervals(year, summary_df, ideology_df; universe = primary_ideological_universe)
+    raw = Processing.ideological_interval_coalitions(summary_df, ideology_df; universe = universe)
+    n = count(row -> universe == :all_parties || row.total_seats > 0, eachrow(summary_df))
+    expected_rows = n * (n + 1) ÷ 2
     nrow(raw) == expected_rows || error("Ideological interval count mismatch for $(year): expected $(expected_rows), found $(nrow(raw)).")
     raw[!, :election_year] = fill(Int(year), nrow(raw))
     raw[!, :interval_size] = Int.(raw.n_parties)
-    raw[!, :coalition_inversion] = Bool.(raw.weak_inversion)
+    raw[!, :coalition_inversion] = Bool.(raw.inversion)
     party_seats = Dict(String(row.SG_PARTIDO) => Int(row.total_seats) for row in eachrow(summary_df))
     raw[!, :left_removed_seats] = [row.seats - party_seats[String(row.start_party)] for row in eachrow(raw)]
     raw[!, :right_removed_seats] = [row.seats - party_seats[String(row.end_party)] for row in eachrow(raw)]
@@ -1756,7 +1775,7 @@ function build_ideological_intervals(year, summary_df, ideology_df)
     # exposing the clearer status names required by the analytical CSV.
     raw[!, :endpoint_minimal_connected_winning] = copy(raw.minimal_connected_winning)
     raw[!, :minimal_ideological_interval_inversion] = copy(raw.minimal_connected_inversion)
-    out = select(raw, :election_year, :start_index, :end_index, :start_party, :end_party, :parties, :interval_size, :votes, :national_vote_total, :vote_share, :seats, :seat_share, :quota, :seat_diff, :required_diff, :representation_ratio, :vote_majority, :seat_majority, :majority_status, :coalition_inversion, :left_removed_seats, :right_removed_seats, :minimal_connected_winning, :minimal_connected_inversion, :endpoint_minimal_connected_winning, :minimal_ideological_interval_inversion, :old_sweep_equivalent)
+    out = select(raw, :election_year, :ideological_universe, :ideological_party_count, :left_original_ordinal_position, :right_original_ordinal_position, :k, :gap_count, :coalition_id, :q_C, :d_C, :R_C, :minimal_seat_majority, :inversion, :start_index, :end_index, :start_party, :end_party, :parties, :interval_size, :votes, :national_vote_total, :vote_share, :seats, :seat_share, :quota, :seat_diff, :required_diff, :representation_ratio, :vote_majority, :seat_majority, :majority_status, :coalition_inversion, :left_removed_seats, :right_removed_seats, :minimal_connected_winning, :minimal_connected_inversion, :endpoint_minimal_connected_winning, :minimal_ideological_interval_inversion, :old_sweep_equivalent)
     sort!(out, [:election_year, :start_index, :end_index])
     return out
 end
@@ -1777,6 +1796,7 @@ function appendix_minimal_connected_winning_table(df)
         :election_year,
         :start_party,
         :end_party,
+        :ideological_universe,
         :interval_size => :n_parties,
         :vote_share,
         :vote_share => ByRow(pct) => :vote_share_pct,
@@ -1798,7 +1818,7 @@ function minimal_connected_winning_latex(df)
     println(io, "\\setlength{\\tabcolsep}{2pt}")
     println(io, "\\renewcommand{\\arraystretch}{1.08}")
     println(io, "\\begin{longtable}{|l|l|l|r|r|r|r|l|l|L{0.42\\linewidth}|}")
-    println(io, "\\caption{Minimal connected winning ideological intervals}\\label{tab:minimal-connected-winning-intervals}\\\\")
+    println(io, "\\caption{Minimal connected winning parliamentary ideological intervals}\\label{tab:minimal-connected-winning-intervals}\\\\")
     println(io, "\\hline")
     println(io, "Election & Start & End & Parties & Vote \\% & Seats & Seat diff. & Status & Contains PT & Interval \\\\")
     println(io, "\\hline")
@@ -1818,9 +1838,9 @@ function minimal_connected_winning_latex(df)
 end
 
 function build_legacy_first_majority_sweep(year, summary_df, ideology_df)
-    ordered = innerjoin(ideology_df, select(summary_df, :SG_PARTIDO, :valid_total, :total_seats), on = :SG_PARTIDO)
+    ordered = innerjoin(select(ideology_df, :SG_PARTIDO, :ordinal_position), select(summary_df, :SG_PARTIDO, :valid_total, :total_seats), on = :SG_PARTIDO)
     sort!(ordered, :ordinal_position)
-    total_votes = sum(ordered.valid_total)
+    total_votes = sum(summary_df.valid_total)
     rows = NamedTuple[]
     for start_index in 1:nrow(ordered)
         parties = String[]
@@ -1842,15 +1862,20 @@ function build_legacy_first_majority_sweep(year, summary_df, ideology_df)
         seat_diff = coalition_seats - quota
         vote_majority = vote_share > 0.5
         seat_majority = coalition_seats >= seat_majority_threshold
-        push!(rows, (election_year = Int(year), start_index = Int(start_index), end_index = end_index, start_party = ordered.SG_PARTIDO[start_index], end_party = end_index === missing ? missing : ordered.SG_PARTIDO[end_index], parties = join(parties, ", "), votes = Int(coalition_votes), vote_share = Float64(vote_share), seats = Int(coalition_seats), seat_share = Float64(seat_share), quota = Float64(quota), seat_diff = Float64(seat_diff), vote_majority = Bool(vote_majority), seat_majority = Bool(seat_majority), majority_status = majority_status(vote_majority, seat_majority), coalition_inversion = Bool(seat_majority && !vote_majority), reached_seat_majority = Bool(seat_majority), diagnostic_label = "legacy first-majority sweep"))
+        push!(rows, (election_year = Int(year), start_index = Int(start_index), end_index = end_index, start_party = ordered.SG_PARTIDO[start_index], end_party = end_index === missing ? missing : ordered.SG_PARTIDO[end_index], parties = join(parties, ", "), votes = Int(coalition_votes), vote_share = Float64(vote_share), seats = Int(coalition_seats), seat_share = Float64(seat_share), quota = Float64(quota), seat_diff = Float64(seat_diff), vote_majority = Bool(vote_majority), seat_majority = Bool(seat_majority), majority_status = majority_status(vote_majority, seat_majority), coalition_inversion = Bool(seat_majority && vote_share < 0.5), reached_seat_majority = Bool(seat_majority), diagnostic_label = "legacy first-majority sweep"))
     end
     return DataFrame(rows)
 end
 
-ideological_intervals_2014 = build_ideological_intervals(2014, party_summary_2014, ideology_order_2014_base)
-ideological_intervals_2018 = build_ideological_intervals(2018, party_summary_2018, ideology_order_2018_base)
-ideological_intervals_2022 = build_ideological_intervals(2022, party_summary_2022, ideology_order_2022_base)
+ideological_intervals_by_universe = Dict{Tuple{Int,Symbol},DataFrame}()
+for universe in ideological_universes, year in analysis_years
+    ideological_intervals_by_universe[(year, universe)] = build_ideological_intervals(year, party_summaries[year], full_ideology_orders[year]; universe = universe)
+end
+ideological_intervals_2014 = ideological_intervals_by_universe[(2014, primary_ideological_universe)]
+ideological_intervals_2018 = ideological_intervals_by_universe[(2018, primary_ideological_universe)]
+ideological_intervals_2022 = ideological_intervals_by_universe[(2022, primary_ideological_universe)]
 ideological_intervals_all_years = vcat(ideological_intervals_2014, ideological_intervals_2018, ideological_intervals_2022; cols = :union)
+ideological_intervals_all_parties = vcat([ideological_intervals_by_universe[(year, :all_parties)] for year in analysis_years]...)
 validate_coalition_accounting!(ideological_intervals_2014, party_seat_differentials_2014; domain = "ideological_interval", id_columns = (:election_year, :start_party, :end_party))
 validate_coalition_accounting!(ideological_intervals_2018, party_seat_differentials_2018; domain = "ideological_interval", id_columns = (:election_year, :start_party, :end_party))
 validate_coalition_accounting!(ideological_intervals_2022, party_seat_differentials_2022; domain = "ideological_interval", id_columns = (:election_year, :start_party, :end_party))
@@ -1862,10 +1887,12 @@ validate_coalition_accounting!(ideological_intervals_2022, party_seat_differenti
 print_block("BLOCK 11A. NESTED K-GAP IDEOLOGICAL-COALITION ROBUSTNESS")
 
 ideology_k_gap_check_rows = NamedTuple[]
+active_audit_universe = Ref(primary_ideological_universe)
 
 function record_k_gap_check!(year, k, check, ok, detail)
     push!(ideology_k_gap_check_rows, (
         election = Int(year),
+        ideological_universe = string(active_audit_universe[]),
         k = Int(k),
         check = String(check),
         ok = Bool(ok),
@@ -1890,8 +1917,8 @@ function k_gap_mask(value, position)
     return mask
 end
 
-function build_k_gap_domain(year, summary_df, ideology_df; k)
-    raw = Processing.ideological_k_gap_coalitions(summary_df, ideology_df; k = k)
+function build_k_gap_domain(year, summary_df, ideology_df; k, universe = primary_ideological_universe)
+    raw = Processing.ideological_k_gap_coalitions(summary_df, ideology_df; k = k, universe = universe)
     raw[!, :election] = fill(Int(year), nrow(raw))
     select!(raw, :election, Not(:election))
     sort!(raw, [:election, :k, :left_index, :right_index, :gap_count, :omitted_party])
@@ -2061,6 +2088,7 @@ function validate_k0_regression!(domain, intervals, year)
     end
     record_k_gap_check!(year, 0, "matches_established_interval_metrics", metrics_ok, isempty(metrics_problem) ? "membership, arithmetic, inversion, and minimality match" : metrics_problem)
 
+    if only(unique(domain.ideological_universe)) == "all_parties"
     minimal_count = sum(Int.(domain.minimal_seat_majority))
     inversion_count = sum(Int.(domain.inversion))
     record_k_gap_check!(year, 0, "baseline_minimal_majority_count", minimal_count == expected.minimal_majorities, "expected=$(expected.minimal_majorities), observed=$(minimal_count)")
@@ -2075,6 +2103,7 @@ function validate_k0_regression!(domain, intervals, year)
     if year == 2022
         selected = strongest.selected
         record_k_gap_check!(year, 0, "baseline_pp_pl_display_regression", round(100.0 * Float64(selected.vote_share); digits = 2) == 45.35 && Int(selected.seats) == 258, "expected 45.35% and 258 seats")
+    end
     end
     return true
 end
@@ -2105,6 +2134,7 @@ function build_k_gap_summary(all_domains, membership_summary)
         year, k = membership_row.election, membership_row.k
         domain = all_domains[
             (all_domains.election .== year) .&
+            (all_domains.ideological_universe .== membership_row.ideological_universe) .&
             (all_domains.k .== k),
             :,
         ]
@@ -2117,6 +2147,7 @@ function build_k_gap_summary(all_domains, membership_summary)
         if strongest === nothing
             push!(rows, (
                 election = Int(year),
+                ideological_universe = String(membership_row.ideological_universe),
                 k = Int(k),
                 minimal_seat_majority_coalitions = membership_row.minimal_seat_majority_coalitions,
                 minimal_inversions = membership_row.minimal_inversions,
@@ -2136,6 +2167,7 @@ function build_k_gap_summary(all_domains, membership_summary)
         has_exact_tie = nrow(strongest.exact_ties) > 1
         push!(rows, (
             election = Int(year),
+            ideological_universe = String(membership_row.ideological_universe),
             k = Int(k),
             minimal_seat_majority_coalitions = membership_row.minimal_seat_majority_coalitions,
             minimal_inversions = membership_row.minimal_inversions,
@@ -2152,7 +2184,7 @@ function build_k_gap_summary(all_domains, membership_summary)
     end
     result = DataFrame(rows)
     membership_columns = select(membership_summary, Not([:minimal_seat_majority_coalitions, :minimal_inversions]))
-    result = leftjoin(result, membership_columns; on = [:election, :k], validate = (true, true))
+    result = leftjoin(result, membership_columns; on = [:election, :ideological_universe, :k], validate = (true, true))
     sort!(result, [:election, :k])
     return result
 end
@@ -2195,104 +2227,81 @@ function strongest_tie_diagnostic(all_domains)
     return DataFrame(rows)
 end
 
-# k=0 is constructed and checked against the established interval pipeline
-# before k=1 is evaluated or any new manuscript-facing asset is written.
-ideology_k_gap_2014_k0 = build_k_gap_domain(2014, party_summary_2014, ideology_order_2014_base; k = 0)
-ideology_k_gap_2018_k0 = build_k_gap_domain(2018, party_summary_2018, ideology_order_2018_base; k = 0)
-ideology_k_gap_2022_k0 = build_k_gap_domain(2022, party_summary_2022, ideology_order_2022_base; k = 0)
-for (year, domain, summary_df, ideology_df, intervals) in [
-    (2014, ideology_k_gap_2014_k0, party_summary_2014, ideology_order_2014_base, ideological_intervals_2014),
-    (2018, ideology_k_gap_2018_k0, party_summary_2018, ideology_order_2018_base, ideological_intervals_2018),
-    (2022, ideology_k_gap_2022_k0, party_summary_2022, ideology_order_2022_base, ideological_intervals_2022),
-]
-    validate_k_gap_domain!(domain, summary_df, ideology_df, year, 0)
-    validate_k0_regression!(domain, intervals, year)
+# Both universes are freshly enumerated, independently for each k. The full
+# party summary is always supplied, so V cannot change with the coalition domain.
+domain_results = Dict{Tuple{Int,Symbol,Int},DataFrame}()
+summary_results = DataFrame[]
+for universe in ideological_universes
+    active_audit_universe[] = universe
+    for year in analysis_years
+        summary_df = party_summaries[year]
+        ordered = ideology_orders[(year, universe)]
+        full = full_ideology_orders[year]
+        represented = Set(String.(summary_df.SG_PARTIDO[summary_df.total_seats .> 0]))
+        expected_parties = String.(sort(full, :ordinal_position).SG_PARTIDO)
+        universe == :seat_winning && filter!(p -> p in represented, expected_parties)
+        record_k_gap_check!(year, 0, "universe_exact_order", String.(ordered.SG_PARTIDO) == expected_parties, "filter preserves the original relative order")
+        for k in (0, 1)
+            domain = build_k_gap_domain(year, summary_df, full; k = k, universe = universe)
+            domain_results[(year, universe, k)] = domain
+            validate_k_gap_domain!(domain, summary_df, ordered, year, k)
+            k == 0 && validate_k0_regression!(domain, ideological_intervals_by_universe[(year, universe)], year)
+        end
+        validate_nested_domains!(domain_results[(year, universe, 0)], domain_results[(year, universe, 1)], year)
+    end
+    domains = vcat([domain_results[(year, universe, k)] for year in analysis_years for k in (0, 1)]...)
+    minimal = domains[domains.minimal_seat_majority, :]
+    suffix = universe == primary_ideological_universe ? "" : "_$(universe)"
+    for (name, df) in (("coalitions", domains), ("minimal_majorities", minimal), ("inversions", domains[domains.inversion, :]))
+        write_artifact_csv(joinpath(raw_dir, "ideology_k_gap_$(name)$(suffix).csv"), df, "raw", "$(universe) k=0/1 ideological domain; all valid votes in V; freshly recomputed minimality.")
+    end
+    registry = CSV.read(joinpath(raw_dir, "ideology_k_gap_minimal_majorities$(suffix).csv"), DataFrame)
+    validate_csv_roundtrip!(registry, minimal, propertynames(minimal), "K-gap $(universe) registry")
+    membership = Processing.build_k_gap_membership_summary(registry)
+    Processing.validate_k_gap_membership_summary!(membership, registry)
+    Processing.validate_k_gap_membership_regression!(membership)
+    summary = build_k_gap_summary(domains, membership)
+    summary[!, :ideological_party_count] = [nrow(ideology_orders[(r.election, universe)]) for r in eachrow(summary)]
+    validate_ideology_k_gap_summary_table!(summary, domains)
+    push!(summary_results, summary)
+    path = write_artifact_csv(joinpath(tables_dir, "ideology_k_gap_summary$(suffix).csv"), summary, "table", "$(universe) domain-minimal counts and strongest inversion.")
+    ties = strongest_tie_diagnostic(minimal)
+    ties[!, :ideological_universe] = fill(string(universe), nrow(ties))
+    write_artifact_csv(joinpath(diagnostics_dir, "ideology_k_gap_strongest_inversion_ties$(suffix).csv"), ties, "diagnostic", "Strongest minimal inversion exact ties in $(universe).")
+    if universe == primary_ideological_universe
+        latex_path = write_artifact_text(joinpath(latex_dir, "table_03_ideology_k_gap_summary.tex"), Processing.ideology_k_gap_summary_latex(summary), "latex", "Primary parliamentary ideological summary."; rows=nrow(summary), columns=5)
+        sync_review_latex_asset(latex_path)
+    end
 end
-println("All k=0 regression gates passed; constructing k=1.")
-
-ideology_k_gap_2014_k1 = build_k_gap_domain(2014, party_summary_2014, ideology_order_2014_base; k = 1)
-ideology_k_gap_2018_k1 = build_k_gap_domain(2018, party_summary_2018, ideology_order_2018_base; k = 1)
-ideology_k_gap_2022_k1 = build_k_gap_domain(2022, party_summary_2022, ideology_order_2022_base; k = 1)
-for (year, d0, d1, summary_df, ideology_df) in [
-    (2014, ideology_k_gap_2014_k0, ideology_k_gap_2014_k1, party_summary_2014, ideology_order_2014_base),
-    (2018, ideology_k_gap_2018_k0, ideology_k_gap_2018_k1, party_summary_2018, ideology_order_2018_base),
-    (2022, ideology_k_gap_2022_k0, ideology_k_gap_2022_k1, party_summary_2022, ideology_order_2022_base),
-]
-    validate_k_gap_domain!(d1, summary_df, ideology_df, year, 1)
-    validate_nested_domains!(d0, d1, year)
+ideology_k_gap_coalitions = vcat([domain_results[(year, primary_ideological_universe, k)] for year in analysis_years for k in (0, 1)]...)
+ideology_k_gap_all_parties = vcat([domain_results[(year, :all_parties, k)] for year in analysis_years for k in (0, 1)]...)
+ideology_k_gap_minimal_majorities = ideology_k_gap_coalitions[ideology_k_gap_coalitions.minimal_seat_majority, :]
+ideology_k_gap_summary = first(summary_results)
+ideology_universe_comparison = vcat(summary_results...)
+# Compare the endpoint region, not incidental zero-seat members/omissions.
+ideology_universe_comparison[!, :strongest_region_changed] = [begin
+    primary = domain_results[(r.election, :seat_winning, r.k)]
+    robustness = domain_results[(r.election, :all_parties, r.k)]
+    a = strongest_inversion_selection(primary[primary.minimal_seat_majority, :])
+    b = strongest_inversion_selection(robustness[robustness.minimal_seat_majority, :])
+    a === nothing || b === nothing ? (a === nothing) != (b === nothing) :
+        (a.selected.left_endpoint, a.selected.right_endpoint) != (b.selected.left_endpoint, b.selected.right_endpoint)
+end for r in eachrow(ideology_universe_comparison)]
+sort!(ideology_universe_comparison, [:election, :k, :ideological_universe]; rev=[false,false,true])
+write_artifact_csv(joinpath(tables_dir, "ideological_universe_comparison.csv"), ideology_universe_comparison, "table", "Primary and robustness counts, strongest cases, and endpoint-region sensitivity.")
+write_artifact_csv(joinpath(raw_dir, "ideology_k_gap_coalitions_both_universes.csv"), vcat(ideology_k_gap_coalitions, ideology_k_gap_all_parties), "raw", "Complete k=0/1 enumeration in both explicitly labeled ideological universes.")
+for year in analysis_years, k in (0,1)
+    a, b = domain_results[(year,:seat_winning,k)], domain_results[(year,:all_parties,k)]
+    active_audit_universe[] = :seat_winning
+    record_k_gap_check!(year, k, "identical_national_denominator_across_universes", only(unique(a.national_vote_total)) == only(unique(b.national_vote_total)) == expected_national_vote_totals[year], "V includes votes cast for zero-seat parties in both domains")
+    shared = innerjoin(select(a,:coalition_id,:vote_share,:seats), select(b,:coalition_id,:vote_share=>:other_vote_share,:seats=>:other_seats); on=:coalition_id)
+    record_k_gap_check!(year, k, "no_vote_renormalization", all(shared.vote_share .== shared.other_vote_share) && all(shared.seats .== shared.other_seats), "shared members imply identical vote shares and observed seats")
 end
-
-ideology_k_gap_coalitions = vcat(
-    ideology_k_gap_2014_k0,
-    ideology_k_gap_2014_k1,
-    ideology_k_gap_2018_k0,
-    ideology_k_gap_2018_k1,
-    ideology_k_gap_2022_k0,
-    ideology_k_gap_2022_k1;
-    cols = :union,
-)
-sort!(ideology_k_gap_coalitions, [:election, :k, :left_index, :right_index, :gap_count, :omitted_party])
-ideology_k_gap_minimal_majorities = ideology_k_gap_coalitions[ideology_k_gap_coalitions.minimal_seat_majority .== true, :]
-ideology_k_gap_inversions = ideology_k_gap_coalitions[ideology_k_gap_coalitions.inversion .== true, :]
-ideology_k_gap_checks = DataFrame(ideology_k_gap_check_rows)
-ideology_k_gap_ties = strongest_tie_diagnostic(ideology_k_gap_coalitions)
-
-write_artifact_csv(joinpath(raw_dir, "ideology_k_gap_coalitions.csv"), ideology_k_gap_coalitions, "raw", "All k=0 and k=1 ideological coalitions with full-precision metrics and domain-relative minimality.")
-ideology_k_gap_registry_path = write_artifact_csv(joinpath(raw_dir, "ideology_k_gap_minimal_majorities.csv"), ideology_k_gap_minimal_majorities, "raw", "All domain-relative minimal seat-majority coalitions for k=0 and k=1.")
-write_artifact_csv(joinpath(raw_dir, "ideology_k_gap_inversions.csv"), ideology_k_gap_inversions, "raw", "All strict vote-minority seat-majority inversions in the full k=0 and k=1 domains.")
-write_artifact_csv(joinpath(diagnostics_dir, "ideology_k_gap_checks.csv"), ideology_k_gap_checks, "diagnostic", "Fail-loud domain, arithmetic, minimality, nesting, and baseline regression checks for k=0 and k=1.")
-write_artifact_csv(joinpath(diagnostics_dir, "ideology_k_gap_strongest_inversion_ties.csv"), ideology_k_gap_ties, "diagnostic", "Exact strongest-inversion ties retained before the party-count tiebreak.")
-
-# The serialized domain-minimal registry is the authoritative membership source.
-ideology_k_gap_registry = CSV.read(ideology_k_gap_registry_path, DataFrame)
-validate_csv_roundtrip!(ideology_k_gap_registry, ideology_k_gap_minimal_majorities,
-    propertynames(ideology_k_gap_minimal_majorities), "K-gap minimal-majority registry")
-ideology_k_gap_membership_summary = Processing.build_k_gap_membership_summary(ideology_k_gap_registry)
-Processing.validate_k_gap_membership_summary!(ideology_k_gap_membership_summary, ideology_k_gap_registry)
-Processing.validate_k_gap_membership_regression!(ideology_k_gap_membership_summary)
-ideology_k_gap_summary = build_k_gap_summary(ideology_k_gap_coalitions, ideology_k_gap_membership_summary)
-
-ideology_k_gap_summary_csv_path = write_artifact_csv(
-    joinpath(tables_dir, "ideology_k_gap_summary.csv"),
-    ideology_k_gap_summary,
-    "table",
-    "Six-row domain-minimal counts and actual coalition membership summaries, with strongest-case diagnostics retained.",
-)
-ideology_k_gap_summary_from_csv = CSV.read(ideology_k_gap_summary_csv_path, DataFrame)
-validate_csv_roundtrip!(
-    ideology_k_gap_summary_from_csv,
-    ideology_k_gap_summary,
-    (
-        :election,
-        :k,
-        :minimal_seat_majority_coalitions,
-        :minimal_inversions,
-        :strongest_inversion_coalition,
-        :strongest_inversion_vote_share,
-        :strongest_inversion_vote_share_pct,
-        :strongest_inversion_seats,
-        :strongest_inversion_r_C,
-        :strongest_inversion_vote_deficit_pp,
-        :diagnostic_admissible_coalitions,
-        :diagnostic_exact_strength_tie_count,
-        :diagnostic_exact_strength_tied_coalitions,
-    ),
-    "Ideology k-gap summary table",
-)
-validate_ideology_k_gap_summary_table!(ideology_k_gap_summary_from_csv, ideology_k_gap_coalitions)
-Processing.validate_k_gap_membership_summary!(ideology_k_gap_summary_from_csv, ideology_k_gap_registry)
-Processing.validate_k_gap_membership_regression!(ideology_k_gap_summary_from_csv)
-ideology_k_gap_summary_latex_path = write_artifact_text(
-    joinpath(latex_dir, "table_03_ideology_k_gap_summary.tex"),
-    Processing.ideology_k_gap_summary_latex(ideology_k_gap_summary_from_csv),
-    "latex",
-    "Complete CSV-driven table float: domain-minimal winning coalitions and membership by inversion status.";
-    rows = nrow(ideology_k_gap_summary_from_csv),
-    columns = 6,
-)
-sync_review_latex_asset(ideology_k_gap_summary_latex_path)
-println("Ideology k-gap summary:")
-show_table(ideology_k_gap_summary)
+write_artifact_csv(joinpath(diagnostics_dir, "ideology_k_gap_checks.csv"), DataFrame(ideology_k_gap_check_rows), "diagnostic", "Both universes: order, domain membership, denominator, minimality, inversion, accounting and nesting checks.")
+include(joinpath(processing_root, "src", "ideological_robustness_table.jl"))
+comparison_latex = write_artifact_text(joinpath(latex_dir, "table_appendix_ideological_universe_comparison.tex"), ideological_universe_comparison_latex(ideology_universe_comparison), "latex", "Compact primary/all-party sensitivity table."; rows=12, columns=8)
+sync_review_latex_asset(comparison_latex)
+show_table(ideology_universe_comparison)
 
 ideological_interval_inversions_only = ideological_intervals_all_years[ideological_intervals_all_years.coalition_inversion .== true, :]
 minimal_connected_inversions = ideological_intervals_all_years[ideological_intervals_all_years.minimal_connected_inversion .== true, :]
@@ -2305,6 +2314,15 @@ write_artifact_csv(joinpath(raw_dir, "ideological_interval_metrics.csv"), ideolo
 write_artifact_csv(joinpath(raw_dir, "ideological_interval_inversions_only.csv"), ideological_interval_inversions_only, "raw", "Contiguous ideological interval coalition inversions only.")
 write_artifact_csv(joinpath(raw_dir, "minimal_connected_inversion_metrics.csv"), minimal_connected_inversion_metrics, "raw", "Julia-filtered minimal connected ideological inversions with full-precision and Julia-generated display metrics.")
 write_artifact_csv(joinpath(raw_dir, "legacy_first_majority_sweeps.csv"), legacy_first_majority_sweeps, "raw", "Legacy first-seat-majority sweep diagnostic, not the main ideological result.")
+
+for (name, df) in (
+    ("ideological_interval_metrics", ideological_intervals_all_parties),
+    ("ideological_interval_inversions_only", ideological_intervals_all_parties[ideological_intervals_all_parties.coalition_inversion, :]),
+    ("minimal_connected_inversion_metrics", add_metric_display_columns(ideological_intervals_all_parties[ideological_intervals_all_parties.minimal_connected_inversion, :])),
+)
+    write_artifact_csv(joinpath(raw_dir, "$(name)_all_parties.csv"), df, "raw", "All-party robustness exact-connected results.")
+end
+write_artifact_csv(joinpath(tables_dir, "table_appendix_minimal_connected_winning_intervals_all_parties.csv"), appendix_minimal_connected_winning_table(ideological_intervals_all_parties), "table", "Complete all-party robustness minimal winning compositions.")
 
 function interval_summary_table(df)
     result = combine(groupby(df, :election_year), nrow => :all_intervals, :seat_majority => (x -> sum(Int.(x))) => :seat_majority_intervals, :coalition_inversion => (x -> sum(Int.(x))) => :coalition_inversions, :minimal_connected_inversion => (x -> sum(Int.(x))) => :minimal_inversions)
@@ -2362,17 +2380,8 @@ if nrow(minimal_connected_with_pt) > 0
     println("Endpoint-minimal connected winning intervals containing PT:")
     show_table(select(minimal_connected_with_pt, :election_year, :start_party, :end_party, :n_parties, :vote_share_pct, :seats, :seat_diff, :status, :coalition_inversion, :parties))
 end
-nrow(ideological_intervals_all_years) == 1686 || error("Ideological regression failed: expected 1686 intervals.")
-nrow(ideological_interval_inversions_only) == 14 || error("Ideological regression failed: expected 14 inversions.")
-nrow(minimal_connected_inversions) == 6 || error("Ideological regression failed: expected 6 minimal connected inversions.")
-for (year, expected_intervals, expected_inversions, expected_minimal) in [(2014, 528, 8, 4), (2018, 630, 0, 0), (2022, 528, 6, 2)]
-    interval_df = ideological_intervals_all_years[ideological_intervals_all_years.election_year .== year, :]
-    inversion_count = sum(Int.(interval_df.coalition_inversion))
-    minimal_count = sum(Int.(interval_df.minimal_connected_inversion))
-    nrow(interval_df) == expected_intervals || error("Ideological regression failed for $(year): expected $(expected_intervals) intervals, found $(nrow(interval_df)).")
-    inversion_count == expected_inversions || error("Ideological regression failed for $(year): expected $(expected_inversions) inversions, found $(inversion_count).")
-    minimal_count == expected_minimal || error("Expected $(expected_minimal) minimal ideological interval inversions for $(year), found $(minimal_count).")
-end
+# Primary empirical counts are generated above; all-party baseline guards run
+# inside validate_k0_regression!, and minimality is independently audited.
 pp_pl_2022 = minimal_connected_inversions[(minimal_connected_inversions.election_year .== 2022) .& (minimal_connected_inversions.start_party .== "PP") .& (minimal_connected_inversions.end_party .== "PL"), :]
 println("2022 PP-PL minimal ideological inversion present: ", nrow(pp_pl_2022) > 0)
 show_table(table_05_ideological_interval_summary_by_election)
@@ -2581,7 +2590,7 @@ function cabinet_bridge_latex(df)
     println(io, "\\setlength{\\tabcolsep}{1pt}")
     println(io, "\\renewcommand{\\arraystretch}{1.08}")
     println(io, "\\begin{longtable}{|l|l|L{0.10\\linewidth}|L{0.13\\linewidth}|L{0.10\\linewidth}|L{0.04\\linewidth}|L{0.13\\linewidth}|L{0.13\\linewidth}|L{0.11\\linewidth}|}")
-    println(io, "\\caption{Cabinet coalitions and ideological intervals}\\label{tab:cabinet-interval-bridge}\\\\")
+    println(io, "\\caption{Cabinet coalitions and parliamentary ideological intervals}\\label{tab:cabinet-interval-bridge}\\\\")
     println(io, "\\hline")
     println(io, "Election & Period & Cabinet & Ideology summary & Span & Gaps & Closure summary & Minimal winning & Minimal inversion \\\\")
     println(io, "\\hline")
@@ -2604,7 +2613,7 @@ function cabinet_bridge_latex(df)
     return String(take!(io))
 end
 
-function build_cabinet_interval_bridge(cabinets, party_summary_all, ideology_order_all, intervals_all)
+function build_cabinet_interval_bridge(cabinets, party_summary_all, ideology_order_all, intervals_all; universe = primary_ideological_universe)
     labels = sort(unique(String.(ideology_order_all.classification_label)))
     ideology_joined = innerjoin(
         select(ideology_order_all, :election_year, :ordinal_position, :party, :classification_label, :ideology_value_numeric),
@@ -2624,7 +2633,10 @@ function build_cabinet_interval_bridge(cabinets, party_summary_all, ideology_ord
         cabinet_parties = split_parties(cab.parties)
         cabinet_set = Set(cabinet_parties)
         ideology_party_set = Set(String.(ideology_year.party))
-        unmapped = sort(collect(setdiff(cabinet_set, ideology_party_set)))
+        parliamentary_cabinet = intersect(cabinet_set, ideology_party_set)
+        excluded_zero_seat = setdiff(cabinet_set, ideology_party_set)
+        summary_seats = Dict(String(r.party)=>Int(r.seats) for r in eachrow(summary_year))
+        unmapped = sort([p for p in excluded_zero_seat if !haskey(summary_seats,p) || summary_seats[p] > 0])
         if !isempty(unmapped)
             push!(unmapped_warnings, "$(year) $(cab.period): $(join(unmapped, ", "))")
         end
@@ -2660,11 +2672,13 @@ function build_cabinet_interval_bridge(cabinets, party_summary_all, ideology_ord
 
         winning_candidates = minimal_winning[minimal_winning.election_year .== year, :]
         inversion_candidates = minimal_inversions[minimal_inversions.election_year .== year, :]
-        closest_mcw = choose_closest_interval(cabinet_parties, winning_candidates)
-        closest_mci = choose_closest_interval(cabinet_parties, inversion_candidates)
+        closest_mcw = choose_closest_interval(collect(parliamentary_cabinet), winning_candidates)
+        closest_mci = choose_closest_interval(collect(parliamentary_cabinet), inversion_candidates)
 
         row = Dict{Symbol,Any}()
         row[:election_year] = year
+        row[:ideological_universe] = string(universe)
+        row[:excluded_zero_seat_cabinet_parties] = join(sort(collect(excluded_zero_seat)), ", ")
         row[:cabinet_period] = String(cab.period)
         row[:source_periods] = String(cab.source_periods)
         row[:period_start] = cab.period_start
@@ -2676,6 +2690,7 @@ function build_cabinet_interval_bridge(cabinets, party_summary_all, ideology_ord
         row[:cabinet_seats] = Int(cab.seats)
         row[:cabinet_seat_diff] = Float64(cab.seat_diff)
         row[:cabinet_n_parties] = length(cabinet_parties)
+        row[:cabinet_parliamentary_n_parties] = length(parliamentary_cabinet)
         row[:cabinet_parties] = String(cab.parties)
         row[:unmapped_cabinet_parties] = join(unmapped, ", ")
 
@@ -2740,9 +2755,9 @@ function build_cabinet_interval_bridge(cabinets, party_summary_all, ideology_ord
     end
 
     ordered_cols = Symbol[
-        :election_year, :cabinet_period, :source_periods, :period_start, :period_end, :days, :cabinet_status,
+        :election_year, :ideological_universe, :excluded_zero_seat_cabinet_parties, :cabinet_period, :source_periods, :period_start, :period_end, :days, :cabinet_status,
         :cabinet_vote_share, :cabinet_vote_share_pct, :cabinet_seats, :cabinet_seat_diff,
-        :cabinet_n_parties, :cabinet_parties, :unmapped_cabinet_parties,
+        :cabinet_n_parties, :cabinet_parliamentary_n_parties, :cabinet_parties, :unmapped_cabinet_parties,
         :cabinet_min_ideology_index, :cabinet_max_ideology_index, :cabinet_leftmost_party,
         :cabinet_rightmost_party, :cabinet_span_width, :cabinet_mean_ideology_value_unweighted,
         :cabinet_median_ideology_value_unweighted, :cabinet_mean_ideology_value_seat_weighted,
@@ -2790,8 +2805,11 @@ cabinet_bridge_csv_path = write_artifact_csv(joinpath(tables_dir, "table_appendi
 cabinet_bridge_latex_path = write_artifact_text(joinpath(latex_dir, "table_appendix_cabinet_interval_bridge.tex"), cabinet_bridge_latex(table_appendix_cabinet_interval_bridge), "latex", "Landscape longtable comparing observed cabinet coalitions with connected ideological intervals."; rows = nrow(table_appendix_cabinet_interval_bridge), columns = 11)
 sync_review_latex_asset(cabinet_bridge_latex_path)
 
+robustness_bridge, robustness_bridge_warnings = build_cabinet_interval_bridge(observed_cabinet_coalitions_all_years, party_summary_bridge_all, ideology_order_all_parties, ideological_intervals_all_parties; universe=:all_parties)
+write_artifact_csv(joinpath(tables_dir, "table_appendix_cabinet_interval_bridge_all_parties.csv"), robustness_bridge, "table", "All-party robustness cabinet closures, gaps, and nearest intervals.")
+
 cabinet_bridge_unmapped_count = sum(table_appendix_cabinet_interval_bridge.unmapped_cabinet_parties .!= "")
-closure_inversion_count = sum((table_appendix_cabinet_interval_bridge.closure_vote_share .<= 0.5) .& (table_appendix_cabinet_interval_bridge.closure_seats .>= seat_majority_threshold))
+closure_inversion_count = sum((table_appendix_cabinet_interval_bridge.closure_vote_share .< 0.5) .& (table_appendix_cabinet_interval_bridge.closure_seats .>= seat_majority_threshold))
 println("Cabinet-interval bridge CSV written: ", cabinet_bridge_csv_path)
 println("Cabinet-interval bridge LaTeX written: ", cabinet_bridge_latex_path)
 println("Cabinet periods processed: ", nrow(table_appendix_cabinet_interval_bridge))
@@ -2864,7 +2882,7 @@ write_artifact_csv(joinpath(tables_dir, "table_07_audit_vote_columns_crosswalk.c
 
 print_block("BLOCK 13. FIGURE-INPUT DATA")
 party_vote_share_vs_seat_share = select(party_seat_differentials_all_years, :election_year, :party, :votes, :national_vote_total, :vote_share, :seats, :seat_share, :quota, :seat_diff, :representation_ratio)
-ideological_interval_heatmap = select(ideological_intervals_all_years, :election_year, :start_index, :end_index, :start_party, :end_party, :interval_size, :vote_share, :seat_share, :seats, :seat_diff, :majority_status, :coalition_inversion, :minimal_ideological_interval_inversion)
+ideological_interval_heatmap = select(ideological_intervals_all_years, :election_year, :ideological_universe, :ideological_party_count, :start_index, :end_index, :start_party, :end_party, :interval_size, :vote_share, :seat_share, :seats, :seat_diff, :majority_status, :coalition_inversion, :minimal_ideological_interval_inversion)
 observed_coalition_timeline = select(observed_cabinet_coalitions_all_years, :election_year, :coalition_year, :period, :source_periods, :period_start, :period_end, :period_days, :days_overlapping_mandate, :parties, :votes, :national_vote_total, :vote_share, :seats, :seat_share, :quota, :seat_diff, :required_diff, :representation_ratio, :vote_majority, :seat_majority, :majority_status, :coalition_inversion)
 write_artifact_csv(joinpath(figure_data_dir, "party_vote_share_vs_seat_share.csv"), party_vote_share_vs_seat_share, "figure_data", "Party vote share versus seat share figure input.")
 write_artifact_csv(joinpath(figure_data_dir, "ideological_interval_heatmap.csv"), ideological_interval_heatmap, "figure_data", "Ideological interval heatmap figure input.")
@@ -2910,5 +2928,5 @@ println("Validated empirical pattern:")
 println("- Total seats are 513 in 2014, 2018, and 2022.")
 println("- Party-level sum(seat_diff) is approximately zero by year.")
 println("- Observed cabinet inversions include 2014/2016.2, 2014/2017.1, 2018/2021.3/2022.1, and 2022/2023.1.")
-println("- Ideological interval inversions exist in 2014 and 2022, not in 2018.")
-println("- Minimal ideological interval inversions counts match: 2014=4, 2018=0, 2022=2.")
+println("- Both ideological universes passed independent enumeration and accounting audits.")
+show_table(ideology_universe_comparison)

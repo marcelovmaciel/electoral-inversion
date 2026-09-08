@@ -1,0 +1,4 @@
+election_year,observations_before,observations_after,inversions_before,inversions_after,inversion_days_before,inversion_days_after
+2014,8,8,2,2,102,102
+2018,13,12,2,1,238,238
+2022,3,3,1,1,255,255

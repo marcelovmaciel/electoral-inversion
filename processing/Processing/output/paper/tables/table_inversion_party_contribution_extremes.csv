@@ -1,0 +1,5 @@
+"coalition_id","election_year","cabinet_period","largest_positive_party","largest_positive_d_i","largest_negative_party","largest_negative_d_i","accounting_qualification"
+"2014/2016.2",2014,"2016.2","PMDB",8.133380861621642,"PT",-2.4217233291555798,"ex post party accounting contribution; joint electoral lists"
+"2014/2017.1",2014,"2017.1","PMDB",8.133380861621642,"PSDB",-4.4303847839739765,"ex post party accounting contribution; joint electoral lists"
+"2018/2021.3/2022.1",2018,"2021.3/2022.1","PP",8.763869279337671,"PSL",-7.697795432903889,"ex post party accounting contribution; joint electoral lists"
+"2022/2023.1",2022,"2023.1","UNIÃO",11.103563583757866,"PSOL",-6.0617753157133025,"accounting attribution; not an independent causal effect"

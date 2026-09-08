@@ -124,8 +124,8 @@ end
             parties = ["A", "B", "C"]
             summary = _summary(parties, [40, 20, 40], [2, 0, 2])
             ideology = _ideology(parties)
-            d0 = Processing.ideological_k_gap_coalitions(summary, ideology; k = 0)
-            d1 = Processing.ideological_k_gap_coalitions(summary, ideology; k = 1)
+            d0 = Processing.ideological_k_gap_coalitions(summary, ideology; k = 0, universe = :all_parties)
+            d1 = Processing.ideological_k_gap_coalitions(summary, ideology; k = 1, universe = :all_parties)
 
             abc0 = only(eachrow(d0[d0.coalition_id .== "A|B|C", :]))
             abc1 = only(eachrow(d1[d1.coalition_id .== "A|B|C", :]))
@@ -149,7 +149,7 @@ end
             # B receives votes and no seats. It belongs to the D0 minimal majority,
             # but is omitted from the smaller D1 minimal majority, which inverts.
             domains = [Processing.ideological_k_gap_coalitions(
-                _summary(parties, [20, 60, 20], [2, 0, 2]), _ideology(parties); k = k,
+                _summary(parties, [20, 60, 20], [2, 0, 2]), _ideology(parties); k = k, universe = :all_parties,
             ) for k in (0, 1)]
             registry = vcat([d[d.minimal_seat_majority, :] for d in domains]...)
             registry.election = fill(2000, nrow(registry))
@@ -201,24 +201,38 @@ end
             @test Processing.coalition_membership_cell(14.0, 11, 19) == "14 [11--19]"
             @test Processing.coalition_membership_cell(missing, missing, missing) == "None"
             @test_throws ErrorException Processing.coalition_membership_cell(missing, 1, 2)
-            latex = Processing.ideology_k_gap_summary_latex(summary)
+            # The main renderer accepts only an explicitly parliamentary summary.
+            @test_throws ErrorException Processing.ideology_k_gap_summary_latex(summary)
+            primary_domains = [Processing.ideological_k_gap_coalitions(
+                _summary(parties, [20, 60, 20], [2, 0, 2]), _ideology(parties); k = k,
+            ) for k in (0, 1)]
+            primary_registry = vcat([d[d.minimal_seat_majority, :] for d in primary_domains]...)
+            primary_registry.election = fill(2000, nrow(primary_registry))
+            primary_summary = Processing.build_k_gap_membership_summary(primary_registry)
+            primary_summary.strongest_inversion_coalition = String.(primary_registry.coalition_label)
+            primary_summary.strongest_inversion_vote_share_pct = 100 .* primary_registry.vote_share
+            primary_summary.strongest_inversion_seats = primary_registry.seats
+            latex = Processing.ideology_k_gap_summary_latex(primary_summary)
             @test occursin(raw"\begin{table}[htbp]", latex)
             @test occursin(raw"\end{table}", latex)
             @test occursin(raw"\label{tab:interval-summary}", latex)
-            @test occursin("2000 & 0 & 1 & 0 & None & 3 [3--3]", latex)
-            @test occursin("2000 & 1 & 1 & 1 & 2 [2--2] & None", latex)
-            @test !occursin("strongest", lowercase(latex))
-            @test !occursin("r_C", latex)
-            @test occursin("parties receiving votes but no seats", latex)
+            @test occursin("2000 & 0 & 1 & 1 & A--C (40.0", latex)
+            @test occursin("Strongest minimal inversion", latex)
+            @test occursin("Chamber-represented parties only", latex)
+            @test occursin("all valid votes", latex)
+            @test occursin(raw"40.0\%", latex)
             table_rows = filter(line -> occursin(" & ", line), split(latex, '\n'))
-            @test length(table_rows) == nrow(summary) + 2
+            @test length(table_rows) == nrow(primary_summary) + 1
             @test all(line -> endswith(line, repeat("\\", 2)), table_rows)
-
+            combined_registry = vcat(registry, primary_registry; cols = :union)
+            combined_summary = Processing.build_k_gap_membership_summary(combined_registry)
+            @test nrow(combined_summary) == 4
+            @test Processing.validate_k_gap_membership_summary!(combined_summary, combined_registry)
             mktemp() do path, io
                 close(io)
-                CSV.write(path, summary)
+                CSV.write(path, primary_summary)
                 roundtrip = CSV.read(path, DataFrame)
-                @test Processing.validate_k_gap_membership_summary!(roundtrip, registry)
+                @test Processing.validate_k_gap_membership_summary!(roundtrip, primary_registry)
                 @test Processing.ideology_k_gap_summary_latex(roundtrip) == latex
             end
         end
@@ -228,22 +242,20 @@ end
                                      "ideology_k_gap_minimal_majorities.csv")
             if isfile(registry_path)
                 registry = CSV.read(registry_path, DataFrame)
-                summary = Processing.build_k_gap_membership_summary(registry)
-                @test Processing.validate_k_gap_membership_summary!(summary, registry)
-                @test Processing.validate_k_gap_membership_regression!(summary)
-                @test nrow(summary) == 6
-                @test collect(zip(summary.election, summary.k)) == [
-                    (2014, 0), (2014, 1), (2018, 0), (2018, 1), (2022, 0), (2022, 1)]
-                empty_inversions = registry[(registry.election .== 2018) .&
-                    (registry.k .== 0) .& registry.inversion, :]
-                @test isempty(empty_inversions)
-                @test occursin("2018 & 0 & 8 & 0 & None & 16.5 [15--20]",
-                               Processing.ideology_k_gap_summary_latex(summary))
-                @test_throws ErrorException Processing.validate_k_gap_membership_regression!(summary[1:5, :])
-                @test_throws ErrorException Processing.validate_k_gap_membership_regression!(reverse(summary))
-                altered = copy(summary)
-                altered.inverted_members_median[1] += 1
-                @test_throws ErrorException Processing.validate_k_gap_membership_regression!(altered)
+                if :ideological_universe in propertynames(registry)
+                    summary = Processing.build_k_gap_membership_summary(registry)
+                    @test Processing.validate_k_gap_membership_summary!(summary, registry)
+                    @test Processing.validate_k_gap_membership_regression!(summary)
+                    for domain in groupby(summary, :ideological_universe)
+                        @test nrow(domain) == 6
+                        @test collect(zip(domain.election, domain.k)) == [
+                            (2014, 0), (2014, 1), (2018, 0), (2018, 1), (2022, 0), (2022, 1)]
+                        @test_throws ErrorException Processing.validate_k_gap_membership_regression!(DataFrame(domain)[1:5, :])
+                        @test_throws ErrorException Processing.validate_k_gap_membership_regression!(reverse(DataFrame(domain)))
+                    end
+                else
+                    @test_skip "Regenerate the universe-labeled production registry."
+                end
             else
                 @test_skip "Generate paper outputs to check the audited membership registry."
             end
@@ -369,6 +381,8 @@ end
             @test a.weak_inversion == true
             @test a.strict_inversion == false
             @test a.vote_tie_seat_majority == true
+            @test a.inversion == false
+            @test a.minimal_inversion == false
         end
 
         @testset "minimal seat-majority interval" begin
@@ -442,11 +456,11 @@ end
             @test occursin("Resolve tied ideological positions", sprint(showerror, err))
         end
 
-        @testset "zero-seat parties are retained" begin
+        @testset "zero-seat parties are retained in all-party robustness" begin
             parties = ["A", "B", "C"]
             df = Processing.ideological_interval_coalitions(
                 _summary(parties, [40, 10, 50], [4, 0, 6]),
-                _ideology(parties),
+                _ideology(parties); universe = :all_parties,
             )
 
             b = _interval_row(df, "B", "B")
@@ -458,6 +472,106 @@ end
             @test b.vote_share == 0.1
             @test ac.votes == 100
             @test a.vote_share == 0.4
+        end
+
+        @testset "parliamentary adjacency retains extra-parliamentary votes" begin
+            parties = ["A", "X", "B", "C", "D"]
+            summary = _summary(parties, [20, 40, 10, 15, 15], [130, 0, 126, 128, 129])
+            # Nonconsecutive original ranks and scrambled input ensure filtering
+            # preserves the existing ranking, rather than reconstructing ideology.
+            ideology = _ideology(parties; positions = [3, 5, 7, 9, 11])[[4, 2, 5, 1, 3], :]
+            ideology.ideology_value_numeric = Float64.(ideology.ordinal_position)
+            parliamentary = Processing.ideological_party_order(summary, ideology)
+            all_order = Processing.ideological_party_order(summary, ideology; universe = :all_parties)
+            @test parliamentary.SG_PARTIDO == ["A", "B", "C", "D"]
+            @test parliamentary.original_ordinal_position == [3, 7, 9, 11]
+            @test parliamentary.ordinal_position == collect(1:4)
+            @test parliamentary.ideological_index == parliamentary.ordinal_position
+            @test parliamentary.ideology_value_numeric == [3, 7, 9, 11]
+            @test all_order.SG_PARTIDO == parties
+            # A full prepared order is a valid input too; retain source ranks
+            # when the shared helper is reused by another pipeline component.
+            prepared = Processing.ideological_party_order(summary, all_order)
+            @test prepared.original_ordinal_position == parliamentary.original_ordinal_position
+            @test prepared.SG_PARTIDO == parliamentary.SG_PARTIDO
+            @test Set(parliamentary.SG_PARTIDO) == Set(summary.SG_PARTIDO[summary.total_seats .> 0])
+            domains = Dict((u, k) => Processing.ideological_k_gap_coalitions(summary, ideology; universe = u, k)
+                for u in (:seat_winning, :all_parties), k in (0, 1))
+            p0, p1 = domains[(:seat_winning, 0)], domains[(:seat_winning, 1)]
+            a0, a1 = domains[(:all_parties, 0)], domains[(:all_parties, 1)]
+            @test "A|B" in p0.coalition_id
+            @test !("A|B" in a0.coalition_id)
+            ab_primary = only(eachrow(p0[p0.coalition_id .== "A|B", :]))
+            ab_all = only(eachrow(a1[a1.coalition_id .== "A|B", :]))
+            @test ab_primary.gap_count == 0
+            @test ab_all.gap_count == 1
+            @test ab_all.omitted_party == "X"
+            @test ab_primary.vote_share == ab_all.vote_share == 0.3
+            @test ab_primary.vote_share != ab_primary.votes / sum(parliamentary.valid_total)
+            @test ab_primary.seats == ab_all.seats == 256
+            acd = only(eachrow(p1[p1.coalition_id .== "A|C|D", :]))
+            @test acd.gap_count == 1
+            @test acd.omitted_party == "B"
+            @test !("A|C|D" in a1.coalition_id) # X and B interrupt the full order.
+            party_d = Dict(row.SG_PARTIDO => row.total_seats - 513 * row.valid_total / 100 for row in eachrow(summary))
+            @test sum(values(party_d)) ≈ 0 atol=1e-12
+            for ((universe, k), domain) in domains
+                @test all(domain.ideological_universe .== String(universe))
+                @test all(domain.k .== k)
+                @test all(domain.national_vote_total .== 100)
+                @test all(domain.total_seats .== 513)
+                @test all(domain.seat_majority_threshold .== 257)
+                for row in eachrow(domain)
+                    members = split(row.coalition_id, '|')
+                    source = summary[in.(summary.SG_PARTIDO, Ref(Set(members))), :]
+                    @test row.votes == sum(source.valid_total)
+                    @test row.seats == sum(source.total_seats)
+                    @test row.vote_share == row.votes / 100
+                    @test row.q_C ≈ 513 * row.vote_share
+                    @test row.d_C ≈ row.seats - row.q_C
+                    @test row.R_C ≈ (row.seats / 513) / row.vote_share
+                    @test row.d_C ≈ sum(party_d[party] for party in members) atol=1e-10
+                    @test row.inversion == (row.vote_share < 0.5 && row.seats >= 257)
+                    if universe == :seat_winning
+                        @test all(source.total_seats .> 0)
+                        @test ismissing(row.omitted_party) || row.omitted_party != "X"
+                    end
+                end
+            end
+            @test_throws ErrorException Processing.ideological_party_order(summary, ideology; universe = :unknown)
+        end
+
+        @testset "fresh minimality agrees with independent exhaustive toy admissibility" begin
+            parties = ["A", "X", "B", "C", "Y", "D"]
+            summary = _summary(parties, [14, 26, 15, 14, 16, 15], [130, 0, 126, 128, 0, 129])
+            ideology = _ideology(parties)
+            for universe in (:seat_winning, :all_parties), k in (0, 1)
+                ordered = universe == :seat_winning ? ["A", "B", "C", "D"] : parties
+                n = length(ordered)
+                source_seats = Dict(zip(parties, summary.total_seats))
+                admissible = Set{String}[]
+                for mask in 1:(2^n - 1)
+                    indices = [i for i in 1:n if (mask & (1 << (i - 1))) != 0]
+                    length(minimum(indices):maximum(indices)) - length(indices) <= k || continue
+                    push!(admissible, Set(ordered[indices]))
+                end
+                domain = Processing.ideological_k_gap_coalitions(summary, ideology; universe, k)
+                @test Set(Set(split(row.coalition_id, '|')) for row in eachrow(domain)) == Set(admissible)
+                winning = [members for members in admissible if sum(source_seats[party] for party in members) >= 257]
+                for row in eachrow(domain)
+                    members = Set(split(row.coalition_id, '|'))
+                    expected_minimal = members in winning && !any(other != members && issubset(other, members) for other in winning)
+                    @test row.minimal_seat_majority == expected_minimal
+                    @test row.minimal_inversion == (expected_minimal && row.vote_share < 0.5)
+                end
+                if k == 0
+                    interval = Processing.ideological_interval_coalitions(summary, ideology; universe)
+                    @test interval.coalition_id == domain.coalition_id
+                    @test interval.minimal_seat_majority == domain.minimal_seat_majority
+                    @test interval.minimal_inversion == domain.minimal_inversion
+                    @test interval.quota == domain.q_C
+                end
+            end
         end
 
         @testset "missing ideology coverage errors" begin

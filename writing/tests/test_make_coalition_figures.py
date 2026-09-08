@@ -30,10 +30,18 @@ EXPECTED_PDFS = {
 }
 
 
+# A deliberately small fixture registry checks dynamic focal-case handling.
+FIXTURE_STATE_WEIGHTING_CASES = (
+    ("cabinet/test/first", "Cabinet first"),
+    ("ideological/seat_winning/test/second", "Parliamentary second"),
+    ("ideological/seat_winning/test/third", "Parliamentary third"),
+)
+
+
 def state_weighting_fixture() -> pd.DataFrame:
     rows = []
     for focal_order, (case_id, case_display) in enumerate(
-        figures.EXPECTED_STATE_WEIGHTING_CASES, start=1
+        FIXTURE_STATE_WEIGHTING_CASES, start=1
     ):
         positive_eight = 3.0 + 0.25 * focal_order
         positive_other = 2.0
@@ -62,22 +70,27 @@ def write_state_weighting_fixture(artifact_root: Path, data: pd.DataFrame) -> Pa
     figure_data_dir.mkdir(parents=True, exist_ok=True)
     path = figure_data_dir / "accounting_state_weighting_anatomy.csv"
     data.to_csv(path, index=False)
+    tables_dir = artifact_root / "tables"
+    tables_dir.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(FIXTURE_STATE_WEIGHTING_CASES, columns=["case_id", "case_display"]).to_csv(
+        tables_dir / "table_accounting_focal_cases.csv", index=False
+    )
     return path
 
 
 class StateWeightingAnatomyRegressions(unittest.TestCase):
-    def test_loader_accepts_exact_seven_case_registry_and_sorts_focal_order(self) -> None:
+    def test_loader_accepts_generated_case_registry_and_sorts_focal_order(self) -> None:
         with tempfile.TemporaryDirectory(prefix="state-weighting-loader-") as temp_dir:
             artifact_root = Path(temp_dir)
             write_state_weighting_fixture(artifact_root, state_weighting_fixture())
             loaded = figures.load_accounting_state_weighting_anatomy(artifact_root)
 
-        self.assertEqual(tuple(loaded["focal_order"]), tuple(range(1, 8)))
+        self.assertEqual(tuple(loaded["focal_order"]), tuple(range(1, len(FIXTURE_STATE_WEIGHTING_CASES) + 1)))
         self.assertEqual(
             tuple(loaded["case_id"]),
-            tuple(case_id for case_id, _ in figures.EXPECTED_STATE_WEIGHTING_CASES),
+            tuple(case_id for case_id, _ in FIXTURE_STATE_WEIGHTING_CASES),
         )
-        self.assertEqual(len(loaded), 7)
+        self.assertEqual(len(loaded), len(FIXTURE_STATE_WEIGHTING_CASES))
 
     def test_loader_rejects_missing_schema_column(self) -> None:
         with tempfile.TemporaryDirectory(prefix="state-weighting-schema-") as temp_dir:
@@ -93,7 +106,7 @@ class StateWeightingAnatomyRegressions(unittest.TestCase):
             data = state_weighting_fixture()
             data.loc[data.index[0], "case_id"] = "ideological/2022/unrestricted"
             write_state_weighting_fixture(artifact_root, data)
-            with self.assertRaisesRegex(ValueError, "focal-case registry changed"):
+            with self.assertRaisesRegex(ValueError, "differs from the generated focal registry"):
                 figures.load_accounting_state_weighting_anatomy(artifact_root)
 
     def test_renderer_writes_pdf_from_validated_csv(self) -> None:
@@ -112,30 +125,38 @@ class StateWeightingAnatomyRegressions(unittest.TestCase):
 
 
 class CoalitionFigureOutputRegressions(unittest.TestCase):
-    def test_actual_artifacts_have_frozen_empirical_counts(self) -> None:
+    def test_actual_artifacts_match_primary_registry_and_cabinet_regressions(self) -> None:
         observed = figures.load_observed_coalition_timeline(ARTIFACT_ROOT)
         self.assertEqual(len(observed), 23)
         self.assertEqual(int(observed["coalition_inversion"].sum()), 4)
 
         ideological = figures.load_ideological_interval_heatmap(ARTIFACT_ROOT)
-        actual_counts = {
-            int(year): (
-                int(rows["coalition_inversion"].sum()),
-                int(rows["minimal_ideological_interval_inversion"].sum()),
+        self.assertEqual(set(ideological["ideological_universe"]), {"seat_winning"})
+        registry = pd.read_csv(ARTIFACT_ROOT / "raw" / "ideology_k_gap_minimal_majorities.csv")
+        registry = registry[(registry["ideological_universe"] == "seat_winning") & (registry["k"] == 0)]
+        for year, rows in ideological.groupby("election_year"):
+            minimal_inversions = rows[rows["minimal_ideological_interval_inversion"]]
+            source = registry[(registry["election"] == year) & registry["inversion"]]
+            self.assertEqual(len(minimal_inversions), len(source))
+            self.assertEqual(
+                set(zip(minimal_inversions["start_party"], minimal_inversions["end_party"])),
+                set(zip(source["left_endpoint"], source["right_endpoint"])),
             )
-            for year, rows in ideological.groupby("election_year")
-        }
-        self.assertEqual(actual_counts, figures.EXPECTED_IDEOLOGICAL_COUNTS)
+        # The parliamentary order admits the 2018 exact-connected inversion.
+        inversion_2018 = ideological[(ideological["election_year"] == 2018)
+            & ideological["minimal_ideological_interval_inversion"]]
+        self.assertEqual(len(inversion_2018), 1)
+        self.assertEqual(tuple(inversion_2018[["start_party", "end_party"]].iloc[0]), ("PT", "PSDB"))
+        self.assertTrue((inversion_2018["vote_share"] < 0.5).all())
+        self.assertTrue((inversion_2018["seats"] >= 257).all())
 
         decomposition = figures.load_inversion_decomposition_components(ARTIFACT_ROOT)
         self.assertEqual(len(decomposition), 4)
 
         anatomy = figures.load_accounting_state_weighting_anatomy(ARTIFACT_ROOT)
-        self.assertEqual(len(anatomy), 7)
-        self.assertEqual(
-            tuple(anatomy["case_id"]),
-            tuple(case_id for case_id, _ in figures.EXPECTED_STATE_WEIGHTING_CASES),
-        )
+        focal_registry = pd.read_csv(ARTIFACT_ROOT / "tables" / "table_accounting_focal_cases.csv")
+        self.assertEqual(set(anatomy["case_id"]), set(focal_registry["case_id"]))
+        self.assertEqual(tuple(anatomy["focal_order"]), tuple(range(1, len(focal_registry) + 1)))
 
         district_weights = figures.load_district_electoral_weight(ARTIFACT_ROOT)
         self.assertEqual(len(district_weights), 81)

@@ -52,8 +52,11 @@ end
 
 function _actual_election_set(year::Int)::Vector{String}
     path = joinpath(_PMZ_DIR, string(year), "party_mun_zone.csv")
-    df = CSV.read(path, DataFrame; select=["SG_PARTIDO"])
-    return _canonical_election_label_set(df.SG_PARTIDO, year)
+    # Match the authoritative Chamber pipeline: the raw files also contain
+    # other offices and their party/coalition labels, outside this analysis.
+    df = CSV.read(path, DataFrame; select=["DS_CARGO", "SG_PARTIDO"])
+    federal = uppercase.(strip.(String.(df.DS_CARGO))) .== "DEPUTADO FEDERAL"
+    return _canonical_election_label_set(df.SG_PARTIDO[federal], year)
 end
 
 function _actual_mandate_set(election_year::Int)::Vector{String}

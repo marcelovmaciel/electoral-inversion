@@ -7,13 +7,27 @@ The repository computes whether party coalitions in Brazil's Chamber of
 Deputies hold a seat majority without a national federal-deputy vote majority.
 It covers observed cabinet-period coalitions and ideologically constrained
 potential coalitions for the mandates tied to the 2014, 2018, and 2022
-elections. The ideological analysis uses exact-connected intervals as the
-\(k=0\) baseline and a nested \(k=1\) domain permitting one omitted interior
-party as a sensitivity check.
+elections. The primary ideological analysis filters the existing election-year order to
+seat-winning parties (`seat_winning`). Exact-connected intervals form the
+\(k=0\) domain; \(k=1\) allows one omitted interior seat-winning party. The
+original full ideological order is generated independently as `all_parties`
+robustness. Both universes retain **all valid federal-deputy votes** in the
+national denominator. Observed cabinet construction is unchanged.
 
 ## Main Workflow
 
 Run commands from the repository root unless the command changes directory.
+The complete production workflow, including both universes, exact accounting,
+figures, independent audits, and `main_rw_again.pdf`, is:
+
+```bash
+processing/rebuild_manuscript.sh --clean
+```
+
+`--clean` removes only the two generated analysis trees before rebuilding from
+the original inputs. Omit it for an overwrite rebuild. Set `PYTHON_BIN` or
+`JULIA_BIN` to select an installed runtime. The equivalent individual stages
+are listed below.
 
 1. Install Julia dependencies.
 
@@ -130,54 +144,49 @@ After running the main analysis, the high-level replication results should be:
 - 2018 cabinet inversions: `2021.3/2022.1` (2021-08-04 through 2022-03-29,
   238 days, 47.2469 percent of the vote, and exactly 257 seats)
 - 2022 cabinet inversion: `2023.1`
-- exact-connected (\(k=0\)) ideological inversions: 2014 = 8, 2018 = 0,
-  2022 = 6
-- exact-connected minimal seat-majority coalitions: 2014 = 8, 2018 = 8,
-  2022 = 4
-- one-gap (\(k=1\)) ideological inversions: 2014 = 74, 2018 = 34, 2022 = 43
-- one-gap minimal seat-majority coalitions: 2014 = 88, 2018 = 118, 2022 = 53
-- strongest exact-connected 2022 inversion: PP--PL, 258 seats and 45.35
-  percent vote share
-- strongest one-gap inversions: PTB--PR omitting PPL (2014), PCdoB--PODE
-  omitting PSDB (2018), and PP--PL omitting DC (2022)
+The generated [universe comparison](processing/Processing/output/paper/tables/ideological_universe_comparison.csv)
+contains all twelve election/universe/k headline rows. Primary exact-connected
+inversions occur in all three elections; the all-party robustness retains the
+2018 exact-connected null. Thus the null is sensitive to whether zero-seat
+parties determine parliamentary adjacency. The 2014 and 2022 strongest endpoint
+regions survive, while member sets, vote shares, minimality, and decomposition
+components can differ.
 
 Use the files under `processing/Processing/output/paper/` to inspect the
 generated tables and diagnostics.
 
-The k-gap outputs are:
+The primary machine-readable files keep the existing `ideology_k_gap_*.csv`
+names and carry `ideological_universe=seat_winning`. Matching
+`*_all_parties.csv` files contain the robustness domain. Complete combined
+outputs are:
 
-    processing/Processing/output/paper/raw/ideology_k_gap_coalitions.csv
-    processing/Processing/output/paper/raw/ideology_k_gap_minimal_majorities.csv
-    processing/Processing/output/paper/raw/ideology_k_gap_inversions.csv
-    processing/Processing/output/paper/tables/ideology_k_gap_summary.csv
-    processing/Processing/output/paper/diagnostics/ideology_k_gap_checks.csv
-    processing/Processing/output/paper/diagnostics/ideology_k_gap_strongest_inversion_ties.csv
-    processing/Processing/output/paper/latex/table_03_ideology_k_gap_summary.tex
+- `raw/ideology_k_gap_accounting_both_universes.csv`: every admissible k=0/1
+  coalition, its members, filtered and original span indices, gaps, observed
+  seats, all-valid-vote share, q, d, R, A, B, inversion, and minimality.
+- `raw/ideology_k_gap_party_contributions_both_universes.csv.gz`: every member's
+  q, d, A, B, including exact rational values, linked to universe/election/k.
+- `raw/ideology_k_gap_minimal_accounting_both_universes.csv`: complete minimal
+  winning sets for both specifications.
+- `tables/ideological_universe_comparison.csv`: headline counts and strongest
+  cases, including endpoint-region sensitivity.
+- `tables/table_appendix_cabinet_interval_bridge{,_all_parties}.csv`: separate
+  closure, gap, and overlap calculations in each ideological universe. Primary
+  overlaps compare represented cabinet members, while cabinet votes, seats,
+  and observed composition retain their original definitions.
+- `diagnostics/ideology_k_gap_checks.csv` and
+  `diagnostics/ideological_universe_reproduction_audit.json`: fail-loud audits.
 
-The summary CSV retains its existing diagnostic columns and appends
-`non_inverted_minimal_majorities` and `inverted_members_{median,min,max}` /
-`non_inverted_members_{median,min,max}`. These numeric statistics are calculated
-once from `raw/ideology_k_gap_minimal_majorities.csv`, using `party_count`
-validated against the canonical `coalition_id` and `parties` lists. Membership
-includes parties receiving votes but no seats and excludes omitted interior
-parties. Minimality is evaluated separately within each domain; the two minimal
-sets are not assumed to be nested. Empty subsets have missing numeric statistics
-and render as `None`.
+The primary decomposition is produced under `output/decomposition/`; the same
+routines write all-party robustness under `output/decomposition/all_parties/`.
+Manuscript-facing numerical tables and figure inputs are generated by the
+production pipeline and synchronized into the manuscript directory. The main
+summary remains compact; the appendix compares both universes and retains the
+all-party exact-connected decomposition. Complete compositions remain in CSV.
 
-The runner checks registry reconciliation and all six audited membership rows
-before rendering the complete table float (caption, label, six columns, and
-notes). With `SYNC_REVIEW_ASSETS=true`, it synchronizes
-`table_03_ideology_k_gap_summary.tex` into
-`writing/submission_inversions_review/manuscript/`, where the generated asset is
-tracked. The authoritative manuscript, `main_rw_again.tex`, includes this float
-with a single `\input{table_03_ideology_k_gap_summary.tex}`. The former tabular-only
-asset is no longer produced; local copies may remain for superseded drafts.
-
-Run the focused ideological-domain tests before regenerating the paper outputs:
+Run the independent serialized-output audit after decomposition:
 
 ```bash
-julia -O0 --startup-file=no --project=processing/Processing processing/Processing/test/test_ideological_interval_coalitions.jl
-ALLOW_OVERWRITE=true SYNC_REVIEW_ASSETS=true julia -O0 --startup-file=no --project=processing/Processing processing/Processing/running/running.jl
+python3 processing/audit_ideological_universes.py
 ```
 
 ## Tests
@@ -206,7 +215,7 @@ Run the focused ideological-domain suite with:
 
 This focused suite is the empirical gate for the decomposition and checks the
 four-case registry, coalition compositions, district accounting identities, and
-party contribution identities against the corrected PSC baseline. The
-repository-wide Julia suite is not the gate for this revision: under Julia
-1.12.2 its normal invocation has exhibited a compiler crash, and a separate
-pre-existing PCA14 loader error remains outside the federal-deputy analysis.
+party contribution identities against the corrected PSC baseline. The focused ideological suite includes synthetic adjacency/denominator tests
+and checks both empirical universes. The full Julia suite is run with the
+repository project environment; the figure and decomposition suites validate
+generated registries and accounting identities.

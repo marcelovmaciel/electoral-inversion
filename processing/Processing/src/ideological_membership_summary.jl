@@ -1,15 +1,16 @@
 """Validate actual membership in the domain-minimal winning coalition registry."""
 function validate_k_gap_membership_registry!(registry)
-    required = (:election, :k, :coalition_id, :parties, :party_count, :gap_count,
+    required = (:election, :ideological_universe, :k, :coalition_id, :parties, :party_count, :gap_count,
                 :omitted_party, :minimal_seat_majority, :seat_majority, :inversion,
                 :votes, :national_vote_total, :seats, :seat_majority_threshold)
     all(column -> column in propertynames(registry), required) || error(
         "K-gap membership registry is missing required columns.")
-    seen = Set{Tuple{Int,Int,String}}()
+    seen = Set{Tuple{Int,String,Int,String}}()
     for row in eachrow(registry)
         row.election isa Integer && !(row.election isa Bool) || error("Invalid election year.")
         row.k isa Integer && !(row.k isa Bool) && row.k in (0, 1) || error("Invalid k-gap domain.")
-        key = (Int(row.election), Int(row.k), String(row.coalition_id))
+        row.ideological_universe in ("seat_winning", "all_parties") || error("Invalid ideological universe.")
+        key = (Int(row.election), String(row.ideological_universe), Int(row.k), String(row.coalition_id))
         key in seen && error("Duplicate minimal coalition: $(key).")
         push!(seen, key)
         row.minimal_seat_majority === true && row.seat_majority === true || error(
@@ -19,7 +20,7 @@ function validate_k_gap_membership_registry!(registry)
             "Invalid inversion status: $(key).")
         row.party_count isa Integer && !(row.party_count isa Bool) && row.party_count > 0 || error(
             "Coalition member counts must be positive integers: $(key).")
-        # coalition_id is the canonical ordered member list, including seatless parties.
+        # coalition_id is the canonical ordered member list in the stated universe.
         # Never substitute an endpoint distance or ideological span for this count.
         members = split(row.coalition_id, '|'; keepempty = true)
         all(member -> !isempty(strip(member)), members) && allunique(members) || error(
@@ -44,13 +45,15 @@ end
 function build_k_gap_membership_summary(registry)
     validate_k_gap_membership_registry!(registry)
     rows = NamedTuple[]
-    for domain in groupby(registry, [:election, :k]; sort = true)
+    for domain in groupby(registry, [:election, :ideological_universe, :k]; sort = true)
         inverted = domain.party_count[domain.inversion]
         non_inverted = domain.party_count[.!domain.inversion]
         inv = coalition_membership_statistics(inverted)
         non = coalition_membership_statistics(non_inverted)
         push!(rows, (
-            election = Int(first(domain.election)), k = Int(first(domain.k)),
+            election = Int(first(domain.election)),
+            ideological_universe = String(first(domain.ideological_universe)),
+            k = Int(first(domain.k)),
             minimal_seat_majority_coalitions = nrow(domain),
             minimal_inversions = length(inverted),
             non_inverted_minimal_majorities = length(non_inverted),
@@ -80,13 +83,15 @@ function validate_k_gap_membership_summary!(summary, registry)
     return true
 end
 
-"""Audited expectations are validation gates only; no rendering data come from here."""
+"""Keep the established all-party regression gate separate from the new primary domain.
+
+Both sets of expectations are checked against the recomputed registry and
+admissible-domain minimality audits; neither supplies rendering data.
+"""
 function validate_k_gap_membership_regression!(summary)
+    :ideological_universe in propertynames(summary) || error("Summary must identify its ideological universe.")
     expected_keys = [(year, k) for year in (2014, 2018, 2022) for k in (0, 1)]
-    collect(zip(summary.election, summary.k)) == expected_keys || error(
-        "K-gap membership summary must contain exactly six rows ordered by election (2014, 2018, 2022), then k (0, 1).")
-    # Counts, then (median, minimum, maximum) for each inversion subset.
-    expected = [
+    expected_all_parties = [
         (8, 4, (15, 12, 16), (12, 12, 14)),
         (88, 43, (14, 11, 19), (14, 11, 19)),
         (8, 0, (missing, missing, missing), (16.5, 15, 20)),
@@ -94,14 +99,33 @@ function validate_k_gap_membership_regression!(summary)
         (4, 2, (11.5, 8, 15), (20, 19, 21)),
         (53, 17, (14, 7, 16), (19, 14, 21)),
     ]
-    for (row, target) in zip(eachrow(summary), expected)
-        actual = (row.minimal_seat_majority_coalitions, row.minimal_inversions,
-                  (row.inverted_members_median, row.inverted_members_min, row.inverted_members_max),
-                  (row.non_inverted_members_median, row.non_inverted_members_min, row.non_inverted_members_max))
-        isequal(actual, target) || error(
-            "Audited membership regression failed at $(row.election)/k=$(row.k): computed $(actual), expected $(target). Diagnose the source records before publishing.")
-        row.non_inverted_minimal_majorities == target[1] - target[2] || error(
-            "Audited non-inverted count failed at $(row.election)/k=$(row.k).")
+    # Parliamentary expectations were audited after independent re-enumeration,
+    # using the unchanged national vote denominator (not filtered prior results).
+    expected_seat_winning = [
+        (8, 4, (14, 12, 15), (12, 12, 13)),
+        (87, 46, (13, 11, 18), (13, 11, 18)),
+        (8, 1, (14, 14, 14), (15, 14, 18)),
+        (108, 42, (17, 13, 18), (15, 13, 19)),
+        (4, 2, (8.5, 7, 10), (15.5, 15, 16)),
+        (39, 12, (9, 7, 11), (14, 10, 16)),
+    ]
+    isempty(summary) && error("K-gap membership summary is empty.")
+    for domain in groupby(summary, :ideological_universe; sort = true)
+        universe = String(first(domain.ideological_universe))
+        universe in ("seat_winning", "all_parties") || error("Invalid ideological universe $(universe).")
+        collect(zip(domain.election, domain.k)) == expected_keys || error(
+            "Each universe must contain six rows ordered by election (2014, 2018, 2022), then k (0, 1).")
+        for (index, row) in enumerate(eachrow(domain))
+            row.minimal_seat_majority_coalitions >= row.minimal_inversions >= 0 || error("Invalid minimal coalition counts.")
+            row.non_inverted_minimal_majorities + row.minimal_inversions == row.minimal_seat_majority_coalitions || error(
+                "Inverted and non-inverted counts do not sum to minimal majorities.")
+            expected = universe == "all_parties" ? expected_all_parties : expected_seat_winning
+            actual = (row.minimal_seat_majority_coalitions, row.minimal_inversions,
+                (row.inverted_members_median, row.inverted_members_min, row.inverted_members_max),
+                (row.non_inverted_members_median, row.non_inverted_members_min, row.non_inverted_members_max))
+            isequal(actual, expected[index]) || error(
+                "$(universe) membership regression failed at $(row.election)/k=$(row.k): computed $(actual), expected $(expected[index]).")
+        end
     end
     return true
 end
@@ -115,34 +139,42 @@ function coalition_membership_cell(med, low, high)
     return "$(median_text) [$(Int(low))--$(Int(high))]"
 end
 
-"""Render the complete manuscript float from the validated machine-readable summary."""
+"""Render the primary compact headline table from the validated CSV summary."""
 function ideology_k_gap_summary_latex(summary)
+    required = (:ideological_universe, :strongest_inversion_coalition,
+                :strongest_inversion_vote_share_pct, :strongest_inversion_seats)
+    all(column -> column in propertynames(summary), required) || error("Headline summary columns are missing.")
+    primary = summary[summary.ideological_universe .== "seat_winning", :]
+    isempty(primary) && error("The main ideological summary requires the seat-winning universe.")
     io = IOBuffer()
     println(io, raw"\begin{table}[htbp]")
     println(io, raw"\centering")
-    println(io, raw"\caption{Minimal winning coalitions and membership by ideological domain}")
+    println(io, raw"\caption{Minimal winning parliamentary coalitions by ideological domain}")
     println(io, raw"\label{tab:interval-summary}")
     println(io, raw"\small")
     println(io, raw"\setlength{\tabcolsep}{4pt}")
-    println(io, raw"\begin{tabularx}{\textwidth}{@{}rc>{\centering\arraybackslash}Xc cc@{}}")
+    println(io, raw"\begin{tabularx}{\textwidth}{@{}rcrr>{\raggedright\arraybackslash}X@{}}")
     println(io, raw"\toprule")
-    println(io, raw" & & & & \multicolumn{2}{c}{\shortstack{Coalition members:\\median [min--max]}} \\\\")
-    println(io, raw"\cmidrule(l){5-6}")
-    println(io, raw"Election & \(k\) & Minimal majorities & Inversions & Inverted & Non-inverted \\\\")
+    println(io, raw"Election & \(k\) & Minimal majorities & Inversions & Strongest minimal inversion", " ", repeat("\\", 2))
     println(io, raw"\midrule")
-    for row in eachrow(summary)
-        inverted = coalition_membership_cell(row.inverted_members_median, row.inverted_members_min, row.inverted_members_max)
-        non_inverted = coalition_membership_cell(row.non_inverted_members_median, row.non_inverted_members_min, row.non_inverted_members_max)
+    for row in eachrow(primary)
+        strongest = if ismissing(row.strongest_inversion_coalition) || String(row.strongest_inversion_coalition) == "None"
+            "None"
+        else
+            label = replace(String(row.strongest_inversion_coalition), "_" => raw"\_")
+            vote = string(round(row.strongest_inversion_vote_share_pct; digits = 2))
+            "$(label) ($(vote)\\%; $(Int(row.strongest_inversion_seats)) seats)"
+        end
         println(io, join((row.election, row.k, row.minimal_seat_majority_coalitions,
-                         row.minimal_inversions, inverted, non_inverted), " & "), raw" \\\\")
+                         row.minimal_inversions, strongest), " & "), " ", repeat("\\", 2))
     end
     println(io, raw"\bottomrule")
     println(io, raw"\end{tabularx}")
     println(io, raw"\begin{flushleft}")
-    println(io, raw"\footnotesize Notes: Coalition membership is the number of parties in the coalition.")
-    println(io, raw"Entries in the final two columns report median [minimum--maximum].")
-    println(io, raw"Membership counts include parties receiving votes but no seats; they are not counts of seat-winning parliamentary partners.")
-    println(io, raw"Minimality is defined within the stated domain.")
+    println(io, raw"\footnotesize Notes: The ideological order contains Chamber-represented parties only.")
+    println(io, raw"\(k\) counts omitted represented parties inside a coalition's ideological span.")
+    println(io, raw"Minimality is defined within each stated domain. Vote shares use all valid votes, including votes for zero-seat parties.")
+    println(io, raw"The strongest minimal inversion has the lowest national vote share; exact ties use coalition size and then canonical membership order.")
     println(io, raw"\end{flushleft}")
     println(io, raw"\end{table}")
     return String(take!(io))

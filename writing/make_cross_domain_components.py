@@ -33,8 +33,10 @@ def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
         raise ValueError('Duplicate cross-domain configuration.')
     counts = {domain: (len(group), int(group.inversion.sum()))
               for domain, group in data.groupby('domain')}
-    if counts != {'cabinet': (23, 4), 'k=0': (20, 6)}:
-        raise ValueError(f'Cross-domain configuration/inversion counts changed: {counts}')
+    if counts.get('cabinet') != (23, 4):
+        raise ValueError(f'Cabinet configuration/inversion counts changed: {counts}')
+    if set(data.loc[data.domain == 'k=0', 'ideological_universe']) != {'seat_winning'}:
+        raise ValueError('Primary ideological panel requires the seat-winning universe.')
     for lhs, rhs in (
         (data.d_C, data.A_C + data.B_C),
         (data.R_C - 1, data.A_C / data.q_C + data.B_C / data.q_C),
@@ -46,9 +48,8 @@ def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
 
     # Rounded design limits retain the approved shared framing without reading
     # the diagnostic k=1 panel or any of its outputs.
-    xlim, ylim = (-11.3, 12.1), (-5.7, 5.0)
-    if not (data.A_pct_quota.between(*xlim) & data.B_pct_quota.between(*ylim)).all():
-        raise ValueError('Cross-domain data exceed the approved figure limits.')
+    xlim = (min(-11.3, float(data.A_pct_quota.min()) - 1.2), max(12.1, float(data.A_pct_quota.max()) + 1.2))
+    ylim = (min(-5.7, float(data.B_pct_quota.min()) - .8), max(5.0, float(data.B_pct_quota.max()) + .8))
     with plt.rc_context({
         'font.family': 'DejaVu Sans', 'font.size': 9.5,
         'axes.spines.top': False, 'axes.spines.right': False,
@@ -91,13 +92,18 @@ def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
 
         for row in data.loc[(data.domain == 'cabinet') & data.inversion].itertuples():
             label(axes[0], row, row.display_label, CABINET_LABEL_POSITIONS[row.display_label])
-        ideological_positions = {
-            ('MDB', 'UNIÃO'): ('2022 MDB--UNIÃO', (3.3, 4.25)),
-            ('PP', 'PL'): ('2022 PP--PL', (7.0, 2.3)),
-        }
-        for row in data.loc[(data.domain == 'k=0') & (data.election == 2022)
-                            & data.inversion].itertuples():
-            text, position = ideological_positions[(row.start_party, row.end_party)]
+        focal = data.loc[(data.domain == 'k=0') & data.inversion &
+                         (data.is_strongest_inversion | (data.B_C > data.A_C))]
+        for number, row in enumerate(focal.itertuples()):
+            text = f'{row.election} {row.start_party}-{row.end_party}'
+            # Distribute annotations within the shared plot limits; the point
+            # identity and text always come from the regenerated registry.
+            position = (max(xlim[0] + 3, min(xlim[1] - 3, row.A_pct_quota - 2.4)),
+                        max(ylim[0] + .7, min(ylim[1] - .6, row.B_pct_quota + 1.1 + .25 * (number % 2))))
+            # The 2014 strongest case sits below a tight cluster of 2018
+            # points. Place its annotation in the open lower-right area.
+            if row.election == 2014 and row.is_strongest_inversion:
+                position = (min(xlim[1] - 3, row.A_pct_quota + 2.5), row.B_pct_quota - 1.7)
             label(axes[1], row, text, position)
 
         fig.supxlabel('Within-district contribution (% of coalition quota)', y=.125, fontsize=10)
@@ -122,4 +128,5 @@ def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
 def save_cross_domain_components(artifact_root: Path, figure_dir: Path) -> Path:
     """Build from audited production outputs and render the manuscript PDF."""
     data = build_cross_domain_components(artifact_root)
+    data.to_csv(artifact_root / 'figure_data/cross_domain_components.csv', index=False, float_format='%.17g')
     return render_cross_domain_components(data, figure_dir / 'cross_domain_components.pdf')

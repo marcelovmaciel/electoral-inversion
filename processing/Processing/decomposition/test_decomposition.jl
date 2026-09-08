@@ -159,7 +159,7 @@ test_result = @testset "PSC-correct four-case coalition decomposition" begin
         ideological_regression.election_year,
         ideological_regression.coalition_inversions,
         ideological_regression.minimal_inversions,
-    )) == [(2014, 8, 4), (2018, 0, 0), (2022, 6, 2)]
+    )) == [(2014, 7, 4), (2018, 1, 1), (2022, 4, 2)]
 end
 
 mkpath(dirname(TEST_LOG_PATH))
