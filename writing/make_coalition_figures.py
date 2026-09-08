@@ -547,9 +547,9 @@ def save_ideological_interval_heatmaps(artifact_root: Path, figure_dir: Path) ->
 
         fig, ax = plt.subplots(figsize=(5.6, 5.2))
         ax.imshow(matrix, origin="lower", interpolation="nearest", aspect="auto", cmap=cmap, norm=norm, extent=(0.5, n + 0.5, 0.5, n + 0.5))
-        ax.set_title(f"Parliamentary interval status, {year}")
-        ax.set_xlabel("Start index in parliamentary ideology order")
-        ax.set_ylabel("End index in parliamentary ideology order")
+        ax.set_title(f"Ideological interval status, {year}")
+        ax.set_xlabel("Start index in ideology order")
+        ax.set_ylabel("End index in ideology order")
         ticks = sorted(set([1, n] + list(range(5, n, 5))))
         ax.set_xticks(ticks)
         ax.set_yticks(ticks)

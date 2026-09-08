@@ -1491,7 +1491,7 @@ function focal_case_latex(data::DataFrame)
         "\\bottomrule",
         "\\end{tabularx}",
         "\\begin{minipage}{0.96\\linewidth}",
-        "\\footnotesize Notes: The two 2018 cabinet periods share one election-space numerical vector and therefore appear once. The ideological rows are focal endpoint-minimal cases; all primary minimal connected ideological inversions are reported in Table~\\ref{tab:minimal-intervals}. The identities are descriptive, not causal.",
+        "\\footnotesize Notes: The two 2018 cabinet periods share one election-space numerical vector and therefore appear once. The ideological rows are focal endpoint-minimal cases; all minimal connected ideological inversions are reported in Table~\\ref{tab:minimal-intervals}. The identities are descriptive, not causal.",
         "\\end{minipage}",
         "\\end{table}",
     ])

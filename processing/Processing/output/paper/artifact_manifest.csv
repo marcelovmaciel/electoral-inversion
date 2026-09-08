@@ -38,7 +38,7 @@ raw/ideology_k_gap_minimal_majorities.csv,raw,seat_winning k=0/1 ideological dom
 raw/ideology_k_gap_inversions.csv,raw,seat_winning k=0/1 ideological domain; all valid votes in V; freshly recomputed minimality.,167,34
 tables/ideology_k_gap_summary.csv,table,seat_winning domain-minimal counts and strongest inversion.,6,22
 diagnostics/ideology_k_gap_strongest_inversion_ties.csv,diagnostic,Strongest minimal inversion exact ties in seat_winning.,0,10
-latex/table_03_ideology_k_gap_summary.tex,latex,Primary parliamentary ideological summary.,6,5
+latex/table_03_ideology_k_gap_summary.tex,latex,Minimal winning coalitions by ideological domain.,6,5
 raw/ideology_k_gap_coalitions_all_parties.csv,raw,all_parties k=0/1 ideological domain; all valid votes in V; freshly recomputed minimality.,19837,34
 raw/ideology_k_gap_minimal_majorities_all_parties.csv,raw,all_parties k=0/1 ideological domain; all valid votes in V; freshly recomputed minimality.,279,34
 raw/ideology_k_gap_inversions_all_parties.csv,raw,all_parties k=0/1 ideological domain; all valid votes in V; freshly recomputed minimality.,165,34

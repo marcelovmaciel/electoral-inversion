@@ -79,14 +79,11 @@ ORCID: 0000-0001-7666-8494 }
   half of all valid federal-deputy votes nationwide, a condition known as
   coalition inversion. Using the 2014, 2018, and 2022 elections, I follow the
   party sets represented in presidential cabinets and examine potential
-  parliamentary coalitions constructed from seat-winning parties and restricted
-  by ideological proximity. Cabinet inversions appear
+  coalitions restricted by ideological proximity. Cabinet inversions appear
   following all three elections, as do inversions among minimal connected
-  parliamentary coalitions. In 2022, a seven-party bloc of ideologically adjacent
-  parliamentary parties combined \AcctIdeologicalTwentyTwentyTwoCaseTwoVotePct{} percent of the vote with 258 of 513 seats.
-  Restoring parties without seats to the ideological order removes the 2018
-  exact-connected inversion, showing sensitivity to how potential coalition
-  partners are defined. Party-level deviations from proportionality can therefore
+  winning coalitions. In 2022, a seven-party bloc of ideologically adjacent
+  parties combined \AcctIdeologicalTwentyTwentyTwoCaseTwoVotePct{} percent of
+  the vote with 258 of 513 seats. Party-level deviations from proportionality can therefore
   have a distinct coalition-level consequence: they can determine which
   combinations of parties command a legislative majority.
 \end{abstract}
@@ -164,37 +161,30 @@ majority without a national vote majority.
 
 Cabinets are politically realized, but they are also selective and may combine
 parties separated by substantial ideological distance. A second domain asks
-whether the same aggregation problem appears among potential parliamentary
-coalitions disciplined by ideological proximity. These coalitions are constructed
-from parties represented in the Chamber. Parties winning no seats remain in the
-national vote benchmark but do not determine adjacency among parliamentary
-actors. The baseline uses minimal connected winning coalitions: contiguous
-blocs in the election-year left-right order restricted to seat-winning parties that
-hold a seat majority and cannot be narrowed further while retaining it \parencite{axelrod1970conflict}.
-Exact connectedness is a deliberately restrictive baseline. Since party
-positions are estimated and actual coalitions need not include every
-intermediate parliamentary party, a one-gap sensitivity extension permits one
-represented party inside the span to be omitted. The one-gap domain therefore provides a nested relaxation of the
-no-gap requirement while preserving ideological proximity as the organizing
-restriction. Across both domains, the relevant quantity is the coalition's
-accumulated seat differential, defined as the difference between its seats and
-the number implied by its national vote share. That differential admits an exact
-algebraic decomposition into a within-district term and a
-between-district term. The terms make cases comparable by showing
-whether the two components reinforce or offset one another.
+whether the same aggregation problem appears among potential coalitions
+disciplined by ideological proximity. The baseline uses minimal connected
+winning coalitions: contiguous blocs in the election-year left-right order that
+hold a seat majority and cannot be narrowed further while retaining it
+\parencite{axelrod1970conflict}. Exact connectedness is a deliberately
+restrictive baseline. Since party positions are estimated and actual coalitions
+need not include every intermediate party, a one-gap sensitivity extension
+permits one intermediate party to be omitted. The one-gap domain therefore
+provides a nested relaxation of the no-gap requirement while preserving
+ideological proximity as the organizing restriction. Across both domains, the
+relevant quantity is the coalition's accumulated seat differential, defined as
+the difference between its seats and the number implied by its national vote
+share. That differential admits an exact algebraic decomposition into a
+within-district term and a between-district term. The terms make cases
+comparable by showing whether the two components reinforce or offset one
+another.
 
-The empirical pattern spans both coalition domains and all three election cycles.
-Realized cabinet inversions and minimal connected parliamentary inversions appear
-following the 2014, 2018, and 2022 elections. The 2022 cases include a compact
-right-side bloc with \AcctIdeologicalTwentyTwentyTwoCaseTwoVotePct{} percent of the vote and 258 seats. The 2018
-exact-connected inversion depends on the parliamentary universe: it disappears
-when parties without seats are restored to the ideological order, although
-one-gap inversions remain. Within-district and between-district components
-reinforce one another in some inversions and offset one another in others.
-The within-district component is positive in every cabinet inversion and every
-primary exact-connected minimal inversion; an all-party sensitivity case instead
-combines a negative within-district component with a larger positive
-between-district component.
+The empirical pattern spans both coalition domains and all three election
+cycles. Realized cabinet inversions and inversions among minimal connected
+winning coalitions appear following the 2014, 2018, and 2022 elections. The
+2022 cases include a compact right-side bloc with
+\AcctIdeologicalTwentyTwentyTwoCaseTwoVotePct{} percent of the vote and
+258 seats. Within-district and between-district components reinforce one
+another in some inversions and offset one another in others.
 
 The remainder of the article follows the order of these transformations.
 Section~\ref{sec:brazil-system} explains how Brazil's multidistrict open-list system
@@ -429,7 +419,7 @@ politically remote combinations on the same footing as combinations that were
 realized in government or structured by recognizable political proximity. The
 coalition space is therefore restricted in two different ways. Observed cabinets
 identify realized governing party combinations. Ideological connectedness
-supplies a disciplined domain of potential parliamentary combinations. Taken together, they use coalition inversion as a lens on two different features of the political system: how governing coalitions recombine party-level representational advantages in practice, and where potential vote-minority seat majorities are located within the ideological structure of the legislature.
+supplies a disciplined domain of potential coalitions. Taken together, they use coalition inversion as a lens on two different features of the political system: how governing coalitions recombine party-level representational advantages in practice, and where potential vote-minority seat majorities are located within the ideological structure of the legislature.
 
 Cabinet coalitions are substantively meaningful because Brazilian presidents ordinarily govern through multiparty arrangements. Cabinet participation records a party combination that was not merely arithmetically possible but institutionally realized in executive government \parencite{abranches1988presidencialismo,figueiredo2000presidential,pereira2004cost}. The relevant representational question is, thus, whether the members of the party set holding ministries collectively possessed a Chamber majority despite receiving less than half of the valid federal-deputy vote in the election that produced that legislature.
 
@@ -442,12 +432,12 @@ requires a larger domain. Ideological proximity restricts this combinatorial
 space and shows whether vote-minority seat majorities can be assembled
 from ideologically coherent blocs and where such seat-efficient majority regions
 lie in the party system. The ideological domain, thus, extends the inversion
-analysis to politically structured potential parliamentary coalitions. I use
+analysis to politically structured potential coalitions. I use
 Axelrod's connected-coalition criterion as the baseline: an admissible coalition
-must occupy a contiguous interval in the ideological ordering of seat-winning
-parties \parencite{axelrod1970conflict}. The criterion is not intended as a
+must occupy a contiguous interval in the ideological ordering
+\parencite{axelrod1970conflict}. The criterion is not intended as a
 model of Brazilian government formation. It defines a politically structured
-domain of potential parliamentary coalitions in which ideological distance constrains which
+domain of potential coalitions in which ideological distance constrains which
 party combinations are compared.
 
 Within this domain, I focus on minimal connected winning coalitions. A connected
@@ -460,7 +450,7 @@ these ideologically coherent seat majorities still fall short of a national vote
 majority? Exact contiguity is a demanding admissibility condition, particularly
 when party positions are estimated and neighboring parties may occupy similar
 locations. I therefore consider a nested one-gap relaxation that permits one
-represented party inside the coalition's ideological span to be omitted to assess the
+party inside the coalition's ideological span to be omitted to assess the
 sensitivity of the ideological-coalition results to the exact no-gap requirement
 while preserving ideological proximity as the organizing principle.
  
@@ -715,12 +705,8 @@ The ideological orders for 2014 and 2018 use the party classifications
 of \textcite{bolognesi2023nova}. For 2022, I use the later 2018--2022
 classification, drawing on the 2025 data release and associated article
 \parencite{bolognesi2025dataverse,bolognesi2026desaparecimento}.
-Each classification supplies a fixed election-year party order. The primary
-analysis filters that order to parties with positive Chamber seats; the
-all-party sensitivity analysis retains the full order. Within each universe
-and each admissibility domain, I enumerate coalitions, identify minimal
-seat-majority coalitions, and compare their combined votes with the same
-national valid-vote total.
+Each classification supplies the election-year party order used to construct
+the coalition domains defined above.
 
 
 \section{Results}
@@ -951,38 +937,34 @@ different majority relations as its parties are recombined in government.
 \subsection{Ideologically constrained potential coalitions}
 \label{sec:ideology}
 
-The primary parliamentary domain yields exact-connected inversions in all
-three elections: four of eight minimal connected winning coalitions invert in
+The exact-connected baseline yields inversions in all three elections: four of eight minimal connected winning coalitions invert in
 2014, one of eight in 2018, and two of four in 2022. These coalitions are
 constructed over 28, 30, and 23 seat-winning parties, respectively.
 Table~\ref{tab:interval-summary} reports minimal-majority and inversion counts
 and the strongest inversion under each admissibility condition.
 Figure~\ref{fig:heatmaps} locates the exact-connected inversions within the
-parliamentary interval space. Appendix~\ref{app:ideological-universes} compares
-these results with the all-party sensitivity universe.
+ideological interval space.
 
 \input{table_03_ideology_k_gap_summary.tex}
 
-The four 2014 connected inversions contain twelve to fifteen represented
-parties. PSB--PTN begins on the center-left; the other three begin at parties
+The four 2014 connected inversions contain twelve to fifteen parties. PSB--PTN begins on the center-left; the other three begin at parties
 classified as center-right, and all extend into the right. None includes PT,
 but every case combines PMDB and PSD with PSDB. The strongest inversion,
 measured by the lowest vote share, is the thirteen-party PTB--PR interval:
 \AcctIdeologicalTwentyFourteenCaseOneVotePct{} percent of all valid votes yields exactly 257 seats, a quota of
 \AcctIdeologicalTwentyFourteenCaseOneQuota{} seats, and a differential of \AcctIdeologicalTwentyFourteenCaseOneDifferential{} seats. Its representation ratio is
-\(R_C=1.056\). PPL, which has no seats, is outside this parliamentary interval
-universe, while its votes remain in the national denominator.
+\(R_C=1.056\).
 
 In 2018, PT--PSDB is the only exact-connected minimal inversion. Its fourteen
-represented parties receive \AcctIdeologicalTwentyEighteenCaseOneVotePct{} percent of all valid votes and hold 267 seats.
+parties receive \AcctIdeologicalTwentyEighteenCaseOneVotePct{} percent of all valid votes and hold 267 seats.
 The proportional quota is \AcctIdeologicalTwentyEighteenCaseOneQuota{} seats, the differential is \AcctIdeologicalTwentyEighteenCaseOneDifferential{} seats, and
 \(R_C=1.042\). The other seven minimal connected majorities have vote majorities,
 including both overrepresented and underrepresented combinations. This election
-therefore supplies a narrow vote-minority parliamentary inversion under exact
+therefore supplies a narrow vote-minority inversion under exact
 connectedness, alongside the observed PSC-inclusive cabinet inversion.
 
 In 2022, the non-inverted minimal majorities PT--PP and PSB--PSC begin on the
-left and center-left and contain fifteen and sixteen represented parties,
+left and center-left and contain fifteen and sixteen parties,
 respectively. They retain seat majorities despite negative differentials of
 9.36 and 15.10 seats. The inversions occur in the ten-party MDB--UNIÃO
 interval, spanning the center-right through the far right, and the seven-party
@@ -999,12 +981,12 @@ members. The contrast shows why the size of a seat majority cannot be read
 directly from the extent of overrepresentation: a coalition with less electoral
 support requires a larger advantage to reach the same threshold.
 Table~\ref{tab:minimal-intervals} reports the differentials and district
-components of all seven primary connected minimal inversions; full primary
+components of all seven minimal connected inversions; full
 \(k=0\) minimal-winning compositions appear in
 Appendix~\ref{app:minimal-connected-winning}.
 
-Allowing one represented party inside a span to be omitted changes both
-admissibility and minimality. All twenty primary exact-connected minimal
+Allowing one party inside a span to be omitted changes both
+admissibility and minimality. All twenty exact-connected minimal
 majorities remain admissible and winning, but only six remain minimal in
 \(\mathcal D_1\). The one-gap domain contains 46 minimal inversions among
 87 minimal majorities in 2014, 42 among 108 in 2018, and 12 among 39 in 2022.
@@ -1014,42 +996,42 @@ not probabilities of government formation.
 In 2014, the relaxation broadens the ideological distribution of inversions:
 their leftmost members range from PSOL through PMDB, and seven include PT.
 The strongest inversion remains the same thirteen-party PTB--PR coalition,
-with \AcctIdeologicalTwentyFourteenCaseOneVotePct{} percent of the vote and 257 seats. Since every primary coalition
+with \AcctIdeologicalTwentyFourteenCaseOneVotePct{} percent of the vote and 257 seats. Since every coalition
 member has positive seats, this exact-threshold coalition has no proper winning
 subset and remains minimal when one gap is allowed.
 
 The strongest 2018 one-gap case is PCdoB--PODE omitting PSDB. The full
-parliamentary span contains sixteen parties and holds 287 seats with 53.59
+span contains sixteen parties and holds 287 seats with 53.59
 percent of all valid votes. Omitting PSDB removes thirty seats, leaving fifteen
 parties with exactly 257 seats and 47.59 percent of the vote. Because PSDB is
 underrepresented, this exclusion raises the differential by 0.76 seats, from
 12.10 to 12.86. The coalition retains its seat majority while losing its vote
 majority. Unlike PSC's departure from the Bolsonaro-period cabinet, this
 exclusion leaves the coalition at the seat-majority threshold. The one-gap
-search thus yields a larger vote deficit than the primary PT--PSDB
+search thus yields a larger vote deficit than the PT--PSDB
 exact-connected inversion.
 
 In 2022, all twelve one-gap minimal inversions contain only parties classified
 as center-right, right, or far right, and none includes PT. They contain seven
-to eleven represented parties, with a median of nine. The strongest remains
+to eleven parties, with a median of nine. The strongest remains
 the same seven-party PP--PL interval as in \(k=0\), with \AcctIdeologicalTwentyTwentyTwoCaseTwoVotePct{} percent of
 the vote and 258 seats. Three other minimal inversions occupy the wider
-MDB--UNIÃO span with one represented party omitted. The right-side
+MDB--UNIÃO span with one party omitted. The right-side
 concentration therefore extends beyond the single coalition with the lowest
 vote share.
 
-The strongest 2014 and 2022 parliamentary inversions retain both their
-membership and their vote--seat outcomes under the one-gap relaxation.
-The broader set of minimal coalitions nevertheless changes in every election.
-Restoring parties without seats to the ideological order also changes
-admissibility: the same PTB--PR and PP--PL member sets require a one-gap
-allowance in the all-party universe because they omit PPL and DC, respectively.
-Appendix~\ref{app:ideological-universes} reports this sensitivity alongside
-the disappearance of the 2018 exact-connected inversion.
+The strongest 2014 and 2022 inversions retain both their membership and
+their vote--seat outcomes under the one-gap relaxation, although the broader
+set of minimal coalitions changes in every election. The all-party sensitivity
+analysis preserves their endpoint spans but removes the 2018 exact-connected
+inversion: including PMB in PT--PSDB adds votes but no seats, giving the
+interval a vote majority. The PTB--PR and PP--PL member sets require a
+one-gap allowance in that universe because they omit PPL and DC, respectively.
+Appendix~\ref{app:ideological-universes} reports the full comparison.
 
 \begin{table}[htbp]
 \centering
-\caption{Exact-connected (\(k=0\)) minimal parliamentary inversions and
+\caption{Exact-connected (\(k=0\)) minimal inversions and
 seat-differential decomposition}
 \label{tab:minimal-intervals}
 \footnotesize
@@ -1059,28 +1041,26 @@ seat-differential decomposition}
 \end{table}
 \FloatBarrier
 
-Figure~\ref{fig:heatmaps} places these cases in the full primary
+Figure~\ref{fig:heatmaps} places these cases in the full
 exact-connected interval space. Blue cells reach a Chamber majority with a
 vote majority, orange cells are inversions, and red cells are minimal
 inversions. The 2014 cases occupy several center-to-right spans. The 2018
 panel contains the PT--PSDB inversion, with a vote share just below one half.
-The 2022 inversion region is on the right side of the parliamentary order.
-The figure concerns \(k=0\); it does not pool the one-gap coalitions or the
-all-party sensitivity universe.
+The 2022 inversion region is on the right side of the ideological order.
+The figure concerns the exact-connected baseline, \(k=0\).
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=.31\textwidth]{ideological_interval_heatmap_2014.pdf}\hfill
 \includegraphics[width=.31\textwidth]{ideological_interval_heatmap_2018.pdf}\hfill
 \includegraphics[width=.31\textwidth]{ideological_interval_heatmap_2022.pdf}
-\caption{Exact-connected (\(k=0\)) parliamentary ideological interval status by election}
+\caption{Exact-connected (\(k=0\)) ideological interval status by election}
 \label{fig:heatmaps}
 \begin{flushleft}
 \footnotesize
-Notes: Each matrix enumerates exact-connected \(k=0\) intervals among
-Chamber-represented parties. Start and end indices refer to the election-year
-ideological order filtered to parties with positive seats. The
-one-gap \(k=1\) domain is not plotted.
+Notes: Each matrix enumerates exact-connected \(k=0\) intervals.
+Start and end indices refer to the election-year ideological order of
+seat-winning parties. The one-gap \(k=1\) domain is not plotted.
 \end{flushleft}
 \end{figure}
 
@@ -1129,25 +1109,22 @@ and fifteen districts are required to account for 90 percent. The balance
 differs across configurations, but in each case the national within-district
 advantage combines positive contributions from much of the country.
 
-The primary exact-connected ideological inversions share the cabinets'
+The minimal connected inversions share the cabinets'
 positive within-district component, but its relative importance varies.
 In 2022, MDB--UNIÃO has \(A_C=\AcctIdeologicalTwentyTwentyTwoCaseOneWithin{}\) and \(B_C=\AcctIdeologicalTwentyTwentyTwoCaseOneBetween{}\): both components
 are positive, with between-district weighting providing the larger share of
 its \AcctIdeologicalTwentyTwentyTwoCaseOneDifferential{}-seat differential. PP--PL instead has \(A_C=\AcctIdeologicalTwentyTwentyTwoCaseTwoWithin{}\) and
 \(B_C=\AcctIdeologicalTwentyTwentyTwoCaseTwoBetween{}\). In 2018, the PT--PSDB inversion combines \(A_C=\AcctIdeologicalTwentyEighteenCaseOneWithin{}\)
 with \(B_C=\AcctIdeologicalTwentyEighteenCaseOneBetween{}\). The same inversion classification therefore covers
-substantially different balances between the components. Under the primary
+substantially different balances between the components. Under the
 one-gap relaxation, three minimal inversions have a negative within-district
 component: two in 2014 and one in 2022. Their positive between-district terms
 more than offset that shortfall.
 
-The sign of the MDB--UNIÃO within-district component is sensitive to the
-ideological universe. Restoring parties without seats to this interval gives
-\(A_C=-1.29\) and \(B_C=9.88\), so the all-party inversion combines a
-negative within-district component with a larger positive between-district
-component. The primary parliamentary interval excludes those parties from
-membership while retaining their votes in the denominator. Positive \(A_C\)
-in all primary exact-connected inversions is an empirical result for that
+In the all-party sensitivity analysis, MDB--UNIÃO instead combines
+\(A_C=-1.29\) with \(B_C=9.88\), while retaining its inversion status
+(Appendix~\ref{app:ideological-universes}). Positive \(A_C\) in all minimal
+connected inversions in the baseline is therefore an empirical result for that
 domain, not a mathematical requirement for inversion.
 
 \newpage
@@ -1160,19 +1137,17 @@ domain, not a mathematical requirement for inversion.
 \footnotesize Notes: Components are expressed as percentages of each coalition's
 proportional quota. Colors identify election years and outlined points are
 coalition inversions. Panel A reports cabinet periods. Panel B reports minimal
-connected winning coalitions
-in the primary exact-connected (\(k=0\)) domain of Chamber-represented parties.
-The dashed line marks \(R_C=1\).
+connected winning coalitions (\(k=0\)). The dashed line marks \(R_C=1\).
 \end{flushleft}
 \end{figure}
 \FloatBarrier
 
 Figure~\ref{fig:cross-domain-components} compares the components after
-accounting for coalition size. Panel B contains twenty primary minimal connected
+accounting for coalition size. Panel B contains twenty minimal connected
 winning coalitions, seven of which invert. Every observed cabinet configuration
-has a positive within-district component, whereas the parliamentary ideological
-majorities occupy both sides of that boundary. The primary ideological
-inversions are all on its positive side. Cabinet inversions are not concentrated
+has a positive within-district component, whereas the ideological
+majorities occupy both sides of that boundary. The inverted connected
+coalitions are all on its positive side. Cabinet inversions are not concentrated
 at the largest normalized within-district values: several non-inverted cabinets
 have larger values. Across domains, majority status depends on both the
 components' sum and the coalition's proportional distance from 257 seats.
@@ -1185,28 +1160,20 @@ The analysis compares coalition inversions across two politically defined
 domains in a proportional system institutionally different from the principal
 cases in the existing literature. The first domain follows the parties actually
 represented in cabinet as composition changes during a mandate. The second
-enumerates potential parliamentary coalitions of seat-winning parties, first
+enumerates ideologically constrained potential coalitions, first
 under exact connectedness and then under a nested one-gap relaxation. The same
 party vote--seat distribution can therefore be evaluated under realized and
 structured potential recombinations.
 
 The distinction matters because coalition inversion is configuration-dependent.
 In 2018, the 238-day PSC-inclusive cabinet period and the PT--PSDB
-parliamentary interval both invert, but they combine different party sets.
-Relaxing exact connectedness admits a stronger parliamentary inversion,
+interval both invert, but they combine different party sets.
+Relaxing exact connectedness admits a stronger inversion,
 PCdoB--PODE omitting PSDB, with 47.59 percent of all valid votes and 257 seats.
-The strongest 2014 and 2022 parliamentary inversions retain their PTB--PR
+The strongest 2014 and 2022 ideological inversions retain their PTB--PR
 and PP--PL compositions and outcomes under the same relaxation. Observed
-cabinets and constrained potential parliamentary coalitions therefore reveal
+cabinets and ideologically constrained potential coalitions therefore reveal
 different majority configurations within the same electoral distribution.
-
-The all-party sensitivity analysis preserves the strongest 2014 and 2022
-ideological regions and the presence of one-gap inversions in every election.
-It changes the 2018 exact-connected finding: no interval inverts when
-extra-parliamentary parties are allowed to structure adjacency. It also changes
-the sign of the within-district component for the 2022 MDB--UNIÃO inversion.
-The general coalition-aggregation result survives, while these particular
-classifications and decomposition patterns depend on the ideological universe.
 
 The party representation profiles also show why coalition inversion should not
 be reduced to one stable party-size bias. In 2014, overrepresentation and
@@ -1226,18 +1193,14 @@ surplus seats are needed to reach 257. The contrast between the
 MDB--UNIÃO interval, whose quota is closer to a majority, and the more strongly overrepresented
 PP--PL interval makes this distinction especially clear.
 
-The decomposition of the primary exact-connected domain adds a second
-comparative result. The within-district component is positive in all four
-observed cabinet inversions and all seven minimal parliamentary inversions.
-Between-district weighting reinforces it in the PTB--PR, PT--PSDB,
-MDB--UNIÃO, and PP--PL parliamentary cases and in the 2016.2 cabinet;
-it offsets it in the other three 2014 parliamentary inversions and the
-remaining cabinet inversions. MDB--UNIÃO illustrates the sensitivity of a
-component's sign to membership: its within-district term is positive in the
-parliamentary universe and negative in the all-party universe. Its inversion
-status survives because the total differential remains large enough in both.
-The balance between components varies even when every case satisfies the same
-inversion criterion.
+The decomposition of the exact-connected domain adds a second comparative
+result. The within-district component is positive in all four observed cabinet
+inversions and all seven minimal connected inversions. Between-district
+weighting reinforces it in the PTB--PR, PT--PSDB, MDB--UNIÃO, and PP--PL
+ideological cases and in the 2016.2 cabinet; it offsets it in the other three
+2014 ideological inversions and the remaining cabinet inversions. The balance
+between components varies even when every case satisfies the same inversion
+criterion.
 
 These comparisons locate national differentials in the decomposition without
 assigning causal responsibility. \(B_C\) is not pure malapportionment; it
@@ -1277,8 +1240,8 @@ kaminski18_spoil_effec_propor_repres_system,
 FlisGrofmanKaminski2025Introduction}.
 
 Two further qualifications remain. The one-gap relaxation weakens exact
-connectedness while holding the parliamentary party order fixed. It therefore
-addresses whether one omitted represented party determines admissibility,
+connectedness while holding the estimated party order fixed. It therefore
+addresses whether one omitted intermediate party determines admissibility,
 but it does not incorporate uncertainty in the ideology estimates themselves;
 alternative placements may change endpoints, spans, or marginal cases. In
 addition, the vote share of a cabinet or potential coalition is the sum of votes
@@ -1292,7 +1255,7 @@ not its public reception or normative legitimacy.
 
 This article extends the literature on coalition inversions by following
 cabinet composition across legislative terms, comparing those realized party
-sets with ideologically constrained potential parliamentary coalitions, and examining both in
+sets with ideologically constrained potential coalitions, and examining both in
 a multidistrict proportional system without national compensation. Party-level
 deviations can aggregate into politically consequential coalition
 differentials, but whether they change majority status depends on coalition
@@ -1301,16 +1264,12 @@ configuration.
 The empirical comparison is not uniform across elections or domains. Four
 observed cabinet periods invert: two linked to the 2014 election, one
 238-day PSC-inclusive period linked to 2018, and the initial Lula cabinet linked
-to 2022. The primary exact-connected parliamentary domain contains inversions
+to 2022. Inversions also occur among minimal connected winning coalitions
 in all three elections. PP--PL provides a compact seven-party right-side
 inversion in 2022, while PT--PSDB has a narrow vote minority in 2018.
 The one-gap relaxation admits more minimal inversions in every election,
 preserving the strongest 2014 and 2022 member sets and producing a stronger
-2018 case. The all-party sensitivity analysis preserves these strongest
-regions and the one-gap existence results, but yields no exact-connected
-inversion in 2018. Potential parliamentary coalitions and national vote
-accounting therefore require distinct universes: parties without seats remain
-in the vote benchmark even when they do not determine parliamentary adjacency.
+2018 case.
 
 The coalition representation ratio clarifies the threshold logic. Most observed
 cabinet coalitions are overrepresented, but only four combine that advantage
@@ -1632,10 +1591,8 @@ and is a vote-and-seat majority. Its closest minimal connected winning
 interval is PSDB--DEM, with 50.82 percent of the vote and 257 seats.
 The closest minimal connected inversion is PT--PSDB, with \AcctIdeologicalTwentyEighteenCaseOneVotePct{} percent
 and 267 seats, but its Jaccard overlap with the cabinet is only 0.095.
-Thus the primary parliamentary universe contains an exact-connected inversion
-in this election, located in a different ideological region from the sparse
-right-side cabinet inversion. The all-party exact-connected null is a separate
-sensitivity result.
+The exact-connected inversion is therefore located in a different ideological
+region from the sparse right-side cabinet inversion.
 
 
 The 2023.1 Lula cabinet returns to a left-anchored structure, but it is not a

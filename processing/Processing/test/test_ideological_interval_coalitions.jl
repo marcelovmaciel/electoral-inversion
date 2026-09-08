@@ -218,8 +218,8 @@ end
             @test occursin(raw"\label{tab:interval-summary}", latex)
             @test occursin("2000 & 0 & 1 & 1 & A--C (40.0", latex)
             @test occursin("Strongest minimal inversion", latex)
-            @test occursin("Chamber-represented parties only", latex)
-            @test occursin("all valid votes", latex)
+            @test occursin("The ideological order contains seat-winning parties.", latex)
+            @test occursin("all valid federal-deputy votes", latex)
             @test occursin(raw"40.0\%", latex)
             table_rows = filter(line -> occursin(" & ", line), split(latex, '\n'))
             @test length(table_rows) == nrow(primary_summary) + 1

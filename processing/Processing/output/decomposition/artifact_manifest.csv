@@ -4,7 +4,7 @@ all_parties/audit/coalition_party_contribution_checks.csv,audit,"Per-case vote, 
 all_parties/figure_data/accounting_district_electoral_weight.csv,figure_data,State-year district electoral weights derived from audited valid votes and seats.,81,12,ab1fa8ab3fa0044a461af3ad686e52f3818112c8d22cc5f319253e684c015ff4
 all_parties/figure_data/accounting_state_weighting_anatomy.csv,figure_data,Seven-case gross positive and negative state-weighting anatomy.,7,25,ba36e6e6852bfd3876ed452c8e99bf8cb2ff8ccf3d66bed6060dd8da164f5db8
 all_parties/latex/accounting_numeric_macros.tex,latex,Generated numerical macros used in manuscript prose.,1,1,e7ffda58b01f350fbed9ad4c2fc623851fa8ab7d8c3a299fa2d16d63e4901ef3
-all_parties/latex/table_accounting_focal_cases.tex,latex,Generated compact sign-and-magnitude table for selected focal accounting vectors.,7,68,8554397625c767619b80010d60a3a3f30cb9c74aad37424ea7f4f3018b33102f
+all_parties/latex/table_accounting_focal_cases.tex,latex,Generated compact sign-and-magnitude table for selected focal accounting vectors.,7,68,8afa078464b00d7a1ff5d2e9c16f872b7fe7f5190c3423a304da277a06503372
 all_parties/latex/table_accounting_gross_components.tex,latex,Generated gross-component concentration appendix table.,28,29,e9ce00ab3088af7ee405fe9cb9aa7440cd4a5321d7e3fd49c0bab93708ad2016
 all_parties/latex/table_accounting_minimal_ideological.tex,latex,Generated portrait tabular for all endpoint-minimal ideological decompositions.,6,68,db93b4d5eaa99361ec736b3b9f73bd856da8f33773868c98a24bbe4046a5dcb5
 all_parties/latex/table_accounting_selected_party_geography.tex,latex,Generated selected-party geography appendix table.,17,28,f16639a57edb9a9057df449e5106a89a6f1c67c03410b34142fd53190a28ce5e
@@ -28,7 +28,7 @@ all_parties/tables/table_coalition_party_contributions.csv,table,Appendix table 
 audit/accounting_integration_checks.csv,audit,"Cardinality, registry, identity, and generation checks for manuscript integration.",12,5,009c5e4517c85493e3cf3378ecf278582290da247d666e656a0cbd7266fad29a
 audit/coalition_party_contribution_checks.csv,audit,"Per-case vote, seat, exact differential, source-regression, and inversion checks.",16,28,8a278a45f082dc1709a127424621b12f98ba4b2f9cbe06f91e72da20a2443d68
 audit/decomposition_identity_checks.csv,audit,Exact and floating-point decomposition identity results.,16,10,7557212b99319be1b5cbf1ffd57f535f7befbd13cceed806308eca19dbf7a4b4
-audit/decomposition_input_manifest.csv,audit,SHA-256 provenance for corrected-baseline and district inputs.,24,3,97c3d6d24c29bf587952e84828b69389ba785b1c6831a9d13742a57cfb4f6ddd
+audit/decomposition_input_manifest.csv,audit,SHA-256 provenance for corrected-baseline and district inputs.,24,3,a45dda7e9356b04b0d7deb642ddd0fc7ea635b38804e127a889fd2cad66969c0
 audit/ideological_regression.csv,audit,Ideological inversion-count regression after the decomposition rebuild.,3,5,94cd433241652b715b146c41e92fc834617d92b5d6d766841f199d7eda2bb255
 audit/party_size_diagnostic_checks.csv,audit,Party-size diagnostic: checks; descriptive accounting only.,282,5,a224bc77984f86e238b25e2b5c4b37bb9a3dc1eafdb870749442bb178ed387da
 audit/party_size_diagnostic_metadata.csv,audit,"Diagnostic definitions, scope and descriptive-benchmark qualification.",9,2,6759e64bd54041003daa953831d4ea828f33fdacb79abc2b213848e0e1dbe7bc
@@ -37,7 +37,7 @@ figure_data/accounting_state_weighting_anatomy.csv,figure_data,Seven-case gross 
 figure_data/inversion_decomposition_components.csv,figure_data,"Long-form A_C, B_C, and d_C values for decomposition visualization.",12,5,083e26d8b906d52af36b7328a85c36114339811bca5e313b0500a11033fbe645
 latex/accounting_numeric_macros.tex,latex,Generated numerical macros used in manuscript prose.,1,1,434f5f0256892e2f1664edeb3c0aeef05054cef491a0d915d2a837628806fefc
 latex/report/party_size_diagnostics.tex,latex,Central analysis report section; never synchronized into the manuscript.,99,0,93354cec7dc589bfec7591d62b4919367d5df5aae7d71e05664cd3bbae5b32e6
-latex/table_accounting_focal_cases.tex,latex,Generated compact sign-and-magnitude table for selected focal accounting vectors.,8,68,89fdbb55827edc13792baad9debb63df795d4934055f706f0e4f5a9130e3b325
+latex/table_accounting_focal_cases.tex,latex,Generated compact sign-and-magnitude table for selected focal accounting vectors.,8,68,f1e22ed94a192623b5ca2e85c156b7b673a28a4da7a90289f697451992295326
 latex/table_accounting_gross_components.tex,latex,Generated gross-component concentration appendix table.,32,29,0fcc5394fdb9aec9abf91bd6b3fc39efa8a0767599df08d219108a079ef5d399
 latex/table_accounting_minimal_ideological.tex,latex,Generated portrait tabular for all endpoint-minimal ideological decompositions.,7,68,d4a61439843ac7d4a507dcc973433c1161b896bba483108449ab721c8b736663
 latex/table_accounting_minimal_ideological_all_parties.tex,latex,All-party sensitivity: exact-connected minimal inversion decomposition.,6,68,db93b4d5eaa99361ec736b3b9f73bd856da8f33773868c98a24bbe4046a5dcb5
