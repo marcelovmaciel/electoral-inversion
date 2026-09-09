@@ -201,8 +201,9 @@ end
             @test Processing.coalition_membership_cell(14.0, 11, 19) == "14 [11--19]"
             @test Processing.coalition_membership_cell(missing, missing, missing) == "None"
             @test_throws ErrorException Processing.coalition_membership_cell(missing, 1, 2)
-            # The main renderer accepts only an explicitly parliamentary summary.
+            # Both renderers accept only an explicitly parliamentary summary.
             @test_throws ErrorException Processing.ideology_k_gap_summary_latex(summary)
+            @test_throws ErrorException Processing.ideology_exact_connected_summary_latex(summary)
             primary_domains = [Processing.ideological_k_gap_coalitions(
                 _summary(parties, [20, 60, 20], [2, 0, 2]), _ideology(parties); k = k,
             ) for k in (0, 1)]
@@ -215,7 +216,7 @@ end
             latex = Processing.ideology_k_gap_summary_latex(primary_summary)
             @test occursin(raw"\begin{table}[htbp]", latex)
             @test occursin(raw"\end{table}", latex)
-            @test occursin(raw"\label{tab:interval-summary}", latex)
+            @test occursin(raw"\label{tab:one-gap-summary}", latex)
             @test occursin("2000 & 0 & 1 & 1 & A--C (40.0", latex)
             @test occursin("Strongest minimal inversion", latex)
             @test occursin("The ideological order contains seat-winning parties.", latex)
@@ -224,6 +225,13 @@ end
             table_rows = filter(line -> occursin(" & ", line), split(latex, '\n'))
             @test length(table_rows) == nrow(primary_summary) + 1
             @test all(line -> endswith(line, repeat("\\", 2)), table_rows)
+            baseline_latex = Processing.ideology_exact_connected_summary_latex(primary_summary)
+            @test occursin(raw"\label{tab:interval-summary}", baseline_latex)
+            @test occursin("2000 & 1 & 1 & A--C & 40.0 & 4", baseline_latex)
+            baseline_rows = filter(line -> occursin(" & ", line), split(baseline_latex, '\n'))
+            @test length(baseline_rows) == count(==(0), primary_summary.k) + 1
+            @test !occursin("one-gap", baseline_latex)
+            @test occursin("all valid federal-deputy votes", baseline_latex)
             combined_registry = vcat(registry, primary_registry; cols = :union)
             combined_summary = Processing.build_k_gap_membership_summary(combined_registry)
             @test nrow(combined_summary) == 4
@@ -234,6 +242,7 @@ end
                 roundtrip = CSV.read(path, DataFrame)
                 @test Processing.validate_k_gap_membership_summary!(roundtrip, primary_registry)
                 @test Processing.ideology_k_gap_summary_latex(roundtrip) == latex
+                @test Processing.ideology_exact_connected_summary_latex(roundtrip) == baseline_latex
             end
         end
 

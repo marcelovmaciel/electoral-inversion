@@ -46,6 +46,7 @@ The full production command is `processing/rebuild_manuscript.sh --clean`. Main 
 - `manuscript_values.tex`
 - `observed_coalition_timeline.pdf`
 - `party_representation_profile.pdf`
+- `table_03_ideology_exact_connected_summary.tex`
 - `table_03_ideology_k_gap_summary.tex`
 - `table_accounting_minimal_ideological.tex`
 - `table_accounting_minimal_ideological_all_parties.tex`

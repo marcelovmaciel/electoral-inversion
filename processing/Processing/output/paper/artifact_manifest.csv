@@ -38,7 +38,8 @@ raw/ideology_k_gap_minimal_majorities.csv,raw,seat_winning k=0/1 ideological dom
 raw/ideology_k_gap_inversions.csv,raw,seat_winning k=0/1 ideological domain; all valid votes in V; freshly recomputed minimality.,167,34
 tables/ideology_k_gap_summary.csv,table,seat_winning domain-minimal counts and strongest inversion.,6,22
 diagnostics/ideology_k_gap_strongest_inversion_ties.csv,diagnostic,Strongest minimal inversion exact ties in seat_winning.,0,10
-latex/table_03_ideology_k_gap_summary.tex,latex,Minimal winning coalitions by ideological domain.,6,5
+latex/table_03_ideology_exact_connected_summary.tex,latex,Main-text exact-connected minimal winning parliamentary coalitions.,3,6
+latex/table_03_ideology_k_gap_summary.tex,latex,Appendix exact-connected versus one-gap robustness comparison.,6,5
 raw/ideology_k_gap_coalitions_all_parties.csv,raw,all_parties k=0/1 ideological domain; all valid votes in V; freshly recomputed minimality.,19837,34
 raw/ideology_k_gap_minimal_majorities_all_parties.csv,raw,all_parties k=0/1 ideological domain; all valid votes in V; freshly recomputed minimality.,279,34
 raw/ideology_k_gap_inversions_all_parties.csv,raw,all_parties k=0/1 ideological domain; all valid votes in V; freshly recomputed minimality.,165,34
@@ -161,4 +162,4 @@ figure_data/cross_domain_components_all_parties.csv,figure_data,Exact-audited id
 raw/ideology_k_gap_party_contributions_both_universes.csv.gz,raw,Complete exact member-party vectors for both ideological universes (deterministic gzip CSV).,475290,25
 diagnostics/ideological_accounting_both_universes.json,diagnostic,Both-universe exact accounting and domain-relative minimality audit.,1,1
 figure_data/party_representation_profile.csv,figure_data,Full-precision party representation-ratio profile used by the manuscript figure.,99,11
-artifact_manifest.csv,manifest,Manifest of every generated paper-runner and decomposition artifact.,163,5
+artifact_manifest.csv,manifest,Manifest of every generated paper-runner and decomposition artifact.,164,5

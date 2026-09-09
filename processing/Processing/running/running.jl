@@ -2269,7 +2269,10 @@ for universe in ideological_universes
     ties[!, :ideological_universe] = fill(string(universe), nrow(ties))
     write_artifact_csv(joinpath(diagnostics_dir, "ideology_k_gap_strongest_inversion_ties$(suffix).csv"), ties, "diagnostic", "Strongest minimal inversion exact ties in $(universe).")
     if universe == primary_ideological_universe
-        latex_path = write_artifact_text(joinpath(latex_dir, "table_03_ideology_k_gap_summary.tex"), Processing.ideology_k_gap_summary_latex(summary), "latex", "Minimal winning coalitions by ideological domain."; rows=nrow(summary), columns=5)
+        baseline = summary[summary.k .== 0, :]
+        baseline_latex_path = write_artifact_text(joinpath(latex_dir, "table_03_ideology_exact_connected_summary.tex"), Processing.ideology_exact_connected_summary_latex(summary), "latex", "Main-text exact-connected minimal winning parliamentary coalitions."; rows=nrow(baseline), columns=6)
+        sync_review_latex_asset(baseline_latex_path)
+        latex_path = write_artifact_text(joinpath(latex_dir, "table_03_ideology_k_gap_summary.tex"), Processing.ideology_k_gap_summary_latex(summary), "latex", "Appendix exact-connected versus one-gap robustness comparison."; rows=nrow(summary), columns=5)
         sync_review_latex_asset(latex_path)
     end
 end
