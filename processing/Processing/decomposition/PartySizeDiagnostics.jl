@@ -300,6 +300,19 @@ function party_size_report_latex(d)
     return String(take!(io))
 end
 
+# The manuscript's effective-party statistics summarize the already calculated
+# national party panel. Keep the statistic in analysis, and its display in the
+# manuscript registry. No vote/seat allocation or denominator is reconstructed.
+function party_fragmentation_summary(parties)
+    DataFrame([begin
+        electoral = inv(sum((BigInt(r.v_i) // BigInt(r.V))^2 for r in eachrow(rows)))
+        parliamentary = inv(sum((BigInt(r.s_i) // BigInt(r.S))^2 for r in eachrow(rows)))
+        (election_year = first(rows.election_year),
+         effective_electoral = Float64(electoral), effective_parliamentary = Float64(parliamentary),
+         effective_electoral_exact = string(electoral), effective_parliamentary_exact = string(parliamentary))
+    end for rows in groupby(parties, :election_year)])
+end
+
 function write_party_size_diagnostic_outputs(output_root, full, diagnostic; write_accounting_base = true)
     artifacts = NamedTuple[]
     function record(relative, data, kind, description)
@@ -314,6 +327,8 @@ function write_party_size_diagnostic_outputs(output_root, full, diagnostic; writ
         record("raw/party_district_accounting_all_years.csv", full.cells, "raw", "Complete existing party-district accounting panel.")
         record("raw/district_accounting_all_years.csv", full.districts, "raw", "Existing district accounting weights and closure.")
     end
+    record("tables/report/party_fragmentation_summary.csv", party_fragmentation_summary(full.parties),
+        "table", "Effective electoral and parliamentary party counts from the exact national party panel.")
     specs = ((:cabinet_size, "tables/report/party_size_cabinet_summary.csv"),
         (:correlations, "tables/report/party_size_correlations.csv"),
         (:size_groups, "tables/report/party_size_groups.csv"),

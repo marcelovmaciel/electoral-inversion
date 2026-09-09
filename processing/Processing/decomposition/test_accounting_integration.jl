@@ -398,7 +398,6 @@ accounting_integration_test_result = @testset "Manuscript accounting integration
     @test all(String.(integration_checks_data.status) .== "PASS")
 
     for filename in (
-        "accounting_numeric_macros.tex",
         "table_accounting_focal_cases.tex",
         "table_accounting_gross_components.tex",
         "table_accounting_selected_party_geography.tex",
@@ -427,3 +426,59 @@ open(ACCOUNTING_INTEGRATION_TEST_LOG, "w") do io
 end
 
 println("Focused accounting-integration audit log: $(ACCOUNTING_INTEGRATION_TEST_LOG)")
+
+# Empirical snapshots belong only to tests; production enforces structural and exact identities.
+const BASELINE_CASE_EXPECTATIONS = Dict(
+    "cabinet/2014/2016.2" => (A_C = 15.74, B_C = 4.53, d_C = 20.27, r_C = 18.27),
+    "cabinet/2014/2017.1" => (A_C = 11.27, B_C = -1.32, d_C = 9.95, r_C = 0.95),
+    "cabinet/2018/2021.3/2022.1" => (A_C = 19.07, B_C = -4.45, d_C = 14.62, r_C = 14.62),
+    "cabinet/2022/2023.1" => (A_C = 13.20, B_C = -0.99, d_C = 12.20, r_C = 6.20),
+)
+
+const BASELINE_PARTY_EXPECTATIONS = [
+    (case_id = "cabinet/2014/2016.2", party = "PMDB", A_i = 3.91, B_i = 4.22, d_i = 8.13),
+    (case_id = "cabinet/2014/2016.2", party = "PT", A_i = -1.22, B_i = -1.21, d_i = -2.42),
+    (case_id = "cabinet/2014/2017.1", party = "PMDB", A_i = 3.91, B_i = 4.22, d_i = 8.13),
+    (case_id = "cabinet/2014/2017.1", party = "PSDB", A_i = 0.58, B_i = -5.01, d_i = -4.43),
+    (case_id = "cabinet/2018/2021.3/2022.1", party = "PP", A_i = 7.32, B_i = 1.45, d_i = 8.76),
+    (case_id = "cabinet/2018/2021.3/2022.1", party = "PSL", A_i = -2.42, B_i = -5.28, d_i = -7.70),
+    (case_id = "cabinet/2018/2021.3/2022.1", party = "PSC", A_i = -3.07, B_i = 1.09, d_i = -1.98),
+    (case_id = "cabinet/2022/2023.1", party = "UNIÃO", A_i = 9.36, B_i = 1.75, d_i = 11.10),
+    (case_id = "cabinet/2022/2023.1", party = "PT", A_i = 9.07, B_i = -2.13, d_i = 6.94),
+    (case_id = "cabinet/2022/2023.1", party = "PSOL", A_i = -3.40, B_i = -2.66, d_i = -6.06),
+]
+
+
+@testset "Historical accounting presentation regressions" begin
+    @test sum(coalition_party_contributions.domain .== "cabinet") == 33
+    @test sum(coalition_party_contribution_focal.domain .== "cabinet") == 4
+    baseline = required_integration_csv("raw/accounting_all_inversion_decomposition.csv")
+    parties = required_integration_csv("raw/coalition_party_contributions.csv")
+    for (case_id, expected) in BASELINE_CASE_EXPECTATIONS
+        row = only(eachrow(baseline[baseline.case_id .== case_id, :]))
+        for field in (:A_C, :B_C, :d_C, :r_C)
+            @test isapprox(row[field], expected[field]; atol = 0.005, rtol = 0)
+        end
+    end
+    for expected in BASELINE_PARTY_EXPECTATIONS
+        row = only(eachrow(parties[(parties.case_identifier .== expected.case_id) .&
+                                  (parties.party .== expected.party), :]))
+        for (field, source) in ((:A_i, :A_i),
+                               (:B_i, :B_i),
+                               (:d_i, :party_differential_d_i))
+            @test isapprox(row[source], expected[field]; atol = 0.005, rtol = 0)
+        end
+    end
+end
+
+@testset "Cabinet district table source and serialization" begin
+    table = AccountingIntegration.cabinet_district_concentration(focal_states)
+    @test nrow(table) == sum(focal_integration.case_domain .== "cabinet")
+    @test table.positive_count .+ table.negative_count == fill(27, nrow(table))
+    for row in eachrow(table)
+        total = only(eachrow(focal_integration[focal_integration.case_id .== row.case_id, :]))
+        @test integration_exact(row.positive_sum_exact) + integration_exact(row.negative_sum_exact) == integration_exact(total.A_C_exact)
+    end
+    latex = AccountingIntegration.cabinet_district_concentration_latex(table)
+    @test length(collect(eachmatch(r"\\\\\s*\n", latex))) == nrow(table) + 1
+end

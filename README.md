@@ -189,6 +189,59 @@ Run the independent serialized-output audit after decomposition:
 python3 processing/audit_ideological_universes.py
 ```
 
+## Manuscript numerical values
+
+The production provenance chain is:
+
+```text
+analysis -> decomposition/ManuscriptValues.jl
+         -> output/paper/tables/manuscript_values.csv
+         -> output/paper/latex/manuscript_values.tex
+         -> writing/submission_inversions_review/manuscript/main_rw_again.tex
+```
+
+`processing/rebuild_manuscript.sh --clean` builds the registry after the
+analysis, writes its CSV and TeX from the same in-memory rows, synchronizes the
+TeX into the manuscript directory, compiles the PDF, and packages its inputs.
+**Do not edit `manuscript_values.tex` manually.** Inspect `manuscript_values.csv`
+to audit manuscript prose values. Empirical regression expectations live in
+`decomposition/test_accounting_integration.jl`, not production code.
+
+The readable specification in `ManuscriptValues.jl` gives each claim an explicit
+source, election, universe/k, selector, metric, and formatting rule. Fixed
+ideological cases assert full membership; fixed cabinet cases use case IDs.
+Strongest cases select the lowest vote share, then coalition size and canonical
+ID, supplying their identity and numbers together. Main-text ideological names
+contain `SeatWinning`; sensitivity names contain `AllParties`. Cabinet accounting
+values use `not_applicable`. Cabinet-to-interval diagnostics explicitly use the
+seat-winning order without changing cabinet accounting.
+
+The CSV has one row per semantic macro: `macro`, `semantic_key`, `description`,
+`domain`, `ideological_universe`, `k`, `election`, `case_id`, `case_label`,
+`selector_rule`, `metric`, `raw_value`, `exact_value`, `display_value`, `format`,
+`source_object`, `source_file`, `selector_source_file`, `selection_group`, and
+`source_row_count`. Paths refer to production objects under `output/paper`;
+linked strongest-span/omission selectors additionally identify their selection
+source. Missing metadata means that dimension does not apply.
+
+Prose formatting preserves the manuscript's decimals, percentages, integers,
+and spelled-out counts. Generated tables retain their table builders and their
+separate closure-preserving rounding. The previously handwritten cabinet
+concentration table now shares a generated CSV with its prose diagnostics.
+Institutional rules, design constants, election years, historical chronology,
+and bibliographic facts remain in the manuscript.
+
+Run the focused provenance, drift, and table-consistency tests with:
+
+```bash
+julia -O0 --startup-file=no --project=processing/Processing processing/Processing/decomposition/test_manuscript_values.jl
+```
+
+The [migration audit](processing/Processing/decomposition/MANUSCRIPT_VALUE_MIGRATION.md)
+records all 20 used legacy macros and their semantic replacements. The new API
+also covers the literal empirical prose values identified during that audit;
+it does not reproduce the 98 unused legacy macros.
+
 ## Tests
 
 The manuscript cabinet output combines adjacent periods only when their translated

@@ -104,3 +104,12 @@ end
     broken_accounting[2014].party.A_exact[1] += 1
     @test_throws ErrorException build_party_size_diagnostics!(copy(parties), periods, broken_accounting)
 end
+
+@testset "Effective party numbers use the existing exact shares" begin
+    synthetic = DataFrame(election_year = [2014, 2014], v_i = [50, 50], V = [100, 100],
+        s_i = [75, 25], S = [100, 100])
+    summary = IntermediateAccountingReport.party_fragmentation_summary(synthetic)
+    @test only(summary.effective_electoral) == 2.0
+    @test only(summary.effective_parliamentary) == 1.6
+    @test only(summary.effective_parliamentary_exact) == "8//5"
+end

@@ -38,12 +38,12 @@ The full production command is `processing/rebuild_manuscript.sh --clean`. Main 
 
 ## Manuscript generated assets
 
-- `accounting_numeric_macros.tex`
 - `cross_domain_components.pdf`
 - `district_electoral_weight_by_magnitude.pdf`
 - `ideological_interval_heatmap_2014.pdf`
 - `ideological_interval_heatmap_2018.pdf`
 - `ideological_interval_heatmap_2022.pdf`
+- `manuscript_values.tex`
 - `observed_coalition_timeline.pdf`
 - `party_representation_profile.pdf`
 - `table_03_ideology_k_gap_summary.tex`
@@ -53,5 +53,6 @@ The full production command is `processing/rebuild_manuscript.sh --clean`. Main 
 - `table_appendix_cabinet_interval_bridge.tex`
 - `table_appendix_ideological_universe_comparison.tex`
 - `table_appendix_minimal_connected_winning_intervals.tex`
+- `table_cabinet_district_concentration.tex`
 - `table_coalition_party_contributions.tex`
 - `table_observed_inversion_decomposition.tex`

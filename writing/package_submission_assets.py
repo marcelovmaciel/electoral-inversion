@@ -37,6 +37,10 @@ def referenced_assets() -> tuple[list[Path], list[Path]]:
     # manuscript now uses the representation-profile rendering in its place.
     figure_names.append("party_vote_share_vs_seat_share.pdf")
     figure_names = sorted(set(figure_names))
+    if "manuscript_values.tex" not in table_names:
+        raise ValueError("The manuscript must consume the generated manuscript-value registry.")
+    if "accounting_numeric_macros.tex" in table_names or re.search(r"\\Acct[A-Za-z]+", source):
+        raise ValueError("Legacy accounting prose macros cannot enter the submission package.")
     tables = [MANUSCRIPT_ROOT / name for name in table_names]
     figures = [MANUSCRIPT_ROOT / name for name in figure_names]
     return tables, figures
@@ -94,6 +98,7 @@ def main() -> int:
     for path, artifact_type in (
         (MAIN_TEX, "manuscript_source"),
         (MAIN_TEX.with_suffix(".pdf"), "compiled_manuscript"),
+        (MANUSCRIPT_ROOT / "manuscript_values.tex", "generated_manuscript_prose_values"),
     ):
         require_files([path])
         publication_records.append(

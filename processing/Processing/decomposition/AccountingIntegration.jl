@@ -55,28 +55,6 @@ const SELECTED_PARTIES_BY_YEAR = Dict(
     2022 => ["UNIÃO", "PT", "MDB", "PSOL", "PSB", "PL", "PP", "REPUBLICANOS"],
 )
 
-# These values are presentation-rounding audit expectations only. They are
-# never used to construct an accounting row.
-const BASELINE_CASE_EXPECTATIONS = Dict(
-    "cabinet/2014/2016.2" => (A_C = 15.74, B_C = 4.53, d_C = 20.27, r_C = 18.27),
-    "cabinet/2014/2017.1" => (A_C = 11.27, B_C = -1.32, d_C = 9.95, r_C = 0.95),
-    "cabinet/2018/2021.3/2022.1" => (A_C = 19.07, B_C = -4.45, d_C = 14.62, r_C = 14.62),
-    "cabinet/2022/2023.1" => (A_C = 13.20, B_C = -0.99, d_C = 12.20, r_C = 6.20),
-)
-
-const BASELINE_PARTY_EXPECTATIONS = [
-    (case_id = "cabinet/2014/2016.2", party = "PMDB", A_i = 3.91, B_i = 4.22, d_i = 8.13),
-    (case_id = "cabinet/2014/2016.2", party = "PT", A_i = -1.22, B_i = -1.21, d_i = -2.42),
-    (case_id = "cabinet/2014/2017.1", party = "PMDB", A_i = 3.91, B_i = 4.22, d_i = 8.13),
-    (case_id = "cabinet/2014/2017.1", party = "PSDB", A_i = 0.58, B_i = -5.01, d_i = -4.43),
-    (case_id = "cabinet/2018/2021.3/2022.1", party = "PP", A_i = 7.32, B_i = 1.45, d_i = 8.76),
-    (case_id = "cabinet/2018/2021.3/2022.1", party = "PSL", A_i = -2.42, B_i = -5.28, d_i = -7.70),
-    (case_id = "cabinet/2018/2021.3/2022.1", party = "PSC", A_i = -3.07, B_i = 1.09, d_i = -1.98),
-    (case_id = "cabinet/2022/2023.1", party = "UNIÃO", A_i = 9.36, B_i = 1.75, d_i = 11.10),
-    (case_id = "cabinet/2022/2023.1", party = "PT", A_i = 9.07, B_i = -2.13, d_i = 6.94),
-    (case_id = "cabinet/2022/2023.1", party = "PSOL", A_i = -3.40, B_i = -2.66, d_i = -6.06),
-]
-
 require(condition::Bool, message::AbstractString) = condition ? true : error(message)
 
 exact_fraction(numerator::Integer, denominator::Integer = 1) =
@@ -478,37 +456,6 @@ function baseline_case_outputs(registry::DataFrame, accounting_by_year::Abstract
     return stack_case_outputs(outputs), by_id
 end
 
-function validate_baseline_expectations!(baseline, by_id)
-    for (case_id, expected) in BASELINE_CASE_EXPECTATIONS
-        haskey(by_id, case_id) || error("Missing baseline expectation case $(case_id).")
-        row = by_id[case_id].total
-        for field in (:A_C, :B_C, :d_C, :r_C)
-            actual = Float64(getproperty(row, field))
-            target = Float64(getproperty(expected, field))
-            isapprox(actual, target; atol = 0.005, rtol = 0.0) || error(
-                "$(case_id)/$(field) changed: expected $(target) at two decimals, found $(actual).",
-            )
-        end
-    end
-
-    for expected in BASELINE_PARTY_EXPECTATIONS
-        source = by_id[expected.case_id].party
-        selected = source[String.(source.party) .== expected.party, :]
-        nrow(selected) == 1 || error(
-            "Missing expected party row $(expected.case_id)/$(expected.party).",
-        )
-        row = only(eachrow(selected))
-        for field in (:A_i, :B_i, :d_i)
-            actual = Float64(getproperty(row, field))
-            target = Float64(getproperty(expected, field))
-            isapprox(actual, target; atol = 0.005, rtol = 0.0) || error(
-                "$(expected.case_id)/$(expected.party)/$(field) changed.",
-            )
-        end
-    end
-
-    return true
-end
 function ranked_contributor(
     members::DataFrame,
     exact_values::Vector{Rat},
@@ -536,7 +483,7 @@ function build_party_contribution_focal_summary(summary::DataFrame)
     sort!(focal, [:domain, :election, :case_order])
     focal[!, :focal_order] = collect(1:nrow(focal))
     focal[!, :source_case_identifiers] = String.(focal.case_identifier)
-    sum(focal.domain .== "cabinet") == 4 || error("Cabinet focal vectors changed.")
+    sum(focal.domain .== "cabinet") == sum(summary.domain .== "cabinet") || error("Cabinet focal vectors lost cases.")
     return focal
 end
 
@@ -810,7 +757,7 @@ function build_coalition_party_contribution_diagnostics(
 
     nrow(contributions) == nrow(baseline.party) || error("Canonical party vector lost members.")
     nrow(summary) == nrow(baseline.total) || error("Case summary lost registry rows.")
-    sum(contributions.domain .== "cabinet") == 33 || error("Cabinet case-party rows changed.")
+    sum(contributions.domain .== "cabinet") == sum(baseline.party.case_domain .== "cabinet") || error("Cabinet case-party rows lost members.")
     all(checks.all_checks_pass) || error("A party-contribution audit check failed.")
 
     focal_summary = build_party_contribution_focal_summary(summary)
@@ -1334,12 +1281,12 @@ function integration_checks(integration)
         ("focal_state_rows", nrow(integration.focal.state), focal_n * 27),
         ("gross_component_rows", nrow(integration.gross_components), focal_n * 6),
         ("state_weighting_rows", nrow(integration.state_weighting_anatomy), focal_n),
-        ("selected_party_rows", nrow(integration.selected_party_geography), 17),
-        ("district_electoral_weight_rows", nrow(integration.district_electoral_weight), 81),
+        ("selected_party_rows", nrow(integration.selected_party_geography), sum(length, values(SELECTED_PARTIES_BY_YEAR))),
+        ("district_electoral_weight_rows", nrow(integration.district_electoral_weight), 27 * length(unique(integration.baseline.total.election_year))),
         ("minimal_ideological_cases", nrow(integration.minimal_ideological), minimal_n),
         ("coalition_party_contribution_rows", nrow(integration.party_contributions.contributions), nrow(integration.baseline.party)),
         ("coalition_party_contribution_cases", nrow(integration.party_contributions.summary), baseline_n),
-        ("coalition_party_contribution_focal_cases", nrow(integration.party_contributions.focal_summary), 4 + minimal_n),
+        ("coalition_party_contribution_focal_cases", nrow(integration.party_contributions.focal_summary), sum(integration.baseline.total.case_domain .== "cabinet") + minimal_n),
         ("coalition_party_contribution_checks", nrow(integration.party_contributions.checks), baseline_n),
     )
     rows = NamedTuple[]
@@ -1385,7 +1332,6 @@ function build_accounting_integration(
     accounting_by_year::AbstractDict,
 )
     baseline, by_id = baseline_case_outputs(registry, accounting_by_year)
-    validate_baseline_expectations!(baseline, by_id)
     party_contributions = build_coalition_party_contribution_diagnostics(baseline, registry)
     focal = build_focal_outputs(registry, accounting_by_year, by_id)
     gross_components = gross_component_summary(focal)
@@ -1733,87 +1679,8 @@ function coalition_party_contribution_latex(data::DataFrame)
     return join(lines, "\n")
 end
 
-const FOCAL_MACRO_SUFFIXES = Dict(
-    "cabinet/2014/2016.2" => "CabinetEarlyTwentyFourteen",
-    "cabinet/2014/2017.1" => "CabinetTemerTwentyFourteen",
-    "cabinet/2018/2021.3/2022.1" => "CabinetTwentyEighteenShared",
-    "cabinet/2022/2023.1" => "CabinetLulaTwentyTwentyTwo",
-)
 
-function accounting_numeric_macros(integration)
-    lines = String[
-        "% Generated by AccountingIntegration.jl. Do not edit manually.",
-        "\\newcommand{\\AcctFocalCaseCount}{$(nrow(integration.focal.total))}",
-        "\\newcommand{\\AcctUniqueCabinetVectorCount}{4}",
-        "\\newcommand{\\AcctFocalIdeologicalVectorCount}{$(sum(integration.focal.total.case_domain .== "ideological"))}",
-    ]
-    year_names = Dict(2014 => "TwentyFourteen", 2018 => "TwentyEighteen", 2022 => "TwentyTwentyTwo")
-    ordinal_names = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"]
-    ideological_counts = Dict{Int,Int}()
-    for row in eachrow(sort(integration.focal.total, :focal_order))
-        suffix = if String(row.case_domain) == "cabinet"
-            FOCAL_MACRO_SUFFIXES[String(row.case_id)]
-        else
-            year = Int(row.election_year)
-            ordinal = get(ideological_counts, year, 0) + 1
-            ideological_counts[year] = ordinal
-            "Ideological" * year_names[year] * "Case" * ordinal_names[ordinal]
-        end
-        values = (
-            "VotePct" => fmt2(row.vote_share_pct),
-            "Seats" => string(row.s_C),
-            "Quota" => fmt2(row.q_C),
-            "Required" => fmt2(row.r_C),
-            "Within" => fmt2(row.A_C),
-            "Between" => fmt2(row.B_C),
-            "Differential" => fmt2(row.d_C),
-            "SeatMargin" => string(row.seat_margin),
-        )
-        for (name, value) in values
-            push!(lines, "\\newcommand{\\Acct$(suffix)$(name)}{$(value)}")
-        end
-
-        anatomy = only(eachrow(integration.state_weighting_anatomy[
-            String.(integration.state_weighting_anatomy.case_id) .== row.case_id,
-            :,
-        ]))
-        for (name, value) in (
-            "PositiveEight" => fmt2(anatomy.b_positive_eight_seat),
-            "PositiveOther" => fmt2(anatomy.b_positive_other),
-            "NegativeSP" => fmt2(anatomy.b_negative_sp),
-            "NegativeOther" => fmt2(anatomy.b_negative_other),
-            "LargestPositiveState" => latex_escape(anatomy.largest_positive_state),
-            "LargestPositiveStateValue" => fmt2(anatomy.largest_positive_b_Cd),
-        )
-            push!(lines, "\\newcommand{\\Acct$(suffix)$(name)}{$(value)}")
-        end
-    end
-    for pp_pl in eachrow(integration.party_contributions.named_aggregates)
-    push!(
-        lines,
-        "\\newcommand{\\AcctPPPLPLPPCombinedDifferential}{$(fmt2(pp_pl.combined_d_i))}",
-    )
-    push!(
-        lines,
-        "\\newcommand{\\AcctPPPLPLPPSharePct}{$(fmt2(pp_pl.share_of_d_C_pct))}",
-    )
-
-    end
-    cabinet_2018 = integration.party_contributions.contributions[
-        (String.(integration.party_contributions.contributions.case_identifier) .==
-            "cabinet/2018/2021.3/2022.1") .&
-        (String.(integration.party_contributions.contributions.party) .== "PSL"),
-        :,
-    ]
-    nrow(cabinet_2018) == 1 || error("Generated macros require one 2018 PSL row.")
-    psl = only(eachrow(cabinet_2018))
-    push!(
-        lines,
-        "\\newcommand{\\AcctCabinetTwentyEighteenPSLDifferential}{$(fmt2(psl.party_differential_d_i))}",
-    )
-
-    return join(lines, "\n")
-end
+include("CabinetDistrictTable.jl")
 
 """
     write_accounting_integration_outputs(output_root, integration)
@@ -1988,14 +1855,13 @@ function write_accounting_integration_outputs(
         "Appendix table source for selected focal coalition-party contribution vectors.",
     )
 
+    district_table = cabinet_district_concentration(integration.focal.state)
+    record_csv("tables/table_cabinet_district_concentration.csv", district_table, "table",
+        "Exact district concentration for inverted cabinet vectors; shared table/prose source.")
     latex_assets = (
-        (
-            "latex/accounting_numeric_macros.tex",
-            accounting_numeric_macros(integration),
-            "Generated numerical macros used in manuscript prose.",
-            1,
-            1,
-        ),
+        ("latex/table_cabinet_district_concentration.tex",
+         cabinet_district_concentration_latex(district_table),
+         "Generated cabinet within-district concentration tabular.", nrow(district_table), ncol(district_table)),
         (
             "latex/table_accounting_focal_cases.tex",
             focal_case_latex(reloaded["tables/table_accounting_focal_cases.csv"]),

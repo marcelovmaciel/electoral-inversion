@@ -9,3 +9,5 @@ include(joinpath(@__DIR__, "test_decomposition.jl"))
 include(joinpath(@__DIR__, "test_accounting_integration.jl"))
 
 include(joinpath(@__DIR__, "test_party_size_diagnostics.jl"))
+
+include(joinpath(@__DIR__, "test_manuscript_values.jl"))

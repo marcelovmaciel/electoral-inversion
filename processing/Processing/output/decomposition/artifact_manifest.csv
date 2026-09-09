@@ -3,11 +3,11 @@ all_parties/audit/accounting_integration_checks.csv,audit,"Cardinality, registry
 all_parties/audit/coalition_party_contribution_checks.csv,audit,"Per-case vote, seat, exact differential, source-regression, and inversion checks.",18,28,4b8f1e8662a1022b0bf83b9a3d64ed1e1defdcb2c1abe4562faf4403b7a6b8e2
 all_parties/figure_data/accounting_district_electoral_weight.csv,figure_data,State-year district electoral weights derived from audited valid votes and seats.,81,12,ab1fa8ab3fa0044a461af3ad686e52f3818112c8d22cc5f319253e684c015ff4
 all_parties/figure_data/accounting_state_weighting_anatomy.csv,figure_data,Seven-case gross positive and negative state-weighting anatomy.,7,25,ba36e6e6852bfd3876ed452c8e99bf8cb2ff8ccf3d66bed6060dd8da164f5db8
-all_parties/latex/accounting_numeric_macros.tex,latex,Generated numerical macros used in manuscript prose.,1,1,e7ffda58b01f350fbed9ad4c2fc623851fa8ab7d8c3a299fa2d16d63e4901ef3
 all_parties/latex/table_accounting_focal_cases.tex,latex,Generated compact sign-and-magnitude table for selected focal accounting vectors.,7,68,8afa078464b00d7a1ff5d2e9c16f872b7fe7f5190c3423a304da277a06503372
 all_parties/latex/table_accounting_gross_components.tex,latex,Generated gross-component concentration appendix table.,28,29,e9ce00ab3088af7ee405fe9cb9aa7440cd4a5321d7e3fd49c0bab93708ad2016
 all_parties/latex/table_accounting_minimal_ideological.tex,latex,Generated portrait tabular for all endpoint-minimal ideological decompositions.,6,68,db93b4d5eaa99361ec736b3b9f73bd856da8f33773868c98a24bbe4046a5dcb5
 all_parties/latex/table_accounting_selected_party_geography.tex,latex,Generated selected-party geography appendix table.,17,28,f16639a57edb9a9057df449e5106a89a6f1c67c03410b34142fd53190a28ce5e
+all_parties/latex/table_cabinet_district_concentration.tex,latex,Generated cabinet within-district concentration tabular.,4,14,886684e1cf0e251057cc3ccdbad4f9b7b23df1b4bbc4e4f0f9c8a028a5f5fca4
 all_parties/latex/table_coalition_party_contributions.tex,latex,Generated appendix table of focal coalition-party contribution diagnostics.,10,55,af4c4455ef7832cdbc39094e48b52b5b6f4edadfe82f97c1a1e34746b1b5a84c
 all_parties/raw/accounting_all_inversion_decomposition.csv,raw,Exact-audited accounting totals for all registered inversion cases.,18,68,a73901b98f933d2217f2e0227cd1875b35b60ea1825d32efacb42347ec1e4300
 all_parties/raw/accounting_focal_case_decomposition.csv,raw,Selected focal cabinet and ideological accounting vectors.,7,68,745fed43402de62f67a0de9e0bc51369f0f8d146e60bee8e8e0c1cc3220b975f
@@ -24,24 +24,26 @@ all_parties/tables/table_accounting_focal_cases.csv,table,Manuscript table sourc
 all_parties/tables/table_accounting_gross_components.csv,table,Appendix table source for gross focal accounting components.,28,29,600f1705e6e69ff863bb463dd67fcd1ff531e6f31a7a94506b389b4ed7578477
 all_parties/tables/table_accounting_minimal_ideological.csv,table,Manuscript table source for all endpoint-minimal ideological decompositions.,6,68,c207733c189f8c4ed647dfefcb2c1dfc0cd61d62c0b548d378dffc94ecf6c147
 all_parties/tables/table_accounting_selected_party_geography.csv,table,Appendix table source for selected party state geography.,17,28,c1d40ee863e7cb3dfdbc84e61b242928dd72aac411d4eb431b20e4a43770aa70
+all_parties/tables/table_cabinet_district_concentration.csv,table,Exact district concentration for inverted cabinet vectors; shared table/prose source.,4,14,e2a7dcb2b88f3b7402d271a0441069e26a3bd188bd8ef935525b963ce9cb8045
 all_parties/tables/table_coalition_party_contributions.csv,table,Appendix table source for selected focal coalition-party contribution vectors.,10,55,562609ca18df130848eb97778c748d02a11ba3a4591db364bae8325d8d3a4dd0
 audit/accounting_integration_checks.csv,audit,"Cardinality, registry, identity, and generation checks for manuscript integration.",12,5,009c5e4517c85493e3cf3378ecf278582290da247d666e656a0cbd7266fad29a
 audit/coalition_party_contribution_checks.csv,audit,"Per-case vote, seat, exact differential, source-regression, and inversion checks.",16,28,8a278a45f082dc1709a127424621b12f98ba4b2f9cbe06f91e72da20a2443d68
 audit/decomposition_identity_checks.csv,audit,Exact and floating-point decomposition identity results.,16,10,7557212b99319be1b5cbf1ffd57f535f7befbd13cceed806308eca19dbf7a4b4
-audit/decomposition_input_manifest.csv,audit,SHA-256 provenance for corrected-baseline and district inputs.,24,3,a45dda7e9356b04b0d7deb642ddd0fc7ea635b38804e127a889fd2cad66969c0
+audit/decomposition_input_manifest.csv,audit,SHA-256 provenance for corrected-baseline and district inputs.,28,3,bcf1a794a94781515f2a218781ca5cd25c018ea0867da271cb707e67e681381b
 audit/ideological_regression.csv,audit,Ideological inversion-count regression after the decomposition rebuild.,3,5,94cd433241652b715b146c41e92fc834617d92b5d6d766841f199d7eda2bb255
-audit/party_size_diagnostic_checks.csv,audit,Party-size diagnostic: checks; descriptive accounting only.,282,5,a224bc77984f86e238b25e2b5c4b37bb9a3dc1eafdb870749442bb178ed387da
+audit/party_size_diagnostic_checks.csv,audit,Party-size diagnostic: checks; descriptive accounting only.,282,5,245e340ab4101897a511dad11ad3708ac8d24161e6801ca7bb74253c0f2c096d
 audit/party_size_diagnostic_metadata.csv,audit,"Diagnostic definitions, scope and descriptive-benchmark qualification.",9,2,6759e64bd54041003daa953831d4ea828f33fdacb79abc2b213848e0e1dbe7bc
 figure_data/accounting_district_electoral_weight.csv,figure_data,State-year district electoral weights derived from audited valid votes and seats.,81,12,ab1fa8ab3fa0044a461af3ad686e52f3818112c8d22cc5f319253e684c015ff4
 figure_data/accounting_state_weighting_anatomy.csv,figure_data,Seven-case gross positive and negative state-weighting anatomy.,8,25,aca9feb4e6ffa0cbae8d94c959fcb0aaaa72b05ddeb7cde27185c69e77b8f7e8
 figure_data/inversion_decomposition_components.csv,figure_data,"Long-form A_C, B_C, and d_C values for decomposition visualization.",12,5,083e26d8b906d52af36b7328a85c36114339811bca5e313b0500a11033fbe645
-latex/accounting_numeric_macros.tex,latex,Generated numerical macros used in manuscript prose.,1,1,434f5f0256892e2f1664edeb3c0aeef05054cef491a0d915d2a837628806fefc
+latex/manuscript_values.tex,latex,Generated manuscript prose macros serialized from the same ManuscriptValues.jl registry as manuscript_values.csv.,234,1,1dbec1a9a74c6e52866cfd1f2b6f9047a6b7f15898cfc94cf662ea37ccff711d
 latex/report/party_size_diagnostics.tex,latex,Central analysis report section; never synchronized into the manuscript.,99,0,93354cec7dc589bfec7591d62b4919367d5df5aae7d71e05664cd3bbae5b32e6
 latex/table_accounting_focal_cases.tex,latex,Generated compact sign-and-magnitude table for selected focal accounting vectors.,8,68,f1e22ed94a192623b5ca2e85c156b7b673a28a4da7a90289f697451992295326
 latex/table_accounting_gross_components.tex,latex,Generated gross-component concentration appendix table.,32,29,0fcc5394fdb9aec9abf91bd6b3fc39efa8a0767599df08d219108a079ef5d399
 latex/table_accounting_minimal_ideological.tex,latex,Generated portrait tabular for all endpoint-minimal ideological decompositions.,7,68,d4a61439843ac7d4a507dcc973433c1161b896bba483108449ab721c8b736663
 latex/table_accounting_minimal_ideological_all_parties.tex,latex,All-party sensitivity: exact-connected minimal inversion decomposition.,6,68,db93b4d5eaa99361ec736b3b9f73bd856da8f33773868c98a24bbe4046a5dcb5
 latex/table_accounting_selected_party_geography.tex,latex,Generated selected-party geography appendix table.,17,28,f16639a57edb9a9057df449e5106a89a6f1c67c03410b34142fd53190a28ce5e
+latex/table_cabinet_district_concentration.tex,latex,Generated cabinet within-district concentration tabular.,4,14,886684e1cf0e251057cc3ccdbad4f9b7b23df1b4bbc4e4f0f9c8a028a5f5fca4
 latex/table_coalition_party_contributions.tex,latex,Generated appendix table of focal coalition-party contribution diagnostics.,11,55,bb47f68a85cc234d9390b97ae64e5ec89d984dba10d5cd3d737d3ab169f480f0
 latex/table_inversion_party_contribution_extremes.tex,latex,Compact manuscript table of party contribution extremes.,4,6,094d6c9ae00a840888681b0e03bb3cf3090d6e5d3d9d928d48b01a0568ce1709
 latex/table_observed_inversion_decomposition.tex,latex,Portrait manuscript tabularx for the four observed cabinet inversions and their accounting components.,4,9,78dc32a4347e2229c38e24bf6274fc0808b831e08ba1fc9c79d5956e41326178
@@ -65,13 +67,16 @@ raw/inversion_district_contributions.csv,raw,State-level a_Cd and b_Cd contribut
 raw/inversion_party_contributions.csv,raw,"Full party-level d_i, A_i, and B_i vectors for the four observed inversions.",33,19,81e46c6433125b51484ca2f4263871df3576e010cccd10375e767593d1adfd65
 raw/party_accounting_all_years.csv,raw,"Exact national party accounting, normalized components and cabinet participation.",99,25,aacd1b6665b2899a68640883efac65e26217b85c4ca4a1797f839bb69c1ebfbd
 raw/party_district_accounting_all_years.csv,raw,Complete existing party-district accounting panel.,2673,38,b496b486f58729996f0ec12e3e1b76c10dd1714d81b81a4204e0a47c6d6c73d1
-tables/report/party_size_cabinet_summary.csv,table,Party-size diagnostic: cabinet_size; descriptive accounting only.,8,7,57b7d2448bdbe74b95b58b7b3f4609aa94844224d8b17052a2900b8db0783d91
-tables/report/party_size_correlations.csv,table,Party-size diagnostic: correlations; descriptive accounting only.,4,7,a33aa8c2d3b17c28f796c7aef295832e3724e862d1d5192957be74f31291b088
-tables/report/party_size_groups.csv,table,Party-size diagnostic: size_groups; descriptive accounting only.,16,13,bf52b3249553f1e95530babe2bd29d63a815dcc85d55d961d6b0f5106ecafdfe
+tables/manuscript_values.csv,table,"Auditable scalar/text prose registry: semantic names, selectors, universe/k, raw/exact/display values and production provenance.",234,20,905b431f8158044b41ac6b68139daee90970a6aae2ee96fe4c94310683c0205f
+tables/report/party_fragmentation_summary.csv,table,Effective electoral and parliamentary party counts from the exact national party panel.,3,5,31fbaa1f8694713df15d92514d9b36d354e85dcde8e1eaf889c5ef88576b38a2
+tables/report/party_size_cabinet_summary.csv,table,Party-size diagnostic: cabinet_size; descriptive accounting only.,8,7,b280f9cb3e631e476b3441b3ba837b814e9cd3ddd93582728282a6e224cbb7b2
+tables/report/party_size_correlations.csv,table,Party-size diagnostic: correlations; descriptive accounting only.,4,7,abf6bf466beee43fac59c4552e380d06fe4efd77a40c8a839250bb6688ca5332
+tables/report/party_size_groups.csv,table,Party-size diagnostic: size_groups; descriptive accounting only.,16,13,0ee03a2722a0a6f09180698efcaac9b6a53f371433570129fb482be0729afbda
 tables/table_accounting_focal_cases.csv,table,Manuscript table source for selected focal accounting vectors.,8,68,faf71078c35e21b4b34e80f1ece485490a6b0421859fe7afd36315a18217e080
 tables/table_accounting_gross_components.csv,table,Appendix table source for gross focal accounting components.,32,29,59f65be4a7ff45d7f06e45f238deb419de262eed29f8f88404de4986dee709e4
 tables/table_accounting_minimal_ideological.csv,table,Manuscript table source for all endpoint-minimal ideological decompositions.,7,68,4f99c05e0d119e2af1a8d47786700f84b29cba6b0242a35b31748737369da814
 tables/table_accounting_selected_party_geography.csv,table,Appendix table source for selected party state geography.,17,28,c1d40ee863e7cb3dfdbc84e61b242928dd72aac411d4eb431b20e4a43770aa70
+tables/table_cabinet_district_concentration.csv,table,Exact district concentration for inverted cabinet vectors; shared table/prose source.,4,14,e2a7dcb2b88f3b7402d271a0441069e26a3bd188bd8ef935525b963ce9cb8045
 tables/table_coalition_party_contributions.csv,table,Appendix table source for selected focal coalition-party contribution vectors.,11,55,ffa9d3b5ca5fc6847e4d58ab7c8c593ae389fe8c0c5112fdab2404078baac46c
 tables/table_inversion_party_contribution_extremes.csv,table,Largest positive and negative party accounting contributions by inversion.,4,8,d36a93e86d8bdb9a83834c3e7dcdf3232e8a6a275c99e4775bd70365db620e51
 tables/table_observed_inversion_decomposition.csv,table,Manuscript summary of coalition quantities and decomposition components.,4,24,0eeeb0c31c5ec931ed2685460d28557a06d1fb97bcf0590d59470b62f3990255
