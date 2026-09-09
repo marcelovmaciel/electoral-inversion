@@ -48,7 +48,7 @@ class DeterministicSubmissionPackageTests(unittest.TestCase):
         tables, figures = package.referenced_assets()
         self.assertIn("table_appendix_ideological_universe_comparison.tex", {p.name for p in tables})
         self.assertIn("table_accounting_minimal_ideological_all_parties.tex", {p.name for p in tables})
-        self.assertIn("manuscript_values.tex", {p.name for p in tables})
+        self.assertNotIn("manuscript_values.tex", {p.name for p in tables})
         self.assertNotIn("accounting_numeric_macros.tex", {p.name for p in tables})
         self.assertNotIn("AccountingIntegration.jl", {p.name for p in package.manuscript_tex_sources()})
         self.assertEqual(set(package.manuscript_tex_sources()), {package.MAIN_TEX, *tables})

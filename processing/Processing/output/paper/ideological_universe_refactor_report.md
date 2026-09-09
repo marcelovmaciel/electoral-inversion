@@ -34,7 +34,7 @@ Primary cabinet gaps range from 7 to 16; all 23 closures and nearest-interval ov
 
 All structural and arithmetic assertions passed for 31,238 coalition rows and 475,290 member rows. Checks cover filtered order, original ranks, zero-seat exclusion, represented-party gaps, unchanged V and S, no vote renormalization, strict inversions, exhaustive domain-relative minimality, A+B=d, member contribution sums, and primary closure/Jaccard calculations.
 
-The full production command is `processing/rebuild_manuscript.sh --clean`. Main summary, full compositions, primary and all-party decompositions, contributions, closures, accounting macros, figures, PDFs, and submission archives are generated programmatically. Source input and output manifests are stored under `output/decomposition/audit/` and `output/paper/artifact_manifest.csv`.
+The full production command is `processing/rebuild_manuscript.sh --clean`. Main summary, full compositions, primary and all-party decompositions, contributions, closures, raw prose summaries, figures, PDFs, and submission archives are generated programmatically; ordinary prose uses literal values with local CSV provenance. Source input and output manifests are stored under `output/decomposition/audit/` and `output/paper/artifact_manifest.csv`.
 
 ## Manuscript generated assets
 
@@ -43,7 +43,6 @@ The full production command is `processing/rebuild_manuscript.sh --clean`. Main 
 - `ideological_interval_heatmap_2014.pdf`
 - `ideological_interval_heatmap_2018.pdf`
 - `ideological_interval_heatmap_2022.pdf`
-- `manuscript_values.tex`
 - `observed_coalition_timeline.pdf`
 - `party_representation_profile.pdf`
 - `table_03_ideology_exact_connected_summary.tex`

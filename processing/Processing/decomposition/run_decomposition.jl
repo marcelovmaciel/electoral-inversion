@@ -20,8 +20,8 @@ using .IntermediateAccountingReport
 include(joinpath(DECOMPOSITION_DIR, "AccountingIntegration.jl"))
 using .AccountingIntegration
 include(joinpath(DECOMPOSITION_DIR, "DualUniverseAccounting.jl"))
-include(joinpath(DECOMPOSITION_DIR, "ManuscriptValues.jl"))
-using .ManuscriptValues
+include(joinpath(DECOMPOSITION_DIR, "ProseSummaries.jl"))
+using .ProseSummaries
 
 const PAPER_ROOT = joinpath(PROCESSING_ROOT, "output", "paper")
 const OUTPUT_ROOT = joinpath(PROCESSING_ROOT, "output", "decomposition")
@@ -58,6 +58,10 @@ function require_file(path::AbstractString)
 end
 
 const ACCOUNTING_ARTIFACT_PREFIXES = (
+    "tables/manuscript_values.",
+    "latex/manuscript_values.",
+    "manuscript_values.",
+    "tables/prose_analysis_summaries.",
     "raw/accounting_",
     "tables/table_accounting_",
     "figure_data/accounting_",
@@ -160,7 +164,6 @@ function sync_decomposition_to_paper!(manifest::DataFrame)
         review_filenames = (
             "table_observed_inversion_decomposition.tex",
             "table_inversion_party_contribution_extremes.tex",
-            "manuscript_values.tex",
             "table_cabinet_district_concentration.tex",
             "table_accounting_focal_cases.tex",
             "table_accounting_gross_components.tex",
@@ -264,8 +267,9 @@ input_paths = [
     joinpath(DECOMPOSITION_DIR, "PartySizeDiagnostics.jl"),
     joinpath(DECOMPOSITION_DIR, "AccountingIntegration.jl"),
     joinpath(DECOMPOSITION_DIR, "CabinetDistrictTable.jl"),
-    joinpath(DECOMPOSITION_DIR, "ManuscriptValues.jl"),
-    joinpath(DECOMPOSITION_DIR, "ManuscriptValueSupport.jl"),
+    joinpath(DECOMPOSITION_DIR, "ProseSummaries.jl"),
+    joinpath(DECOMPOSITION_DIR, "validate_prose_provenance.py"),
+    joinpath(DECOMPOSITION_DIR, "audit_empirical_assets.py"),
     joinpath(DECOMPOSITION_DIR, "run_decomposition.jl"),
     joinpath(PROCESSING_ROOT, "..", "rebuild_manuscript.sh"),
     joinpath(DECOMPOSITION_DIR, "report", "intermediate_accounting_report.tex"),
@@ -304,11 +308,9 @@ report_manifest = write_intermediate_report_outputs(
 )
 
 
-manuscript_registry = build_registry(load_manuscript_sources(PAPER_ROOT; accounting_root = OUTPUT_ROOT))
-manuscript_artifacts = write_manuscript_values(OUTPUT_ROOT, manuscript_registry;
-    manuscript_source = read(joinpath(REVIEW_MANUSCRIPT_DIR, "main_rw_again.tex"), String))
+prose_summary_artifacts = write_prose_summaries(OUTPUT_ROOT; paper_root = PAPER_ROOT)
 
-manifest = append_output_manifest_rows!(vcat(integration_artifacts, party_size_artifacts, robustness_artifacts, manuscript_artifacts, [
+manifest = append_output_manifest_rows!(vcat(integration_artifacts, party_size_artifacts, robustness_artifacts, prose_summary_artifacts, [
     (
         path = "audit/ideological_regression.csv",
         artifact_type = "audit",

@@ -1,201 +1,210 @@
-# Manuscript-value migration audit
+# Literal prose and local CSV provenance migration
 
-Audited against `main_rw_again.tex` and repository state before this refactor.
-Commit `f27cf5c3775ab4ccf03d8ef4573b173d67efce80` introduced
-`AccountingIntegration.jl`, its `accounting_numeric_macros(integration)` writer,
-and the generated prose interface. `write_accounting_integration_outputs`
-serialized that file; `run_decomposition.jl` copied it to the paper and review
-manuscript trees. Packaging followed the manuscript's `\input` list.
-The file was generated, not a manually maintained source of numerical results.
-The seat-winning ideological universe and all-valid-vote denominator from that
-commit are preserved.
+## Scope and preserved state
 
-Of 118 legacy definitions, the manuscript referenced these 20 distinct macros.
-There were no referenced aggregate, cabinet, party/state diagnostic, or other
-legacy macros. The unused definitions are deliberately retired. Fixed-case
-selection now asserts complete membership. Dynamic k=1 claims that formerly
-reused k=0 values have separate k-specific selections, labels, and numbers.
+The active manuscript is `writing/submission_inversions_review/manuscript/main_rw_again.tex`.
+The migration preserves the user's pre-existing working-tree edits. It replaces
+**295 occurrences of 232 distinct empirical prose macros**, adds **53 adjacent
+paragraph provenance blocks**, and retires **234 definitions** (including two
+already unused definitions). All occurrences were ordinary prose, including the
+abstract and appendices. None occurred inside a generated table or figure/caption.
+No value was selected from a macro expansion, manuscript text, old report, or PDF.
 
-| Legacy macro | Classification | Replacement |
-|---|---|---|
-| `\AcctIdeologicalTwentyEighteenCaseOneBetween` | Fixed substantive case: PT--PSDB | `\IdeologySeatWinningTwentyEighteenKZeroPTPSDBBetween` |
-| `\AcctIdeologicalTwentyEighteenCaseOneDifferential` | Fixed substantive case: PT--PSDB | `\IdeologySeatWinningTwentyEighteenKZeroPTPSDBDifferential` |
-| `\AcctIdeologicalTwentyEighteenCaseOneQuota` | Fixed substantive case: PT--PSDB | `\IdeologySeatWinningTwentyEighteenKZeroPTPSDBQuota` |
-| `\AcctIdeologicalTwentyEighteenCaseOneVotePct` | Fixed substantive case: PT--PSDB | `\IdeologySeatWinningTwentyEighteenKZeroPTPSDBVotePct` |
-| `\AcctIdeologicalTwentyEighteenCaseOneWithin` | Fixed substantive case: PT--PSDB | `\IdeologySeatWinningTwentyEighteenKZeroPTPSDBWithin` |
-| `\AcctIdeologicalTwentyFourteenCaseOneDifferential` | Dynamic selection: strongest 2014 minimal inversion | `\IdeologySeatWinningTwentyFourteenKZeroStrongestDifferential` |
-| `\AcctIdeologicalTwentyFourteenCaseOneQuota` | Dynamic selection: strongest 2014 minimal inversion | `\IdeologySeatWinningTwentyFourteenKZeroStrongestQuota` |
-| `\AcctIdeologicalTwentyFourteenCaseOneVotePct` | Dynamic selection: strongest 2014 minimal inversion | `\IdeologySeatWinningTwentyFourteenKZeroStrongestVotePct` |
-| `\AcctIdeologicalTwentyTwentyTwoCaseOneBetween` | Fixed substantive case: MDB--UNIÃO | `\IdeologySeatWinningTwentyTwentyTwoKZeroMDBUniaoBetween` |
-| `\AcctIdeologicalTwentyTwentyTwoCaseOneDifferential` | Fixed substantive case: MDB--UNIÃO | `\IdeologySeatWinningTwentyTwentyTwoKZeroMDBUniaoDifferential` |
-| `\AcctIdeologicalTwentyTwentyTwoCaseOneQuota` | Fixed substantive case: MDB--UNIÃO | `\IdeologySeatWinningTwentyTwentyTwoKZeroMDBUniaoQuota` |
-| `\AcctIdeologicalTwentyTwentyTwoCaseOneRequired` | Fixed substantive case: MDB--UNIÃO | `\IdeologySeatWinningTwentyTwentyTwoKZeroMDBUniaoRequired` |
-| `\AcctIdeologicalTwentyTwentyTwoCaseOneVotePct` | Fixed substantive case: MDB--UNIÃO | `\IdeologySeatWinningTwentyTwentyTwoKZeroMDBUniaoVotePct` |
-| `\AcctIdeologicalTwentyTwentyTwoCaseOneWithin` | Fixed substantive case: MDB--UNIÃO | `\IdeologySeatWinningTwentyTwentyTwoKZeroMDBUniaoWithin` |
-| `\AcctIdeologicalTwentyTwentyTwoCaseTwoBetween` | Fixed substantive case: PP--PL | `\IdeologySeatWinningTwentyTwentyTwoKZeroPPPLBetween` |
-| `\AcctIdeologicalTwentyTwentyTwoCaseTwoDifferential` | Fixed substantive case: PP--PL | `\IdeologySeatWinningTwentyTwentyTwoKZeroPPPLDifferential` |
-| `\AcctIdeologicalTwentyTwentyTwoCaseTwoQuota` | Fixed substantive case: PP--PL | `\IdeologySeatWinningTwentyTwentyTwoKZeroPPPLQuota` |
-| `\AcctIdeologicalTwentyTwentyTwoCaseTwoRequired` | Fixed substantive case: PP--PL | `\IdeologySeatWinningTwentyTwentyTwoKZeroPPPLRequired` |
-| `\AcctIdeologicalTwentyTwentyTwoCaseTwoVotePct` | Fixed substantive case: PP--PL | `\IdeologySeatWinningTwentyTwentyTwoKZeroPPPLVotePct` |
-| `\AcctIdeologicalTwentyTwentyTwoCaseTwoWithin` | Fixed substantive case: PP--PL | `\IdeologySeatWinningTwentyTwentyTwoKZeroPPPLWithin` |
+Before replacements, every former macro was traced independently through the
+production selection and display rules to current CSV observations. Each key
+was checked for uniqueness; raw values and displays were then compared to the
+old registry and macro definitions. This complete mapping was finished before
+editing the manuscript. `PROSE_MACRO_INVENTORY.csv` preserves it, including the
+full list of contributing observations for multi-row aggregates. All row numbers
+are **1-based data rows, excluding the header**.
 
-The 2014 k=0 selection uses minimum vote share, then member count and canonical
-membership ID. This is the existing focal rule (minimum `v_C` within an election)
-and summary rule (maximum `257-q_C`) stated directly. Dynamic fields within a
-group are extracted from one selected row, and associated full-span and omitted
-party values follow that same winner.
+## Retired and retained architecture
 
-Production empirical guards removed from AccountingIntegration:
+The `Ideology...`, `Cabinet...`, `Party...`, and `District...` prose macro families
+are retired in their entirety. Their `Words`, percent, seat, ratio, differential,
+component, duration, summary, and empirical-label values are now literal text.
+`ManuscriptValues.jl`, `ManuscriptValueSupport.jl`, the generated
+`manuscript_values.tex` copies, and the old `manuscript_values.csv` registry are
+removed from production, synchronization, manifests, and submission packages.
 
-- `BASELINE_CASE_EXPECTATIONS`: four historical cabinet decompositions.
-- `BASELINE_PARTY_EXPECTATIONS`: ten historical case/party decompositions.
-- Literal expectations of four cabinet vectors and 33 cabinet member rows.
+`ProseSummaries.jl` preserves only 32 existing raw aggregate/intermediate
+statistics. It writes `prose_analysis_summaries.csv`, without macro names,
+formatting rules, TeX output, or source injection. Its semantic key is
+`summary; metric; aggregation`. Upstream CSV paths, filters, and selected-row
+counts remain in that CSV. Direct observations are cited directly in their
+original CSVs. This is an output-summary export, not a new electoral analysis.
 
-These regressions now live in `test_accounting_integration.jl`. The unused
-`AcctUniqueCabinetVectorCount` literal `4` disappeared with the legacy writer;
-the new cabinet inversion count derives from the current cabinet accounting
-objects. Selected-party (17) and district-panel (81) dimension checks now derive
-from the selected-party specification and analyzed election panel respectively.
-Mathematical and structural invariants remain in production.
+All generated tables and figures retain their analysis code and existing
+inclusion paths. Retained manuscript macros are notation/formatting or fixed
+institutional definitions: `Votes`, `Seats`, `Quota`, `Diff`, `Parties`,
+`Coalition`, `ChamberSeats`, `MajoritySeats`, and the existing column/theorem
+and package facilities. No generated empirical macro has a remaining structured
+output dependency. The historic `Acct...` references in older drafts and the
+frozen submission are outside the active manuscript; those pre-existing drafts
+and archives are not publication inputs and were not rewritten.
 
-The specification additionally covers literal numerical prose: party
-statistics, cabinet periods and transitions, duration and sign counts,
-ideological domain summaries, both-universe robustness comparisons,
-party-size diagnostics, district summaries, and cabinet/interval comparisons.
-The cabinet district concentration table is an independently generated table,
-not a collection of scalar registry entries.
+## Provenance validation
 
-`ManuscriptValues.jl` holds the public specification;
-`ManuscriptValueSupport.jl` implements selection, formatting, assertions, and
-serialization. Neither reads an existing TeX value file. Both serialized outputs
-come from the same registry. The CSV stores exact rationals where the source
-supplies them, alongside unrounded raw and declared-format display values.
+`validate_prose_provenance.py` validates sources, uniquely resolving semantic
+keys, all recorded CSV fields, strict numeric/string value agreement, closed and
+well-formed blocks, and optional paragraph-local display strings. Numeric
+comparison permits equivalent decimal spellings but has no rounding tolerance.
+CSV row numbers are diagnostic only; reordering produces warnings and reports
+the newly located row. No semantic lookup depends on row position.
 
-## Semantic macro groups
+The validator is integrated into `audit_empirical_assets.py`, which now defaults
+to the active `main_rw_again.tex`. The full `processing/rebuild_manuscript.sh`
+workflow invokes that final audit after PDF compilation and before packaging;
+`writing/package_submission_assets.py` also validates provenance before writing
+archives. The audit writes every current row and field to
+`output/decomposition/audit/manuscript_prose_provenance.csv`.
 
-Each prefix below plus its explicitly listed field suffixes in `ManuscriptValues.jl`
-is a semantic macro group. The CSV gives a row for every complete macro.
+The optional `display` check is intentionally just a bounded literal match with
+normalized whitespace. It does not infer prose meaning, selection rules, or
+formatting. Future substantive changes still require reviewing the sentences.
 
-| Prefix | Manuscript claim |
-|---|---|
-| `IdeologySeatWinningTwentyFourteenKZeroStrongest` | 2014 seat_winning k=0 strongest minimal inversion |
-| `IdeologySeatWinningTwentyEighteenKZeroPTPSDB` | 2018 seat_winning k=0 PTPSDB substantive interval |
-| `IdeologySeatWinningTwentyTwentyTwoKZeroMDBUniao` | 2022 seat_winning k=0 MDBUniao substantive interval |
-| `IdeologySeatWinningTwentyTwentyTwoKZeroPPPL` | 2022 seat_winning k=0 PPPL substantive interval |
-| `IdeologySeatWinningTwentyFourteenKOneStrongest` | 2014 seat_winning k=1 strongest minimal inversion |
-| `IdeologySeatWinningTwentyTwentyTwoKOneStrongest` | 2022 seat_winning k=1 strongest minimal inversion |
-| `IdeologySeatWinningTwentyEighteenKOneStrongest` | 2018 seat_winning k=1 strongest minimal inversion |
-| `IdeologyAllPartiesTwentyTwentyTwoKZeroMDBUniao` | 2022 all_parties k=0 MDBUniao substantive interval |
-| `PartyTwentyFourteenPMDB` | 2014 PMDB party accounting |
-| `PartyTwentyFourteenPSD` | 2014 PSD party accounting |
-| `PartyTwentyFourteenPTB` | 2014 PTB party accounting |
-| `PartyTwentyFourteenPSDB` | 2014 PSDB party accounting |
-| `PartyTwentyFourteenPSOL` | 2014 PSOL party accounting |
-| `PartyTwentyEighteenPP` | 2018 PP party accounting |
-| `PartyTwentyEighteenPR` | 2018 PR party accounting |
-| `PartyTwentyEighteenMDB` | 2018 MDB party accounting |
-| `PartyTwentyEighteenPSL` | 2018 PSL party accounting |
-| `PartyTwentyEighteenNOVO` | 2018 NOVO party accounting |
-| `PartyTwentyTwentyTwoPL` | 2022 PL party accounting |
-| `PartyTwentyTwentyTwoUniao` | 2022 UNIÃO party accounting |
-| `PartyTwentyTwentyTwoPT` | 2022 PT party accounting |
-| `PartyTwentyTwentyTwoPP` | 2022 PP party accounting |
-| `PartyTwentyTwentyTwoPV` | 2022 PV party accounting |
-| `IdeologySeatWinningTwentyTwentyTwoKZeroPTPP` | 2022 seat_winning k=0 PTPP substantive interval |
-| `IdeologySeatWinningTwentyTwentyTwoKZeroPSBPSC` | 2022 seat_winning k=0 PSBPSC substantive interval |
-| `CabinetTwentyFourteenDilma` | Dilma inverted cabinet cabinet/2014/2016.2 |
-| `CabinetTwentyFourteenTemer` | Temer inverted cabinet cabinet/2014/2017.1 |
-| `CabinetTwentyEighteenBolsonaro` | Bolsonaro inverted cabinet cabinet/2018/2021.3/2022.1 |
-| `CabinetTwentyTwentyTwoLula` | Lula inverted cabinet cabinet/2022/2023.1 |
-| `CabinetTwentyEighteenBolsonaroAfterPSC` | BolsonaroAfterPSC transition period |
-| `CabinetTwentyTwentyTwoLulaExpanded` | LulaExpanded transition period |
-| `IdeologySeatWinningTwentyFourteenKZeroSummary` | 2014 seat_winning k=0 domain summary |
-| `IdeologySeatWinningTwentyEighteenKZeroSummary` | 2018 seat_winning k=0 domain summary |
-| `IdeologySeatWinningTwentyTwentyTwoKZeroSummary` | 2022 seat_winning k=0 domain summary |
-| `IdeologyAllPartiesTwentyFourteenKZeroSummary` | 2014 all_parties k=0 domain summary |
-| `IdeologyAllPartiesTwentyEighteenKZeroSummary` | 2018 all_parties k=0 domain summary |
-| `IdeologyAllPartiesTwentyTwentyTwoKZeroSummary` | 2022 all_parties k=0 domain summary |
-| `IdeologySeatWinningTwentyFourteenKOneSummary` | 2014 seat_winning k=1 domain summary |
-| `IdeologySeatWinningTwentyEighteenKOneSummary` | 2018 seat_winning k=1 domain summary |
-| `IdeologySeatWinningTwentyTwentyTwoKOneSummary` | 2022 seat_winning k=1 domain summary |
-| `IdeologySeatWinningKZeroTotals` | seat_winning k=0 totals across elections |
-| `IdeologyAllPartiesKZeroTotals` | all_parties k=0 totals across elections |
-| `IdeologyAllPartiesTwentyFourteenKOneSummary` | 2014 all_parties k=1 domain summary |
-| `IdeologyAllPartiesTwentyEighteenKOneSummary` | 2018 all_parties k=1 domain summary |
-| `IdeologyAllPartiesTwentyTwentyTwoKOneSummary` | 2022 all_parties k=1 domain summary |
-| `IdeologySeatWinningKOneSurvivingConnected` | Connected minimal majorities still minimal under k=1 |
-| `IdeologySeatWinningKZeroAllInversions` | All connected inversions, including nonminimal cases |
-| `IdeologySeatWinningKOneNegativeWithin` | Minimal one-gap inversions with negative within-district component |
-| `IdeologySeatWinningTwentyFourteenKOneNegativeWithin` | Minimal one-gap inversions with negative within-district component |
-| `IdeologySeatWinningTwentyTwentyTwoKOneNegativeWithin` | Minimal one-gap inversions with negative within-district component |
-| `IdeologyAllPartiesKZeroPositiveWithin` | All-party connected minimal inversions with positive within component |
-| `IdeologySeatWinningTwentyFourteenKOnePT` | PT membership among 2014 primary one-gap minimal inversions |
-| `IdeologySeatWinningTwentyTwentyTwoKOneMDBUniao` | Gapped minimal inversions spanning MDB--UNIÃO |
-| `CabinetPeriods` | All observed cabinet periods |
-| `CabinetInversions` | Observed inverted cabinet periods and distinct accounting vectors |
-| `CabinetComponents` | District component signs across all cabinet periods |
-| `CabinetTwentyFourteenDuration` | 2014 mandate coverage and inversion duration |
-| `CabinetTwentyEighteenDuration` | 2018 mandate coverage and inversion duration |
-| `CabinetTwentyTwentyTwoDuration` | 2022 mandate coverage and inversion duration |
-| `PartyTwentyFourteenEverCabinet` | 2014 mean vote share by cabinet participation |
-| `PartyTwentyFourteenNeverCabinet` | 2014 mean vote share by cabinet participation |
-| `PartyTwentyFourteenLarge` | 2014 parties at the descriptive 5 percent benchmark |
-| `PartyTwentyEighteenEverCabinet` | 2018 mean vote share by cabinet participation |
-| `PartyTwentyEighteenNeverCabinet` | 2018 mean vote share by cabinet participation |
-| `PartyTwentyEighteenLarge` | 2018 parties at the descriptive 5 percent benchmark |
-| `PartyTwentyTwentyTwoEverCabinet` | 2022 mean vote share by cabinet participation |
-| `PartyTwentyTwentyTwoNeverCabinet` | 2022 mean vote share by cabinet participation |
-| `PartyTwentyTwentyTwoLarge` | 2022 parties at the descriptive 5 percent benchmark |
-| `IdeologyAllPartiesTwentyEighteenKOneStrongest` | 2018 all_parties k=1 strongest minimal inversion |
-| `CabinetTwentyFourteenDilmaBridge` | 2016.2 cabinet parliamentary closure and closest intervals |
-| `CabinetTwentyFourteenTemerBridge` | 2017.1 cabinet parliamentary closure and closest intervals |
-| `CabinetTwentyEighteenBolsonaroBridge` | 2021.3/2022.1 cabinet parliamentary closure and closest intervals |
-| `CabinetTwentyTwentyTwoLulaBridge` | 2023.1 cabinet parliamentary closure and closest intervals |
-| `CabinetTwentyFourteenTemerTransitionBridge` | 2016.4 cabinet parliamentary closure and closest intervals |
-| `CabinetBridge` | Range of gaps in observed parliamentary cabinet closures |
-| `DistrictMagnitude` | District magnitude distribution (2014 apportionment, unchanged across analyzed elections) |
-| `DistrictEightSeat` | Districts at the statutory eight-seat floor (2014 apportionment) |
-| `IdeologySeatWinningTwentyEighteenStrongestFullSpan` | Full k=0 span of the strongest 2018 seat-winning k=1 minimal inversion |
-| `PartyTwentyEighteenStrongestOmission` | Omitted party in the strongest 2018 seat-winning k=1 minimal inversion |
-| `IdeologySeatWinningTwentyFourteenKZeroOther` | 2014 connected inversions excluding the strongest |
-| `IdeologySeatWinningTwentyFourteenKZeroNegativeBetween` | 2014 minimal connected inversions with negative between-district component |
-| `CabinetDistrictConcentration` | Range of within-district concentration across inverted cabinet vectors |
-| `PartyTwentyFourteenFragmentation` | 2014 effective party numbers: inverse sum of squared production vote/seat shares |
-| `PartyTwentyEighteenFragmentation` | 2018 effective party numbers: inverse sum of squared production vote/seat shares |
-| `PartyTwentyTwentyTwoFragmentation` | 2022 effective party numbers: inverse sum of squared production vote/seat shares |
+## Authoritative CSVs referenced by manuscript blocks
 
-## Validation of this migration
+- `processing/Processing/output/decomposition/raw/accounting_all_inversion_decomposition.csv`
+- `processing/Processing/output/decomposition/raw/coalition_period_quantities.csv`
+- `processing/Processing/output/decomposition/raw/party_accounting_all_years.csv`
+- `processing/Processing/output/decomposition/tables/report/party_fragmentation_summary.csv`
+- `processing/Processing/output/decomposition/tables/report/party_size_cabinet_summary.csv`
+- `processing/Processing/output/decomposition/tables/report/party_size_groups.csv`
+- `processing/Processing/output/paper/raw/ideology_k_gap_accounting_both_universes.csv`
+- `processing/Processing/output/paper/raw/observed_cabinet_duration_summary.csv`
+- `processing/Processing/output/paper/tables/ideological_universe_comparison.csv`
+- `processing/Processing/output/paper/tables/prose_analysis_summaries.csv`
+- `processing/Processing/output/paper/tables/table_appendix_cabinet_interval_bridge.csv`
 
-The pre-refactor PDF, generated tables, machine-readable outputs, and prose
-macro values were saved outside the repository before editing. Comparisons use
-those actual outputs, not regression constants as inputs.
+The summary CSV additionally records its upstream district-accounting,
+cabinet-period linkage, cabinet concentration, ideological, and party/cabinet
+accounting sources. Full contributing-row keys and values at migration are in
+the historical inventory.
 
-- The final clean production build completed analysis, registry generation,
-  synchronization, figures/tables, both PDF compilations, and submission archives.
-- All 234 registry values are generated from 85 explicitly named selection groups.
-  Every expanded manuscript prose value and table cell matches the saved source.
-- All 35 final manuscript PDF pages render identically to the saved PDF at 75 dpi;
-  extracted layout-preserving text is also identical.
-- The initial regenerated analysis matched all 241 existing data/table assets
-  byte-for-byte. The final clean run used Julia 1.12.7 with generic CPU code via
-  the existing `JULIA_BIN` override. Its 231 byte-identical assets and ten remaining
-  assets are semantically equivalent: differing numeric cells are roundoff of at
-  most 7.105427357601002e-15, and the internal closure audit table differs only in
-  signs on displayed zero residuals. No identities, membership, counts, exact
-  accounting quantities, or manuscript displays changed. No output was edited
-  to force agreement. The four legacy analysis-tree macro files were retired.
-- The complete decomposition/accounting/manuscript test suite passed 1,260
-  assertions, including 80 manuscript provenance and drift assertions.
-- Ideological-domain tests passed 969 assertions; figure/table/audit/packaging
-  tests passed all 18 tests. The full Processing suite passed 1,135 assertions
-  with one pre-existing skipped/broken test.
-- The independent ideological audit passed for 12 domains, 31,238 coalitions,
-  475,290 member rows, and 23 cabinet bridge rows.
-- Both analysis artifact manifests contain the registry CSV and generated TeX.
-  The 22-file submission archive contains `manuscript_values.tex`, contains no
-  `accounting_numeric_macros.tex`, and requires no Julia source files.
+## Discrepancies and limits
 
-The existing Julia default and pinned project dependencies were not changed.
-Three previously untracked cabinet-coalescing source/test/fixture dependencies
-already required by the current package are included unchanged so a fresh
-checkout can run the same production and test paths.
+No macro has ambiguous or missing source provenance. The independent pre-edit
+CSV/macro comparison found no numerical discrepancies. Prose and generated
+table CSVs agree; the existing two-decimal prose versus three-decimal table
+component displays and closure-preserving table rounding are retained.
+For example, the primary 2022 MDB--UNIÃO components appear as 2.95 and 9.55
+in prose and 2.953 and 9.554 in its generated table. No precision was changed.
+
+Normalized expanded manuscript text was compared before and after migration and
+is identical. All migrated paragraphs have adjacent provenance; tables and
+figures receive no new paragraph blocks simply for containing empirical values.
+
+## Validation results
+
+- Python decomposition/provenance suite: 19 tests passed.
+- Python writing/figure/table/packaging suite: 13 tests passed.
+- Full decomposition/accounting/summary suite: **1,329 Julia assertions passed**,
+  including 149 raw-summary and independent table-source assertions.
+- The initial full rebuild using the default Julia 1.12.2 produced a last-bit raw
+  mean difference (0.018508552895346038 versus 0.01850855289534604 for 2018
+  never-cabinet parties). Its existing 1.85-percent prose display did not change.
+  The strict final audit correctly failed rather than accepting this drift.
+  Four pre-existing bitwise party-size regression comparisons also failed with
+  that runtime. The established baseline used Julia 1.12.7 with generic CPU code,
+  compiled modules/pkgimages disabled, and one Julia/GC thread; final verification
+  uses that same runtime through the existing `JULIA_BIN` override. No production
+  calculation, tolerance, prose value, or provenance value was changed to mask
+  this runtime difference.
+- The full baseline-runtime production workflow completed successfully, including
+  all table and figure generators, both PDF compilations, the integrated final
+  asset/provenance audit, and submission packaging.
+- Independent normal analysis audit: 12 domains, 31,238 coalition rows, 475,290
+  member rows, and 23 cabinet bridge rows passed every assertion.
+- **All 196 original substantive CSVs and all 76 generated table TeX files are
+  byte-identical to the pre-refactor files.** No data, calculations, memberships,
+  domains, numerical precision, or substantive numerical claims changed.
+- **53 provenance blocks, 292 recorded fields, 11 source CSVs: all passed.**
+  Every semantic key resolves uniquely; there are zero row-number warnings.
+  All optional local display checks passed.
+- The final audit validated 163 paper artifacts and all 18 manuscript asset
+  references (11 generated table inputs and 7 figure references).
+- The final **36-page PDF** has identical layout-preserving extracted text and
+  pixel-identical rendered pages at 65 dpi. Rendered prose, figures, and a
+  landscape appendix table were also inspected. No undefined commands,
+  references/citations, multiply defined labels, or overfull boxes remain.
+- Submission archives contain the current literal-prose manuscript and its
+  generated assets: 11 table files, 8 figure files (including the retained
+  repository diagnostic), and 22 files in each full manuscript archive. No
+  retired macro file is included.
+- Final repository searches find no commands from any of the 234 retired macro
+  definitions and no remaining generated `manuscript_values.*` file. Broad
+  namespace searches find only the intentional validator rejection fixture;
+  the two pre-existing historical drafts still reference their older retired
+  `accounting_numeric_macros.tex` input and are excluded from packaging.
+- `git diff --check` passes. Nothing was committed, staged, or pushed.
+
+Run logs and the pre-edit source, inventory, PDF, page renders, and fingerprints
+are retained in `/tmp/electoral-provenance-before/` for local review. The permanent
+historical mapping and this report do not feed any production calculation.
+
+
+## Files changed
+
+Source, documentation, tests, and the historical inventory:
+
+- modified: `README.md`
+- modified: `processing/Processing/decomposition/CabinetDistrictTable.jl`
+- modified: `processing/Processing/decomposition/MANUSCRIPT_VALUE_MIGRATION.md`
+- removed: `processing/Processing/decomposition/ManuscriptValueSupport.jl`
+- removed: `processing/Processing/decomposition/ManuscriptValues.jl`
+- added: `processing/Processing/decomposition/PROSE_MACRO_INVENTORY.csv`
+- added: `processing/Processing/decomposition/ProseSummaries.jl`
+- modified: `processing/Processing/decomposition/audit_empirical_assets.py`
+- modified: `processing/Processing/decomposition/run_decomposition.jl`
+- modified: `processing/Processing/decomposition/runtests.jl`
+- removed: `processing/Processing/decomposition/test_manuscript_values.jl`
+- added: `processing/Processing/decomposition/test_prose_summaries.jl`
+- added: `processing/Processing/decomposition/tests/test_prose_provenance.py`
+- added: `processing/Processing/decomposition/validate_prose_provenance.py`
+- modified: `processing/audit_ideological_universes.py`
+- modified: `processing/rebuild_manuscript.sh`
+- modified: `writing/package_submission_assets.py`
+- modified: `writing/submission_inversions_review/manuscript/main_rw_again.tex`
+- modified: `writing/tests/test_package_submission_assets.py`
+
+Changed, added, or retired generated deliverables and audit metadata:
+
+- modified: `processing/Processing/output/decomposition/artifact_manifest.csv`
+- modified: `processing/Processing/output/decomposition/audit/decomposition_input_manifest.csv`
+- modified: `processing/Processing/output/decomposition/audit/intermediate_accounting_input_manifest.csv`
+- modified: `processing/Processing/output/decomposition/audit/intermediate_accounting_report_artifact_manifest.csv`
+- added: `processing/Processing/output/decomposition/audit/manuscript_empirical_asset_manifest.csv`
+- added: `processing/Processing/output/decomposition/audit/manuscript_prose_provenance.csv`
+- added: `processing/Processing/output/decomposition/audit/paper_artifact_hashes.csv`
+- modified: `processing/Processing/output/decomposition/audit/publication_artifact_manifest.csv`
+- removed: `processing/Processing/output/decomposition/latex/manuscript_values.tex`
+- modified: `processing/Processing/output/decomposition/report/intermediate_accounting_report.pdf`
+- removed: `processing/Processing/output/decomposition/tables/manuscript_values.csv`
+- added: `processing/Processing/output/decomposition/tables/prose_analysis_summaries.csv`
+- modified: `processing/Processing/output/paper/artifact_manifest.csv`
+- modified: `processing/Processing/output/paper/ideological_universe_refactor_report.md`
+- removed: `processing/Processing/output/paper/latex/manuscript_values.tex`
+- removed: `processing/Processing/output/paper/tables/manuscript_values.csv`
+- added: `processing/Processing/output/paper/tables/prose_analysis_summaries.csv`
+- modified: `writing/submission_inversions_review/manuscript.zip`
+- modified: `writing/submission_inversions_review/manuscript/accounting_state_weighting_anatomy.pdf`
+- modified: `writing/submission_inversions_review/manuscript/district_electoral_weight_by_magnitude.pdf`
+- modified: `writing/submission_inversions_review/manuscript/figures.zip`
+- modified: `writing/submission_inversions_review/manuscript/ideological_interval_heatmap_2014.pdf`
+- modified: `writing/submission_inversions_review/manuscript/ideological_interval_heatmap_2018.pdf`
+- modified: `writing/submission_inversions_review/manuscript/ideological_interval_heatmap_2022.pdf`
+- modified: `writing/submission_inversions_review/manuscript/inversion_decomposition_components.pdf`
+- modified: `writing/submission_inversions_review/manuscript/main_rw_again.pdf`
+- modified: `writing/submission_inversions_review/manuscript/manuscript.zip`
+- removed: `writing/submission_inversions_review/manuscript/manuscript_values.tex`
+- modified: `writing/submission_inversions_review/manuscript/observed_coalition_timeline.pdf`
+- modified: `writing/submission_inversions_review/manuscript/party_representation_profile.pdf`
+- modified: `writing/submission_inversions_review/manuscript/party_vote_share_vs_seat_share.pdf`
+- modified: `writing/submission_inversions_review/manuscript/tables.zip`
+
+The normal build also refreshes its analysis archive `processing/Processing/output/paper.zip`
+and routine LaTeX control files, auxiliary logs, and test logs. All unchanged
+generated tables and substantive CSVs are intentionally omitted from the changed
+file list above. New CSV/audit outputs under `processing/Processing/output` are
+covered by the existing output ignore rules; their generators are source files.

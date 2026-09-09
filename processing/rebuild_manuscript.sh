@@ -28,4 +28,5 @@ cd writing/submission_inversions_review/manuscript
 latexmk -g -pdf -interaction=nonstopmode -halt-on-error main_rw_again.tex
 
 cd "$project_root"
+"$python_cmd" processing/Processing/decomposition/audit_empirical_assets.py
 "$python_cmd" writing/package_submission_assets.py

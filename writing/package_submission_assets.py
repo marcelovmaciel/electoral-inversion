@@ -6,11 +6,14 @@ from __future__ import annotations
 import hashlib
 import csv
 import re
+import sys
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "processing" / "Processing" / "decomposition"))
+from validate_prose_provenance import validate_provenance  # noqa: E402
 REVIEW_ROOT = REPO_ROOT / "writing" / "submission_inversions_review"
 MANUSCRIPT_ROOT = REVIEW_ROOT / "manuscript"
 MAIN_TEX = MANUSCRIPT_ROOT / "main_rw_again.tex"
@@ -37,10 +40,8 @@ def referenced_assets() -> tuple[list[Path], list[Path]]:
     # manuscript now uses the representation-profile rendering in its place.
     figure_names.append("party_vote_share_vs_seat_share.pdf")
     figure_names = sorted(set(figure_names))
-    if "manuscript_values.tex" not in table_names:
-        raise ValueError("The manuscript must consume the generated manuscript-value registry.")
-    if "accounting_numeric_macros.tex" in table_names or re.search(r"\\Acct[A-Za-z]+", source):
-        raise ValueError("Legacy accounting prose macros cannot enter the submission package.")
+    if {"manuscript_values.tex", "accounting_numeric_macros.tex"} & set(table_names):
+        raise ValueError("Retired empirical prose macro files cannot enter the submission package.")
     tables = [MANUSCRIPT_ROOT / name for name in table_names]
     figures = [MANUSCRIPT_ROOT / name for name in figure_names]
     return tables, figures
@@ -72,6 +73,9 @@ def write_deterministic_zip(destination: Path, paths: list[Path]) -> str:
 
 
 def main() -> int:
+    _, warnings = validate_provenance(MAIN_TEX, REPO_ROOT)
+    for warning in warnings:
+        print(f"WARNING: {warning}", file=sys.stderr)
     tables, figures = referenced_assets()
     core = [MAIN_TEX, MAIN_TEX.with_suffix(".pdf"), MANUSCRIPT_ROOT / "refs2.bib"]
     manuscript_files = core + tables + figures
@@ -98,7 +102,6 @@ def main() -> int:
     for path, artifact_type in (
         (MAIN_TEX, "manuscript_source"),
         (MAIN_TEX.with_suffix(".pdf"), "compiled_manuscript"),
-        (MANUSCRIPT_ROOT / "manuscript_values.tex", "generated_manuscript_prose_values"),
     ):
         require_files([path])
         publication_records.append(

@@ -23,11 +23,15 @@ EXPECTED_PDFS = {
     "ideological_interval_heatmap_2014.pdf",
     "ideological_interval_heatmap_2018.pdf",
     "ideological_interval_heatmap_2022.pdf",
+    "ideological_interval_heatmap_legend.pdf",
+    "minimal_connected_winning_inversions_3x1_diamond.pdf",
     "inversion_decomposition_components.pdf",
     "accounting_state_weighting_anatomy.pdf",
     "district_electoral_weight_by_magnitude.pdf",
     "cross_domain_components.pdf",
 }
+
+EXPECTED_PNGS = {"minimal_connected_winning_inversions_3x1_diamond.png"}
 
 
 # A deliberately small fixture registry checks dynamic focal-case handling.
@@ -169,12 +173,14 @@ class CoalitionFigureOutputRegressions(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="coalition-figure-test-") as temp_dir:
             output_dir = Path(temp_dir)
             outputs = figures.generate_figures(ARTIFACT_ROOT, output_dir)
-            self.assertEqual({path.name for path in outputs}, EXPECTED_PDFS)
+            self.assertEqual({path.name for path in outputs}, EXPECTED_PDFS | EXPECTED_PNGS)
             self.assertEqual({path.name for path in output_dir.glob("*.pdf")}, EXPECTED_PDFS)
+            self.assertEqual({path.name for path in output_dir.glob("*.png")}, EXPECTED_PNGS)
             for path in outputs:
                 self.assertTrue(path.is_file(), path)
                 self.assertGreater(path.stat().st_size, 1_000, path)
-                self.assertEqual(path.read_bytes()[:5], b"%PDF-", path)
+                signature = b"%PDF-" if path.suffix == ".pdf" else b"\x89PNG\r\n\x1a\n"
+                self.assertTrue(path.read_bytes().startswith(signature), path)
 
 
 if __name__ == "__main__":

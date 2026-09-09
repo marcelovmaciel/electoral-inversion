@@ -16,6 +16,7 @@ Expected input tree:
   <artifact-root>/figure_data/inversion_decomposition_components.csv
   <artifact-root>/figure_data/accounting_state_weighting_anatomy.csv
   <artifact-root>/figure_data/accounting_district_electoral_weight.csv
+  <artifact-root>/raw/ideology_order_{2014,2018,2022}.csv
 
 Outputs:
   party_vote_share_vs_seat_share.pdf
@@ -23,10 +24,16 @@ Outputs:
   ideological_interval_heatmap_2014.pdf
   ideological_interval_heatmap_2018.pdf
   ideological_interval_heatmap_2022.pdf
+  ideological_interval_heatmap_legend.pdf
+  minimal_connected_winning_inversions_3x1_diamond.pdf
+  minimal_connected_winning_inversions_3x1_diamond.png
   inversion_decomposition_components.pdf
   accounting_state_weighting_anatomy.pdf
   district_electoral_weight_by_magnitude.pdf
   cross_domain_components.pdf
+
+Generate only the minimal-connected interval figure (PDF and 300-dpi PNG):
+  python3 writing/make_coalition_figures.py --minimal-connected-only
 """
 
 from __future__ import annotations
@@ -81,7 +88,7 @@ INTERVAL_COLORS = [
 ]
 INTERVAL_LABELS = [
     "no seat majority",
-    "seat majority",
+    "vote + seat majority",
     "inversion",
     "minimal inversion",
 ]
@@ -530,6 +537,24 @@ def interval_status_code(row: pd.Series) -> int:
     return 0
 
 
+def save_ideological_interval_legend(figure_dir: Path) -> Path:
+    """Save one compact legend for the separately included heatmap panels."""
+    handles = [
+        plt.Rectangle((0, 0), 1, 1, facecolor=color, edgecolor="none", label=label)
+        for color, label in zip(INTERVAL_COLORS, INTERVAL_LABELS, strict=True)
+    ]
+    fig = plt.figure(figsize=(6.4, 0.28))
+    fig.legend(
+        handles=handles, loc="center", ncol=4, frameon=False, fontsize=9,
+        handlelength=1.1, handletextpad=0.45, columnspacing=1.25,
+        borderpad=0, borderaxespad=0,
+    )
+    output = figure_dir / "ideological_interval_heatmap_legend.pdf"
+    fig.savefig(output, bbox_inches="tight", pad_inches=0.035)
+    plt.close(fig)
+    return output
+
+
 def save_ideological_interval_heatmaps(artifact_root: Path, figure_dir: Path) -> list[Path]:
     intervals = load_ideological_interval_heatmap(artifact_root)
     outputs: list[Path] = []
@@ -561,6 +586,122 @@ def save_ideological_interval_heatmaps(artifact_root: Path, figure_dir: Path) ->
         plt.close(fig)
         outputs.append(output)
 
+    outputs.append(save_ideological_interval_legend(figure_dir))
+    return outputs
+
+
+
+def build_minimal_connected_winning_inversions(artifact_root: Path) -> plt.Figure:
+    """Plot the exact-connected minimal inversions in the seat-winning order.
+
+    Both interval membership and annotation values come from the unrounded
+    figure-data export; the raw ideology-order CSVs determine party positions.
+    Each interval gets its own bracket row, in increasing start-position order.
+    """
+    input_path = artifact_root / "figure_data" / "ideological_interval_heatmap.csv"
+    intervals = load_ideological_interval_heatmap(artifact_root)
+    require_columns(intervals, input_path, {"start_party", "end_party", "vote_share"})
+    require_finite_numeric(intervals, input_path, {"vote_share"})
+    minimal = intervals.loc[
+        intervals["ideological_universe"].eq("seat_winning")
+        & intervals["coalition_inversion"]
+        & intervals["minimal_ideological_interval_inversion"]
+    ].sort_values(["election_year", "start_index", "end_index"])
+
+    years = sorted(ELECTION_LABELS)
+    orders = {}
+    for year in years:
+        order_path = artifact_root / "raw" / f"ideology_order_{year}.csv"
+        order = read_csv(order_path)
+        require_columns(
+            order, order_path,
+            {"ideological_universe", "election_year", "ordinal_position", "party"},
+        )
+        order = order.loc[
+            order["ideological_universe"].eq("seat_winning")
+            & order["election_year"].eq(year)
+        ].sort_values("ordinal_position")
+        require_finite_numeric(order, order_path, {"ordinal_position"})
+        if (order["party"].isna().any() or order["party"].duplicated().any()
+                or not np.array_equal(order["ordinal_position"], np.arange(1, len(order) + 1))
+                or order["party"].eq("PT").sum() != 1):
+            raise ValueError(f"Invalid seat-winning party order in {order_path}")
+        positions = order.set_index("party")["ordinal_position"]
+        rows = minimal.loc[minimal["election_year"].eq(year)]
+        if rows.empty:
+            raise ValueError(f"No minimal connected winning inversions for {year}")
+        for endpoint in ("start", "end"):
+            if not np.array_equal(
+                rows[f"{endpoint}_party"].map(positions), rows[f"{endpoint}_index"]
+            ):
+                raise ValueError(f"Interval endpoints disagree with party order for {year}")
+        if not (rows["seats"] == rows["seats"].astype(int)).all():
+            raise ValueError(f"Non-integer interval seat counts for {year}")
+        orders[year] = order
+
+    counts = [int(minimal["election_year"].eq(year).sum()) for year in years]
+    with plt.rc_context({"font.family": "DejaVu Sans", "pdf.fonttype": 42}):
+        fig, axes = plt.subplots(
+            3, 1, figsize=(6.4, 6.2), layout="constrained",
+            gridspec_kw={"height_ratios": [count + 0.75 for count in counts]},
+        )
+        for ax, year, count in zip(axes, years, counts, strict=True):
+            order = orders[year]
+            positions = order.set_index("party")["ordinal_position"]
+            ordinary = order.loc[order["party"].ne("PT"), "ordinal_position"]
+            ax.plot(ordinary, np.zeros(len(ordinary)), linestyle="none",
+                    marker="o", markersize=2.7, color="black", zorder=3)
+            ax.plot(positions["PT"], 0, linestyle="none", marker="D",
+                    markersize=4.2, color="black", zorder=4)
+
+            # Put tick labels immediately below the party baseline.
+            for spine in ax.spines.values():
+                spine.set_visible(False)
+            ax.spines["bottom"].set_visible(True)
+            ax.spines["bottom"].set_position(("data", 0))
+            ax.spines["bottom"].set_bounds(1, len(order))
+            ax.spines["bottom"].set_linewidth(0.6)
+            ax.set_xticks(order["ordinal_position"], order["party"],
+                          rotation=90, fontsize=8, ha="center", va="top")
+            ax.tick_params(axis="x", length=0, pad=5)
+            ax.set_yticks([])
+            ax.grid(False)
+            ax.set_xlim(0.35, len(order) + 0.65)
+            ax.set_ylim(-0.12, count + 0.75)
+            ax.set_title(str(year), fontsize=10.5, pad=4)
+
+            rows = minimal.loc[minimal["election_year"].eq(year)]
+            for lane, row in enumerate(rows.itertuples()):
+                left = positions[row.start_party]
+                right = positions[row.end_party]
+                height = count - lane
+                ax.plot([left, left, right, right],
+                        [height - 0.18, height, height, height - 0.18],
+                        color="black", linewidth=0.65, solid_capstyle="butt")
+                ax.annotate(f"{100 * row.vote_share:.2f}% votes, {int(row.seats)} seats",
+                            ((left + right) / 2, height), xytext=(0, 3),
+                            textcoords="offset points", ha="center", va="bottom",
+                            fontsize=8.5)
+
+        axes[-1].set_xlabel("Seat-winning parties ordered from left to right",
+                            fontsize=9, labelpad=8)
+    return fig
+
+
+def save_minimal_connected_winning_inversions(
+    artifact_root: Path, figure_dir: Path
+) -> list[Path]:
+    """Save matching vector PDF and 300-dpi PNG versions of the three panels."""
+    figure_dir.mkdir(parents=True, exist_ok=True)
+    fig = build_minimal_connected_winning_inversions(artifact_root)
+    stem = "minimal_connected_winning_inversions_3x1_diamond"
+    outputs = [figure_dir / f"{stem}.{extension}" for extension in ("pdf", "png")]
+    try:
+        with plt.rc_context({"pdf.fonttype": 42}):
+            for output in outputs:
+                fig.savefig(output, dpi=300, facecolor="white")
+    finally:
+        plt.close(fig)
     return outputs
 
 
@@ -738,6 +879,7 @@ def generate_figures(artifact_root: Path, figure_dir: Path) -> list[Path]:
         save_accounting_state_weighting_anatomy(artifact_root, figure_dir),
     ]
     outputs.extend(save_ideological_interval_heatmaps(artifact_root, figure_dir))
+    outputs.extend(save_minimal_connected_winning_inversions(artifact_root, figure_dir))
     outputs.append(
         save_district_electoral_weight_by_magnitude(artifact_root, figure_dir)
     )
@@ -757,14 +899,21 @@ def parse_args() -> argparse.Namespace:
         "--figure-dir",
         type=Path,
         default=DEFAULT_FIGURE_DIR,
-        help=f"Directory where figure PDFs should be written. Default: {DEFAULT_FIGURE_DIR}",
+        help=f"Directory where figures should be written. Default: {DEFAULT_FIGURE_DIR}",
+    )
+    parser.add_argument(
+        "--minimal-connected-only",
+        action="store_true",
+        help="Generate only the 3x1 minimal-connected interval figure (PDF and PNG).",
     )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    outputs = generate_figures(args.artifact_root.expanduser(), args.figure_dir.expanduser())
+    generator = (save_minimal_connected_winning_inversions
+                 if args.minimal_connected_only else generate_figures)
+    outputs = generator(args.artifact_root.expanduser(), args.figure_dir.expanduser())
     print("Generated figures:")
     for path in outputs:
         print(f"- {path}")

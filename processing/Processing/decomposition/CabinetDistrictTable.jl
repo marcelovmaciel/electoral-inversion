@@ -1,5 +1,5 @@
 # Table-specific aggregation of existing exact district contributions. Scalar prose
-# reads this table's machine-readable output through ManuscriptValues.jl.
+# cites this table's machine-readable output and its raw concentration summaries.
 function cabinet_district_concentration(states::DataFrame)
     records = NamedTuple[]
     cabinets = states[states.case_domain .== "cabinet", :]

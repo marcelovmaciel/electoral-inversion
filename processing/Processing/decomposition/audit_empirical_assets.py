@@ -19,6 +19,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
 
+from validate_prose_provenance import ProvenanceError, validate_provenance
+
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 PAPER_HASH_FILENAME = "paper_artifact_hashes.csv"
@@ -65,6 +67,8 @@ class AuditResult:
     unreferenced_manuscript_assets: tuple[Path, ...]
     paper_hash_path: Path
     manuscript_hash_path: Path
+    provenance_records: tuple[dict[str, object], ...]
+    provenance_warnings: tuple[str, ...]
 
 
 def sha256_and_size(path: Path) -> tuple[int, str]:
@@ -366,6 +370,16 @@ def run_audit(
         manuscript_sources,
         repository_root=repository_root,
     )
+    provenance_records: list[dict[str, object]] = []
+    provenance_warnings: list[str] = []
+    for source in manuscript_sources:
+        if source.name == "main_rw_again.tex" or "PROVENANCE-BEGIN" in source.read_text(encoding="utf-8"):
+            try:
+                records, warnings = validate_provenance(source, repository_root or REPOSITORY_ROOT)
+            except ProvenanceError as exc:
+                raise AuditError(f"Prose provenance validation failed: {exc}") from exc
+            provenance_records.extend(records)
+            provenance_warnings.extend(warnings)
     unreferenced: list[Path] = []
     if generated_manuscript_directory is not None:
         unreferenced = find_unreferenced_manuscript_assets(
@@ -383,12 +397,19 @@ def run_audit(
         MANUSCRIPT_HASH_FIELDS,
         manuscript_records,
     )
+    _write_csv_atomic(
+        audit_directory / "manuscript_prose_provenance.csv",
+        ("block", "source", "key", "row_at_generation", "current_row", "field", "value", "display"),
+        provenance_records,
+    )
     return AuditResult(
         paper_records=tuple(paper_records),
         manuscript_records=tuple(manuscript_records),
         unreferenced_manuscript_assets=tuple(unreferenced),
         paper_hash_path=paper_hash_path,
         manuscript_hash_path=manuscript_hash_path,
+        provenance_records=tuple(provenance_records),
+        provenance_warnings=tuple(provenance_warnings),
     )
 
 
@@ -408,7 +429,7 @@ def _argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--main-tex",
         type=Path,
-        help="Active manuscript main.tex.",
+        help="Active manuscript (default: main_rw_again.tex).",
     )
     parser.add_argument(
         "--title-page-tex",
@@ -443,7 +464,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     paper_manifest = args.paper_manifest or (
         processing_root / "output" / "paper" / "artifact_manifest.csv"
     )
-    main_tex = args.main_tex or active_manuscript_dir / "main.tex"
+    main_tex = args.main_tex or active_manuscript_dir / "main_rw_again.tex"
     title_page_tex = args.title_page_tex or (
         repo_root / "writing" / "submission_inversions_review" / "title_page.tex"
     )
@@ -474,6 +495,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"Validated {len(result.manuscript_records)} manuscript asset references; "
         f"wrote {result.manuscript_hash_path}"
     )
+    print(
+        f"Validated {len({r['block'] for r in result.provenance_records})} prose provenance blocks, "
+        f"{len(result.provenance_records)} fields; current data rows recorded in "
+        f"{audit_directory / 'manuscript_prose_provenance.csv'}"
+    )
+    for warning in result.provenance_warnings:
+        print(f"WARNING: {warning}", file=sys.stderr)
     if args.report_unreferenced:
         if result.unreferenced_manuscript_assets:
             print("Unreferenced manuscript PDF/TeX files (non-fatal):")

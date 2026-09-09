@@ -29,14 +29,13 @@ all_parties/tables/table_coalition_party_contributions.csv,table,Appendix table 
 audit/accounting_integration_checks.csv,audit,"Cardinality, registry, identity, and generation checks for manuscript integration.",12,5,009c5e4517c85493e3cf3378ecf278582290da247d666e656a0cbd7266fad29a
 audit/coalition_party_contribution_checks.csv,audit,"Per-case vote, seat, exact differential, source-regression, and inversion checks.",16,28,8a278a45f082dc1709a127424621b12f98ba4b2f9cbe06f91e72da20a2443d68
 audit/decomposition_identity_checks.csv,audit,Exact and floating-point decomposition identity results.,16,10,7557212b99319be1b5cbf1ffd57f535f7befbd13cceed806308eca19dbf7a4b4
-audit/decomposition_input_manifest.csv,audit,SHA-256 provenance for corrected-baseline and district inputs.,28,3,bcf1a794a94781515f2a218781ca5cd25c018ea0867da271cb707e67e681381b
+audit/decomposition_input_manifest.csv,audit,SHA-256 provenance for corrected-baseline and district inputs.,29,3,25a02d50ae3c9eaefefa73ba4e7ec72a158557f7a7060c0a90060a7a1b83e0ea
 audit/ideological_regression.csv,audit,Ideological inversion-count regression after the decomposition rebuild.,3,5,94cd433241652b715b146c41e92fc834617d92b5d6d766841f199d7eda2bb255
 audit/party_size_diagnostic_checks.csv,audit,Party-size diagnostic: checks; descriptive accounting only.,282,5,245e340ab4101897a511dad11ad3708ac8d24161e6801ca7bb74253c0f2c096d
 audit/party_size_diagnostic_metadata.csv,audit,"Diagnostic definitions, scope and descriptive-benchmark qualification.",9,2,6759e64bd54041003daa953831d4ea828f33fdacb79abc2b213848e0e1dbe7bc
 figure_data/accounting_district_electoral_weight.csv,figure_data,State-year district electoral weights derived from audited valid votes and seats.,81,12,ab1fa8ab3fa0044a461af3ad686e52f3818112c8d22cc5f319253e684c015ff4
 figure_data/accounting_state_weighting_anatomy.csv,figure_data,Seven-case gross positive and negative state-weighting anatomy.,8,25,aca9feb4e6ffa0cbae8d94c959fcb0aaaa72b05ddeb7cde27185c69e77b8f7e8
 figure_data/inversion_decomposition_components.csv,figure_data,"Long-form A_C, B_C, and d_C values for decomposition visualization.",12,5,083e26d8b906d52af36b7328a85c36114339811bca5e313b0500a11033fbe645
-latex/manuscript_values.tex,latex,Generated manuscript prose macros serialized from the same ManuscriptValues.jl registry as manuscript_values.csv.,234,1,1dbec1a9a74c6e52866cfd1f2b6f9047a6b7f15898cfc94cf662ea37ccff711d
 latex/report/party_size_diagnostics.tex,latex,Central analysis report section; never synchronized into the manuscript.,99,0,93354cec7dc589bfec7591d62b4919367d5df5aae7d71e05664cd3bbae5b32e6
 latex/table_accounting_focal_cases.tex,latex,Generated compact sign-and-magnitude table for selected focal accounting vectors.,8,68,f1e22ed94a192623b5ca2e85c156b7b673a28a4da7a90289f697451992295326
 latex/table_accounting_gross_components.tex,latex,Generated gross-component concentration appendix table.,32,29,0fcc5394fdb9aec9abf91bd6b3fc39efa8a0767599df08d219108a079ef5d399
@@ -67,7 +66,7 @@ raw/inversion_district_contributions.csv,raw,State-level a_Cd and b_Cd contribut
 raw/inversion_party_contributions.csv,raw,"Full party-level d_i, A_i, and B_i vectors for the four observed inversions.",33,19,81e46c6433125b51484ca2f4263871df3576e010cccd10375e767593d1adfd65
 raw/party_accounting_all_years.csv,raw,"Exact national party accounting, normalized components and cabinet participation.",99,25,aacd1b6665b2899a68640883efac65e26217b85c4ca4a1797f839bb69c1ebfbd
 raw/party_district_accounting_all_years.csv,raw,Complete existing party-district accounting panel.,2673,38,b496b486f58729996f0ec12e3e1b76c10dd1714d81b81a4204e0a47c6d6c73d1
-tables/manuscript_values.csv,table,"Auditable scalar/text prose registry: semantic names, selectors, universe/k, raw/exact/display values and production provenance.",234,20,905b431f8158044b41ac6b68139daee90970a6aae2ee96fe4c94310683c0205f
+tables/prose_analysis_summaries.csv,table,Raw prose aggregates from existing analysis CSVs; semantic summary/metric/aggregation keys and upstream selections. No TeX or display values.,32,7,a7c1e20d8471944020e5d93ab260d7762141803ed64e7353efc66b42ffb09009
 tables/report/party_fragmentation_summary.csv,table,Effective electoral and parliamentary party counts from the exact national party panel.,3,5,31fbaa1f8694713df15d92514d9b36d354e85dcde8e1eaf889c5ef88576b38a2
 tables/report/party_size_cabinet_summary.csv,table,Party-size diagnostic: cabinet_size; descriptive accounting only.,8,7,b280f9cb3e631e476b3441b3ba837b814e9cd3ddd93582728282a6e224cbb7b2
 tables/report/party_size_correlations.csv,table,Party-size diagnostic: correlations; descriptive accounting only.,4,7,abf6bf466beee43fac59c4552e380d06fe4efd77a40c8a839250bb6688ca5332
