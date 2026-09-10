@@ -1,7 +1,7 @@
 "path","artifact_type","description","rows","columns","bytes","sha256"
 "audit/intermediate_accounting_generation_checks.csv","audit","Report-output cardinality and generation-boundary checks.",8,4,367,"f3c80b84b1a4192967695b85e632e66e97d9ae86db1b9987bbaa8f482949a8a8"
 "audit/intermediate_accounting_identity_checks.csv","audit","Exact complete-system and registry-derived accounting identity checks.",137,9,11851,"1dfd665f8818bc1cddf4fb6a262280b09f005722455224373cb7614244cc720a"
-"audit/intermediate_accounting_input_manifest.csv","audit","SHA-256 provenance for every corrected-baseline and source-code input.",29,3,3860,"634f293b8b62998eef79e8bbfb242ade804178a6d7f610a7ef96e04ff8e73bce"
+"audit/intermediate_accounting_input_manifest.csv","audit","SHA-256 provenance for every corrected-baseline and source-code input.",30,3,3993,"d7790d82a38a0839882b9c064eaa96d4820156c0cbef2f4ae8ae5f630ee4e02c"
 "audit/party_size_diagnostic_checks.csv","audit","Party-size diagnostic: checks; descriptive accounting only.",282,5,53817,"245e340ab4101897a511dad11ad3708ac8d24161e6801ca7bb74253c0f2c096d"
 "audit/party_size_diagnostic_metadata.csv","audit","Diagnostic definitions, scope and descriptive-benchmark qualification.",9,2,1017,"6759e64bd54041003daa953831d4ea828f33fdacb79abc2b213848e0e1dbe7bc"
 "latex/report/generated_interpretation.tex","latex","Procedurally generated descriptive interpretation linked to case outputs.",16,23,8965,"5ccec6a789a0ca23fb67d2bff8638d646ad4ef4fff61e652ce5932d0e25cf28c"

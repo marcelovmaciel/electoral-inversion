@@ -43,9 +43,9 @@ The full production command is `processing/rebuild_manuscript.sh --clean`. Main 
 - `ideological_interval_heatmap_2014.pdf`
 - `ideological_interval_heatmap_2018.pdf`
 - `ideological_interval_heatmap_2022.pdf`
+- `ideological_interval_heatmap_legend.pdf`
 - `observed_coalition_timeline.pdf`
 - `party_representation_profile.pdf`
-- `table_03_ideology_exact_connected_summary.tex`
 - `table_03_ideology_k_gap_summary.tex`
 - `table_accounting_minimal_ideological.tex`
 - `table_accounting_minimal_ideological_all_parties.tex`
@@ -54,5 +54,6 @@ The full production command is `processing/rebuild_manuscript.sh --clean`. Main 
 - `table_appendix_ideological_universe_comparison.tex`
 - `table_appendix_minimal_connected_winning_intervals.tex`
 - `table_cabinet_district_concentration.tex`
+- `table_coalition_party_component_extremes.tex`
 - `table_coalition_party_contributions.tex`
 - `table_observed_inversion_decomposition.tex`

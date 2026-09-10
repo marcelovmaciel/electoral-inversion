@@ -1758,14 +1758,14 @@ larger regions of connected majorities.
 
 
 Figure~\ref{fig:heatmaps} complements
-Figure~\ref{fig:minimal-connected-inversions} by placing the minimal
-inversions alongside all other minimal connected winning coalitions. Blue cells identify
-connected coalitions with both a Chamber majority and a vote majority,
-red cells identify minimal connected winning inversions, and orange cells
-identify larger connected coalitions that remain inverted. Whereas
-Figure~\ref{fig:minimal-connected-inversions} identifies the membership
-and endpoints of the minimal cases, the heatmaps show how those cases
-sit within the surrounding space of connected coalitions.
+Figure~\ref{fig:minimal-connected-inversions} by placing the minimal inversions
+within the full set of ideologically-connected intervals. Blue cells identify
+connected coalitions with both a Chamber majority and a vote majority, red cells
+identify minimal connected winning inversions, and orange cells identify larger
+connected coalitions that remain inverted. Whereas
+Figure~\ref{fig:minimal-connected-inversions} identifies the membership and
+endpoints of the minimal cases, the heatmaps show how those cases sit within the
+surrounding space of connected coalitions.
 
 The structure differs substantially across elections. In 2014, several
 minimal inversions lie in overlapping center-to-right spans, and some are
@@ -1781,16 +1781,16 @@ larger exact-connected interval containing it also has a vote majority. The
 single inversion is therefore isolated within the surrounding connected
 coalition space rather than forming part of a larger set of inverted intervals.
 
-The 2022 pattern differs again. The blue region is compressed toward
-longer intervals spanning more of the ideological order, while the inversion
-cells are concentrated on the right. Unlike 2018, orange cells reappear:
-some connected expansions of the minimal right-side inversions continue
-to hold a Chamber majority without reaching 50 percent of the national
-vote. Connected majorities extending through PT, by contrast, require
-broader intervals and have both vote and seat majorities. The 2022 result
-is therefore not merely the existence of two minimal inversions, but an
-asymmetry in where connected vote-and-seat majorities and connected
-vote-minority seat majorities occur within the party ordering.
+The 2022 pattern differs again. The blue region is smaller, reflecting a lower
+proportion of connected coalitions with both vote and seat majorities, while the
+inversion cells are concentrated on the right. Unlike 2018, orange cells
+reappear: some connected expansions of the minimal right-side inversions
+continue to hold a Chamber majority without reaching 50 percent of the national
+vote. Connected majorities extending through PT, by contrast, require broader
+intervals and have both vote and seat majorities. The 2022 result is therefore
+not merely the existence of two minimal inversions, but an asymmetry in where
+connected vote-and-seat majorities and connected vote-minority seat majorities
+occur within the party ordering.
 
 Figure~\ref{fig:minimal-connected-inversions} and
 Figure~\ref{fig:heatmaps} thus reveal different aspects of the same result:
@@ -1853,9 +1853,22 @@ reports the comparison.
 \subsection{Comparing decomposition patterns across coalition domains}
 \label{sec:decomposition}
 
+
+The inversions identified in the two coalition domains share a positive
+within-district component, but differ in how between-district weighting
+contributes to their seat majorities. Table~\ref{tab:minimal-intervals}
+reports the decomposition for the minimal connected inversions,
+complementing the cabinet results in
+Table~\ref{tab:cabinet-inversions}. Reading the tables together separates
+two questions: which component accounts for most of a coalition's seat
+differential, and whether that component is sufficient to cover the
+distance from its proportional quota to 257 seats. A component can account
+for most of the differential without being sufficient to produce the
+seat majority.
+
 \begin{table}[htbp]
 \centering
-\caption{Exact-connected (\(k=0\)) minimal inversions and
+\caption{Minimal connected winning inversions and
 seat-differential decomposition}
 \label{tab:minimal-intervals}
 \footnotesize
@@ -1865,17 +1878,18 @@ seat-differential decomposition}
 \end{table}
 \FloatBarrier
 
-
-The member-party decomposition helps explain the persistent positive
-within-district component of cabinet coalitions. Cabinets repeatedly combine
-large parties carrying substantial positive \(A_i\) contributions. In the
-2018 cabinet inversion, for example, PP and PR contribute
-\(7.32\) and \(6.37\) seats to \(A_C\). In the initial 2023 cabinet,
-UNIÃO and PT contribute \(9.36\) and \(9.07\) seats. Because these
-contributions are summed when parties enter the same cabinet, the selection
-of such parties systematically raises the coalition's within-district
-component. This pattern extends beyond the inverted configurations:
-\(A_C\) is positive in all twenty-three observed cabinet periods.
+The \(A_i\) contributions of individual coalition members help explain the
+persistent positive within-district component of cabinet coalitions.\footnote{The
+largest member-party \(A_i\) and \(B_i\) contributions for the focal coalitions
+are reported in Appendix~\ref{app:party-contributions}.}
+Cabinets repeatedly combine large parties carrying substantial positive
+\(A_i\) contributions. In the 2018 cabinet inversion, for example, PP and PR
+contribute \(7.32\) and \(6.37\) seats to \(A_C\). In the initial 2023
+cabinet, UNIÃO and PT contribute \(9.36\) and \(9.07\) seats. Cabinet
+membership therefore repeatedly places substantial positive \(A_i\)
+contributions in the same coalition. This pattern extends beyond the
+inverted configurations: \(A_C\) is positive in all twenty-three observed
+cabinet periods.
 
 % PROVENANCE-BEGIN party-within-contributions
 % source: processing/Processing/output/decomposition/raw/party_accounting_all_years.csv
@@ -1917,26 +1931,27 @@ component. This pattern extends beyond the inverted configurations:
 %     value: twenty-three
 % PROVENANCE-END party-within-contributions
 
-The between-district component behaves differently because its sign depends
-on the geographic distribution of each party's support across districts with
-different electoral weights. Large parties can therefore contribute
-substantially in either direction. PSL contributes \(-5.28\) seats to
-\(B_C\) in the 2018 cabinet inversion, while PT contributes
-\(-2.13\) in the initial 2023 cabinet despite its large positive contribution
-to \(A_C\). Between-district weighting is positive in only six of the
-twenty-three cabinet periods. The same parties that build the within-district
-advantage therefore need not provide a corresponding between-district
-advantage.
+Cabinet coalitions show no comparable tendency in the between-district
+component: \(B_C\) is positive in only six of the twenty-three periods.
+The two components can also pull in opposite directions for the same
+party. In the initial 2023 cabinet, for example, PT contributes \(9.07\)
+seats to \(A_C\) but \(-2.13\) seats to \(B_C\). Among the 2014
+inversions, between-district weighting reinforces the within-district
+component in the Dilma cabinet inversion and the PTB--PR interval, but
+offsets it in the Temer cabinet inversion and the other three minimal
+connected inversions. The contrast is especially clear in 2018. The
+observed cabinet inversion has a large positive within-district component
+(\(A_C=19.07\)) that more than offsets its negative between-district
+component (\(B_C=-4.45\)). The PT--PSDB connected inversion instead combines positive contributions
+from both components (\(A_C=6.57\), \(B_C=4.18\)). Its proportional
+quota is only \(0.75\) seats below the majority threshold, so either
+component individually exceeds that shortfall. Between-district weighting therefore enlarges the PT--PSDB coalition's
+seat majority, whereas it reduces the seat advantage of the observed
+2018 cabinet inversion.
+
 
 % PROVENANCE-BEGIN party-between-contributions
 % source: processing/Processing/output/decomposition/raw/party_accounting_all_years.csv
-% row:
-%   key: election_year=2018; party=PSL
-%   row_at_generation: 59
-%   fields:
-%     B_i: -5.276539936713024
-%   display:
-%     B_i: -5.28
 % row:
 %   key: election_year=2022; party=PT
 %   row_at_generation: 92
@@ -1961,116 +1976,45 @@ advantage.
 %     value: twenty-three
 % PROVENANCE-END party-between-contributions
 
-The positive cabinet \(A_C\) values are also accumulated across many
-districts rather than produced by only a few exceptional state results.
-Among the four distinct inverted cabinet configurations, between eighteen
-and twenty-two of the twenty-seven districts contribute positively to
-\(A_C\). The three largest positive district contributions account for
-between 26.3 and 45.1 percent of the positive total, and between twelve
-and fifteen districts are required to account for 90 percent. The balance
-differs across configurations, but in each case the national within-district
-advantage combines positive contributions from much of the country.
+The 2022 inversions most clearly distinguish the size of a component
+from its importance for crossing the majority threshold. MDB--UNIÃO
+combines \(A_C=2.95\) with \(B_C=9.55\). Its between-district
+component exceeds the \(4.51\) seats separating its proportional quota
+from a majority, whereas its within-district component does not. The
+small net \(A_C\) reflects substantial offsetting party contributions:
+the positive contributions of UNIÃO and MDB are largely offset by the
+negative contributions of PTB and PODE
+(Appendix~\ref{app:party-contributions}).
 
-% PROVENANCE-BEGIN cabinet-district-concentration
-% source: processing/Processing/output/paper/tables/prose_analysis_summaries.csv
-% row:
-%   key: summary=cabinet-inversions; metric=numerical_vector_group; aggregation=unique_count
-%   row_at_generation: 17
-%   fields:
-%     value: 4
-%   display:
-%     value: four
-% row:
-%   key: summary=cabinet-district-concentration; metric=positive_count; aggregation=min
-%   row_at_generation: 27
-%   fields:
-%     value: 18
-%   display:
-%     value: eighteen
-% row:
-%   key: summary=cabinet-district-concentration; metric=positive_count; aggregation=max
-%   row_at_generation: 28
-%   fields:
-%     value: 22
-%   display:
-%     value: twenty-two
-% row:
-%   key: summary=cabinet-district-concentration; metric=top_three_positive_share; aggregation=min
-%   row_at_generation: 29
-%   fields:
-%     value: 0.26314497352740485
-%   display:
-%     value: 26.3
-% row:
-%   key: summary=cabinet-district-concentration; metric=top_three_positive_share; aggregation=max
-%   row_at_generation: 30
-%   fields:
-%     value: 0.4512009751151352
-%   display:
-%     value: 45.1
-% row:
-%   key: summary=cabinet-district-concentration; metric=districts_for_ninety_pct; aggregation=min
-%   row_at_generation: 31
-%   fields:
-%     value: 12
-%   display:
-%     value: twelve
-% row:
-%   key: summary=cabinet-district-concentration; metric=districts_for_ninety_pct; aggregation=max
-%   row_at_generation: 32
-%   fields:
-%     value: 15
-%   display:
-%     value: fifteen
-% PROVENANCE-END cabinet-district-concentration
+PP--PL presents the opposite balance. It combines \(A_C=23.32\) with
+\(B_C=2.49\), while its proportional quota lies \(24.81\) seats below
+the majority threshold. Neither component alone spans that gap, but
+together they raise the coalition to 258 seats. The Dilma cabinet
+inversion and the 2014 PTB--PR interval similarly require both positive
+components to reach 257 seats. Thus, although within-district allocation
+provides the larger component of the seat differential in every baseline
+inversion except MDB--UNIÃO, a smaller between-district contribution
+can still be consequential for whether the coalition reaches a seat
+majority.
 
-The minimal connected inversions share the cabinets'
-positive within-district component, but its relative importance varies.
-In 2022, MDB--UNIÃO has \(A_C=2.95\) and \(B_C=9.55\): both components
-are positive, with between-district weighting providing the larger share of
-its 12.51-seat differential. PP--PL instead has \(A_C=23.32\) and
-\(B_C=2.49\). In 2018, the PT--PSDB inversion combines \(A_C=6.57\)
-with \(B_C=4.18\). The same inversion classification therefore covers
-substantially different balances between the components.
-
-% PROVENANCE-BEGIN ideological-component-comparisons
-% source: processing/Processing/output/paper/raw/ideology_k_gap_accounting_both_universes.csv
-% row:
-%   key: election=2022; ideological_universe=seat_winning; k=0; coalition_id=MDB|PSDB|PSD|PODE|PROS|PTB|PP|REPUBLICANOS|PSC|UNIÃO
-%   row_at_generation: 9273
-%   fields:
-%     A_C: 2.9531634698279121
-%     B_C: 9.5534626590043707
-%     d_C: 12.506626128832282
-%   display:
-%     A_C: 2.95
-%     B_C: 9.55
-%     d_C: 12.51
-% row:
-%   key: election=2022; ideological_universe=seat_winning; k=0; coalition_id=PP|REPUBLICANOS|PSC|UNIÃO|PATRIOTA|NOVO|PL
-%   row_at_generation: 9333
-%   fields:
-%     A_C: 23.321113301517023
-%     B_C: 2.4922065675433847
-%   display:
-%     A_C: 23.32
-%     B_C: 2.49
-% row:
-%   key: election=2018; ideological_universe=seat_winning; k=0; coalition_id=PT|PDT|PSB|REDE|PPS|PV|PTB|AVANTE|SOLIDARIEDADE|PMN|PHS|MDB|PSD|PSDB
-%   row_at_generation: 4161
-%   fields:
-%     A_C: 6.5677682988018651
-%     B_C: 4.1833800696933112
-%   display:
-%     A_C: 6.57
-%     B_C: 4.18
-% PROVENANCE-END ideological-component-comparisons
-
-In the all-party sensitivity analysis, MDB--UNIÃO instead combines
-\(A_C=-1.29\) with \(B_C=9.88\), while retaining its inversion status
-(Appendix~\ref{app:ideological-universes}). Positive \(A_C\) in all minimal
-connected inversions in the baseline is therefore an empirical result for that
-domain, not a mathematical requirement for inversion.
+Taken together, the inversion cases point to a substantive regularity in
+how coalition advantages are assembled. Most inverted coalitions derive
+the larger part of their seat surplus from gains accumulated within
+district allocations rather than from favorable between-district
+weighting. The sensitivity analysis reinforces this interpretation.
+Allowing one omitted party greatly expands the set of minimal inversions,
+from seven under exact connectedness to one hundred under the one-gap
+domain, yet only three of those one hundred cases have \(A_C<0\)
+(Appendix~\ref{app:one-gap}). Positive within-district contributions
+therefore remain a pervasive feature of the inverted coalitions even
+under substantially broader ideological admissibility. Between-district
+weighting can nevertheless dominate in particular configurations.
+When parties without seats are restored to the ideological order,
+MDB--UNIÃO combines \(A_C=-1.29\) with \(B_C=9.88\) and remains
+inverted (Appendix~\ref{app:ideological-universes}). The broader results
+thus strengthen the descriptive pattern while also showing that the
+balance between the two components can vary considerably across
+coalitions.
 
 % PROVENANCE-BEGIN all-party-mdb-uniao-components
 % source: processing/Processing/output/paper/raw/ideology_k_gap_accounting_both_universes.csv
@@ -2085,30 +2029,65 @@ domain, not a mathematical requirement for inversion.
 %     B_C: 9.88
 % PROVENANCE-END all-party-mdb-uniao-components
 
-\newpage
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{cross_domain_components.pdf}
 \caption{Within-district and between-district contributions across coalition domains}
 \label{fig:cross-domain-components}
-\begin{flushleft}
-\footnotesize Notes: Components are expressed as percentages of each coalition's
-proportional quota. Colors identify election years and outlined points are
-coalition inversions. Panel A reports cabinet periods. Panel B reports minimal
-connected winning coalitions (\(k=0\)). The dashed line marks \(R_C=1\).
-\end{flushleft}
 \end{figure}
 \FloatBarrier
 
-Figure~\ref{fig:cross-domain-components} compares the components after
-accounting for coalition size. Panel B contains twenty minimal connected
-winning coalitions, seven of which invert. Every observed cabinet configuration
-has a positive within-district component, whereas the ideological
-majorities occupy both sides of that boundary. The inverted connected
-coalitions are all on its positive side. Cabinet inversions are not concentrated
-at the largest normalized within-district values: several non-inverted cabinets
-have larger values. Across domains, majority status depends on both the
-components' sum and the coalition's proportional distance from 257 seats.
+Figure~\ref{fig:cross-domain-components} extends the comparison beyond
+the inverted coalitions. Panel A includes all observed cabinet periods,
+whereas Panel B includes all minimal connected winning coalitions in
+the primary ideological domain. The horizontal and vertical coordinates
+are \(100A_C/q_C\) and \(100B_C/q_C\), respectively: each component is
+expressed as a percentage of the coalition's national proportional
+quota. Their sum is \(100(R_C-1)\). The dashed diagonal therefore marks
+exact national proportionality, including cases in which positive and
+negative components cancel. Points above it are overrepresented and
+points below it are underrepresented. The diagonal does not mark the
+boundary of inversion, which also depends on the coalition's vote share
+and whether it reaches 257 seats.
+
+Panel A shows that the positive within-district component is a feature
+of the observed cabinet domain, not a feature confined to its inversions.
+Every cabinet period lies to the right of the vertical zero line,
+including the three underrepresented configurations linked to the
+2018 election. In those cases, negative between-district weighting
+more than offsets the within-district gain. The outlined inversions
+are also not the cabinets with the largest within-district contributions
+relative to their quotas: several non-inverted cabinets lie farther
+to the right. The figure thus distinguishes the recurrent accumulation
+of within-district gains in cabinet coalitions from the more restrictive
+condition under which those gains accompany a vote-minority seat
+majority.
+
+Panel B reveals a different relationship between the components and
+majority formation, especially in 2022. All four minimal connected
+majorities have positive between-district components. The two
+non-inverted intervals, PT--PP and PSB--PSC, nevertheless remain
+underrepresented because their negative within-district components
+outweigh that advantage. Their vote majorities are large enough to
+retain seat majorities despite the resulting losses. MDB--UNIÃO and
+PP--PL instead combine positive components and reach seat majorities
+with vote minorities. Favorable between-district weighting is therefore
+not exclusive to the right-side inversions identified in
+Section~\ref{sec:ideology}. Within these four minimal majorities, the
+contrast lies in whether within-district allocation adds to that
+advantage or more than offsets it.
+
+Similar overall representation can also conceal different component
+balances across domains. The initial Lula cabinet and MDB--UNIÃO have
+almost identical representation ratios, approximately \(1.049\) and
+\(1.050\). For the cabinet, the within- and between-district components
+are approximately \(5.26\) and \(-0.40\) percent of its proportional
+quota. For MDB--UNIÃO, they are \(1.17\) and \(3.78\) percent.
+The cabinet's advantage is therefore predominantly within districts and
+partly offset between them, whereas the connected interval's advantage
+is predominantly between districts. The same 2022 election supports
+both configurations. Neither the overall representation ratio nor the
+election year identifies how a coalition's advantage is composed.
 
 % PROVENANCE-BEGIN cross-domain-majorities
 % source: processing/Processing/output/paper/tables/prose_analysis_summaries.csv
@@ -2455,6 +2434,13 @@ all-party sensitivity results.
 % PROVENANCE-END appendix-party-contribution-coverage
 
 \input{table_coalition_party_contributions.tex}
+\FloatBarrier
+
+Table~\ref{tab:coalition-party-component-extremes} reports the largest
+positive and negative \(A_i\) and \(B_i\) contributions among the members
+of the same focal coalitions.
+
+\input{table_coalition_party_component_extremes.tex}
 \FloatBarrier
 
 \subsection{District contributions to cabinet inversions}

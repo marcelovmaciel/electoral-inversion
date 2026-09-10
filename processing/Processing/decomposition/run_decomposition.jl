@@ -74,6 +74,9 @@ const ACCOUNTING_ARTIFACT_PREFIXES = (
     "latex/table_coalition_party_contribution",
     "coalition_party_contribution",
     "table_coalition_party_contribution",
+    "tables/table_coalition_party_component",
+    "latex/table_coalition_party_component",
+    "table_coalition_party_component",
 )
 
 function is_accounting_integration_artifact(relative_path::AbstractString)
@@ -171,6 +174,7 @@ function sync_decomposition_to_paper!(manifest::DataFrame)
             "table_accounting_minimal_ideological.tex",
             "table_accounting_minimal_ideological_all_parties.tex",
             "table_coalition_party_contributions.tex",
+            "table_coalition_party_component_extremes.tex",
         )
         for filename in review_filenames
             source = joinpath(OUTPUT_ROOT, "latex", filename)
@@ -267,6 +271,7 @@ input_paths = [
     joinpath(DECOMPOSITION_DIR, "PartySizeDiagnostics.jl"),
     joinpath(DECOMPOSITION_DIR, "AccountingIntegration.jl"),
     joinpath(DECOMPOSITION_DIR, "CabinetDistrictTable.jl"),
+    joinpath(DECOMPOSITION_DIR, "PartyComponentTable.jl"),
     joinpath(DECOMPOSITION_DIR, "ProseSummaries.jl"),
     joinpath(DECOMPOSITION_DIR, "validate_prose_provenance.py"),
     joinpath(DECOMPOSITION_DIR, "audit_empirical_assets.py"),

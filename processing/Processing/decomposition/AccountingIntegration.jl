@@ -1681,6 +1681,7 @@ end
 
 
 include("CabinetDistrictTable.jl")
+include("PartyComponentTable.jl")
 
 """
     write_accounting_integration_outputs(output_root, integration)
@@ -1855,10 +1856,23 @@ function write_accounting_integration_outputs(
         "Appendix table source for selected focal coalition-party contribution vectors.",
     )
 
+    component_table, component_checks = party_component_extremes(
+        reloaded["raw/coalition_party_contributions.csv"],
+        reloaded["tables/table_coalition_party_contributions.csv"],
+    )
+    record_csv("tables/table_coalition_party_component_extremes.csv", component_table, "table",
+        "Largest signed member-party A_i/B_i contributions for the existing focal appendix cases.")
+    record_csv("audit/coalition_party_component_checks.csv", component_checks, "audit",
+        "Exact and numerical closure audits of the focal member-party component vectors.")
+
     district_table = cabinet_district_concentration(integration.focal.state)
     record_csv("tables/table_cabinet_district_concentration.csv", district_table, "table",
         "Exact district concentration for inverted cabinet vectors; shared table/prose source.")
     latex_assets = (
+        ("latex/table_coalition_party_component_extremes.tex",
+         party_component_extremes_latex(reloaded["tables/table_coalition_party_component_extremes.csv"]),
+         "Generated appendix table of largest member-party within- and between-district contributions.",
+         nrow(component_table), ncol(component_table)),
         ("latex/table_cabinet_district_concentration.tex",
          cabinet_district_concentration_latex(district_table),
          "Generated cabinet within-district concentration tabular.", nrow(district_table), ncol(district_table)),

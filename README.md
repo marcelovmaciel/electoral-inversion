@@ -188,6 +188,19 @@ sensitivity (`table_appendix_ideological_universe_comparison.tex`) and its
 exact-connected decomposition. Both summary tables are generated from the same
 validated `ideology_k_gap_summary.csv` registry. Complete compositions remain in CSV.
 
+Appendix A.1 retains the `d_i` contribution table and adds
+`latex/table_coalition_party_component_extremes.tex`. The decomposition runner
+calls `party_component_extremes` and `party_component_extremes_latex` in
+`decomposition/PartyComponentTable.jl` through `AccountingIntegration.jl`.
+These rank the existing exact `A_i`/`B_i` fields in
+`raw/coalition_party_contributions.csv` for the same four cabinet and seven
+primary minimal exact-connected inversions selected by the `d_i` table.
+The party-year source is `raw/party_accounting_all_years.csv`.
+The generated table CSV retains the unrounded and exact extrema; the associated
+`audit/coalition_party_component_checks.csv` checks member and coalition closure
+before rounding. Outputs are mirrored from `output/decomposition/` to
+`output/paper/`, and the LaTeX table is synchronized to the manuscript.
+
 Run the independent serialized-output audit after decomposition:
 
 ```bash
