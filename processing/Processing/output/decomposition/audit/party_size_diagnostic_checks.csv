@@ -378,39 +378,39 @@
 "accounting_identity","input cabinet chronology unchanged","true","true",true
 "frozen_data_regression","party-election observations","99","99",true
 "frozen_data_regression","cabinet set linkage counts","53","53",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PP|PR|PRB|PROS|PSD|PT|PTB links","1","1",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PP|PR|PRB|PROS|PSD|PT|PTB gross A closure","18.06336845268631","18.06336845268631",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PP|PR|PRB|PROS|PSD|PT|PTB large-positive balance","13.978895917135478","13.978895917135478",true
+"frozen_data_regression","C2014-18bcced275baef2aaa3d links","1","1",true
+"frozen_data_regression","C2014-18bcced275baef2aaa3d gross A closure","18.06336845268631","18.06336845268631",true
+"frozen_data_regression","C2014-18bcced275baef2aaa3d large-positive balance","13.978895917135478","13.978895917135478",true
 "frozen_data_regression","2014/2015.1 linked A","18.06336845268631","18.06336845268631",true
 "frozen_data_regression","2014/2015.1 linked B","4.592762169569966","4.592762169569966",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PP|PR|PRB|PSD|PT|PTB links","1","1",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PP|PR|PRB|PSD|PT|PTB gross A closure","18.24506595458887","18.24506595458887",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PP|PR|PRB|PSD|PT|PTB large-positive balance","14.16059341903804","14.16059341903804",true
+"frozen_data_regression","C2014-775e65d300fa693ddc20 links","1","1",true
+"frozen_data_regression","C2014-775e65d300fa693ddc20 gross A closure","18.24506595458887","18.24506595458887",true
+"frozen_data_regression","C2014-775e65d300fa693ddc20 large-positive balance","14.16059341903804","14.16059341903804",true
 "frozen_data_regression","2014/2015.2 linked A","18.24506595458887","18.24506595458887",true
 "frozen_data_regression","2014/2015.2 linked B","3.829197613904753","3.829197613904753",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PP|PR|PROS|PSD|PT|PTB links","1","1",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PP|PR|PROS|PSD|PT|PTB gross A closure","18.20492529603732","18.204925296037324",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PP|PR|PROS|PSD|PT|PTB large-positive balance","14.120452760486492","14.120452760486492",true
+"frozen_data_regression","C2014-a5d11edd0c3bda7c1f99 links","1","1",true
+"frozen_data_regression","C2014-a5d11edd0c3bda7c1f99 gross A closure","18.20492529603732","18.204925296037324",true
+"frozen_data_regression","C2014-a5d11edd0c3bda7c1f99 large-positive balance","14.120452760486492","14.120452760486492",true
 "frozen_data_regression","2014/2016.1 linked A","18.204925296037324","18.204925296037324",true
 "frozen_data_regression","2014/2016.1 linked B","6.7671773681880065","6.7671773681880065",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PP|PR|PSD|PT|PTB links","1","1",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PP|PR|PSD|PT|PTB gross A closure","18.386622797939882","18.386622797939882",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PP|PR|PSD|PT|PTB large-positive balance","14.302150262389052","14.302150262389052",true
+"frozen_data_regression","C2014-6d2a12159a495f8181b3 links","1","1",true
+"frozen_data_regression","C2014-6d2a12159a495f8181b3 gross A closure","18.386622797939882","18.386622797939882",true
+"frozen_data_regression","C2014-6d2a12159a495f8181b3 large-positive balance","14.302150262389052","14.302150262389052",true
 "frozen_data_regression","2014/2016.2 linked A","18.386622797939882","18.386622797939882",true
 "frozen_data_regression","2014/2016.2 linked B","6.003612812522793","6.003612812522793",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PR|PSD|PT|PTB links","1","1",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PR|PSD|PT|PTB gross A closure","15.742022264747813","15.742022264747815",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PR|PSD|PT|PTB large-positive balance","11.657549729196983","11.657549729196983",true
+"frozen_data_regression","C2014-a264923b9881ebab3d9b links","1","1",true
+"frozen_data_regression","C2014-a264923b9881ebab3d9b gross A closure","15.742022264747813","15.742022264747815",true
+"frozen_data_regression","C2014-a264923b9881ebab3d9b large-positive balance","11.657549729196983","11.657549729196983",true
 "frozen_data_regression","2014/2016.3 linked A","15.742022264747815","15.742022264747815",true
 "frozen_data_regression","2014/2016.3 linked B","4.529069893162678","4.529069893162678",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PR|PT|PTB links","1","1",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PR|PT|PTB gross A closure","11.09608095474679","11.09608095474679",true
-"frozen_data_regression","2014:PCdoB|PDT|PMDB|PR|PT|PTB large-positive balance","7.011608419195959","7.011608419195959",true
+"frozen_data_regression","C2014-8d3ff5ab64ec71cc91c5 links","1","1",true
+"frozen_data_regression","C2014-8d3ff5ab64ec71cc91c5 gross A closure","11.09608095474679","11.09608095474679",true
+"frozen_data_regression","C2014-8d3ff5ab64ec71cc91c5 large-positive balance","7.011608419195959","7.011608419195959",true
 "frozen_data_regression","2014/2016.4 linked A","11.09608095474679","11.09608095474679",true
 "frozen_data_regression","2014/2016.4 linked B","4.622279003145202","4.622279003145202",true
-"frozen_data_regression","2014:DEM|PMDB|PP|PPS|PR|PRB|PSB|PSD|PSDB|PTB|PV links","5","5",true
-"frozen_data_regression","2014:DEM|PMDB|PP|PPS|PR|PRB|PSB|PSD|PSDB|PTB|PV gross A closure","20.253867595361555","20.253867595361555",true
-"frozen_data_regression","2014:DEM|PMDB|PP|PPS|PR|PRB|PSB|PSD|PSDB|PTB|PV large-positive balance","15.677667897071666","15.677667897071665",true
+"frozen_data_regression","C2014-e44de479fb9c3be1477f links","5","5",true
+"frozen_data_regression","C2014-e44de479fb9c3be1477f gross A closure","20.253867595361555","20.253867595361555",true
+"frozen_data_regression","C2014-e44de479fb9c3be1477f large-positive balance","15.677667897071666","15.677667897071665",true
 "frozen_data_regression","2014/2016.5 linked A","20.253867595361555","20.253867595361555",true
 "frozen_data_regression","2014/2016.5 linked B","-3.9388174954975064","-3.9388174954975064",true
 "frozen_data_regression","2014/2016.7 linked A","20.253867595361555","20.253867595361555",true
@@ -421,9 +421,9 @@
 "frozen_data_regression","2014/2017.2 linked B","-3.9388174954975064","-3.9388174954975064",true
 "frozen_data_regression","2014/2017.4 linked A","20.253867595361555","20.253867595361555",true
 "frozen_data_regression","2014/2017.4 linked B","-3.9388174954975064","-3.9388174954975064",true
-"frozen_data_regression","2014:DEM|PMDB|PP|PPS|PR|PRB|PSD|PSDB|PTB|PV links","5","5",true
-"frozen_data_regression","2014:DEM|PMDB|PP|PPS|PR|PRB|PSD|PSDB|PTB|PV gross A closure","19.604503474585233","19.604503474585236",true
-"frozen_data_regression","2014:DEM|PMDB|PP|PPS|PR|PRB|PSD|PSDB|PTB|PV large-positive balance","15.028303776295344","15.028303776295342",true
+"frozen_data_regression","C2014-5afcbfcc0efa1e534140 links","5","5",true
+"frozen_data_regression","C2014-5afcbfcc0efa1e534140 gross A closure","19.604503474585233","19.604503474585236",true
+"frozen_data_regression","C2014-5afcbfcc0efa1e534140 large-positive balance","15.028303776295344","15.028303776295342",true
 "frozen_data_regression","2014/2016.6 linked A","19.604503474585236","19.604503474585236",true
 "frozen_data_regression","2014/2016.6 linked B","-4.261774034147886","-4.261774034147886",true
 "frozen_data_regression","2014/2016.8 linked A","19.604503474585236","19.604503474585236",true
@@ -434,125 +434,125 @@
 "frozen_data_regression","2014/2017.3 linked B","-4.261774034147886","-4.261774034147886",true
 "frozen_data_regression","2014/2017.5 linked A","19.604503474585236","19.604503474585236",true
 "frozen_data_regression","2014/2017.5 linked B","-4.261774034147886","-4.261774034147886",true
-"frozen_data_regression","2014:DEM|PMDB|PP|PR|PRB|PSD|PSDB|PTB|PV links","1","1",true
-"frozen_data_regression","2014:DEM|PMDB|PP|PR|PRB|PSD|PSDB|PTB|PV gross A closure","19.112776311846172","19.112776311846176",true
-"frozen_data_regression","2014:DEM|PMDB|PP|PR|PRB|PSD|PSDB|PTB|PV large-positive balance","15.028303776295344","15.028303776295342",true
+"frozen_data_regression","C2014-c5d55c3e560b3a34e2ec links","1","1",true
+"frozen_data_regression","C2014-c5d55c3e560b3a34e2ec gross A closure","19.112776311846172","19.112776311846176",true
+"frozen_data_regression","C2014-c5d55c3e560b3a34e2ec large-positive balance","15.028303776295344","15.028303776295342",true
 "frozen_data_regression","2014/2018.1 linked A","19.112776311846176","19.112776311846176",true
 "frozen_data_regression","2014/2018.1 linked B","-3.464825681416542","-3.464825681416542",true
-"frozen_data_regression","2014:DEM|PMDB|PP|PRB|PSD|PSDB|PTB|PV links","1","1",true
-"frozen_data_regression","2014:DEM|PMDB|PP|PRB|PSD|PSDB|PTB|PV gross A closure","14.069938121667574","14.069938121667574",true
-"frozen_data_regression","2014:DEM|PMDB|PP|PRB|PSD|PSDB|PTB|PV large-positive balance","9.985465586116744","9.985465586116742",true
+"frozen_data_regression","C2014-b99061a13a4cbf708682 links","1","1",true
+"frozen_data_regression","C2014-b99061a13a4cbf708682 gross A closure","14.069938121667574","14.069938121667574",true
+"frozen_data_regression","C2014-b99061a13a4cbf708682 large-positive balance","9.985465586116744","9.985465586116742",true
 "frozen_data_regression","2014/2018.2 linked A","14.069938121667574","14.069938121667574",true
 "frozen_data_regression","2014/2018.2 linked B","-2.7264327197972267","-2.7264327197972267",true
-"frozen_data_regression","2014:PMDB|PP|PRB|PSD|PSDB|PTB|PV links","1","1",true
-"frozen_data_regression","2014:PMDB|PP|PRB|PSD|PSDB|PTB|PV gross A closure","14.319579123634586","14.319579123634586",true
-"frozen_data_regression","2014:PMDB|PP|PRB|PSD|PSDB|PTB|PV large-positive balance","10.235106588083756","10.235106588083754",true
+"frozen_data_regression","C2014-3a21551efde30c618990 links","1","1",true
+"frozen_data_regression","C2014-3a21551efde30c618990 gross A closure","14.319579123634586","14.319579123634586",true
+"frozen_data_regression","C2014-3a21551efde30c618990 large-positive balance","10.235106588083756","10.235106588083754",true
 "frozen_data_regression","2014/2018.3 linked A","14.319579123634586","14.319579123634586",true
 "frozen_data_regression","2014/2018.3 linked B","-2.4481890714757704","-2.4481890714757704",true
-"frozen_data_regression","2014:PMDB|PP|PRB|PSD|PSDB|PV links","1","1",true
-"frozen_data_regression","2014:PMDB|PP|PRB|PSD|PSDB|PV gross A closure","10.235106588083756","10.235106588083754",true
-"frozen_data_regression","2014:PMDB|PP|PRB|PSD|PSDB|PV large-positive balance","10.235106588083756","10.235106588083754",true
+"frozen_data_regression","C2014-b4f47741435e535810d3 links","1","1",true
+"frozen_data_regression","C2014-b4f47741435e535810d3 gross A closure","10.235106588083756","10.235106588083754",true
+"frozen_data_regression","C2014-b4f47741435e535810d3 large-positive balance","10.235106588083756","10.235106588083754",true
 "frozen_data_regression","2014/2018.4 linked A","10.235106588083754","10.235106588083754",true
 "frozen_data_regression","2014/2018.4 linked B","-2.738440919342003","-2.738440919342003",true
-"frozen_data_regression","2018:DEM|MDB|NOVO|PP|PSL links","1","1",true
-"frozen_data_regression","2018:DEM|MDB|NOVO|PP|PSL gross A closure","8.929052747817426","8.929052747817424",true
-"frozen_data_regression","2018:DEM|MDB|NOVO|PP|PSL large-positive balance","4.353523520404988","4.3535235204049885",true
+"frozen_data_regression","C2018-6dd392dbf9b24c264313 links","1","1",true
+"frozen_data_regression","C2018-6dd392dbf9b24c264313 gross A closure","8.929052747817426","8.929052747817424",true
+"frozen_data_regression","C2018-6dd392dbf9b24c264313 large-positive balance","4.353523520404988","4.3535235204049885",true
 "frozen_data_regression","2018/2019.1 linked A","8.929052747817424","8.929052747817424",true
 "frozen_data_regression","2018/2019.1 linked B","-3.5258436845767878","-3.5258436845767878",true
-"frozen_data_regression","2018:DEM|MDB|NOVO|PP|PSDB|PSL links","2","2",true
-"frozen_data_regression","2018:DEM|MDB|NOVO|PP|PSDB|PSL gross A closure","9.349769373369426","9.349769373369428",true
-"frozen_data_regression","2018:DEM|MDB|NOVO|PP|PSDB|PSL large-positive balance","4.774240145956991","4.77424014595699",true
+"frozen_data_regression","C2018-5053b0a398fe7d5859d4 links","2","2",true
+"frozen_data_regression","C2018-5053b0a398fe7d5859d4 gross A closure","9.349769373369426","9.349769373369428",true
+"frozen_data_regression","C2018-5053b0a398fe7d5859d4 large-positive balance","4.774240145956991","4.77424014595699",true
 "frozen_data_regression","2018/2020.1 linked A","9.349769373369428","9.349769373369428",true
 "frozen_data_regression","2018/2020.1 linked B","-4.705440813799558","-4.705440813799558",true
 "frozen_data_regression","2018/2020.3 linked A","9.349769373369428","9.349769373369428",true
 "frozen_data_regression","2018/2020.3 linked B","-4.705440813799558","-4.705440813799558",true
-"frozen_data_regression","2018:DEM|NOVO|PP|PSDB|PSL links","2","2",true
-"frozen_data_regression","2018:DEM|NOVO|PP|PSDB|PSL gross A closure","5.01148725454002","5.01148725454002",true
-"frozen_data_regression","2018:DEM|NOVO|PP|PSDB|PSL large-positive balance","0.43595802712758314","0.43595802712758375",true
+"frozen_data_regression","C2018-72d588ebc21b8a1a1f9e links","2","2",true
+"frozen_data_regression","C2018-72d588ebc21b8a1a1f9e gross A closure","5.01148725454002","5.01148725454002",true
+"frozen_data_regression","C2018-72d588ebc21b8a1a1f9e large-positive balance","0.43595802712758314","0.43595802712758375",true
 "frozen_data_regression","2018/2020.2 linked A","5.01148725454002","5.01148725454002",true
 "frozen_data_regression","2018/2020.2 linked B","-5.967486830784428","-5.967486830784428",true
 "frozen_data_regression","2018/2020.4 linked A","5.01148725454002","5.01148725454002",true
 "frozen_data_regression","2018/2020.4 linked B","-5.967486830784428","-5.967486830784428",true
-"frozen_data_regression","2018:DEM|PP|PSDB|PSL links","1","1",true
-"frozen_data_regression","2018:DEM|PP|PSDB|PSL gross A closure","9.893766986117328","9.893766986117328",true
-"frozen_data_regression","2018:DEM|PP|PSDB|PSL large-positive balance","5.318237758704891","5.318237758704891",true
+"frozen_data_regression","C2018-080d8b1d183af39b5538 links","1","1",true
+"frozen_data_regression","C2018-080d8b1d183af39b5538 gross A closure","9.893766986117328","9.893766986117328",true
+"frozen_data_regression","C2018-080d8b1d183af39b5538 large-positive balance","5.318237758704891","5.318237758704891",true
 "frozen_data_regression","2018/2020.5 linked A","9.893766986117328","9.893766986117328",true
 "frozen_data_regression","2018/2020.5 linked B","-4.503090250268795","-4.503090250268795",true
-"frozen_data_regression","2018:DEM|PP|PSD|PSDB|PSL links","1","1",true
-"frozen_data_regression","2018:DEM|PP|PSD|PSDB|PSL gross A closure","14.157264067397003","14.157264067397003",true
-"frozen_data_regression","2018:DEM|PP|PSD|PSDB|PSL large-positive balance","9.581734839984566","9.581734839984566",true
+"frozen_data_regression","C2018-2de7f0263e0db9154478 links","1","1",true
+"frozen_data_regression","C2018-2de7f0263e0db9154478 gross A closure","14.157264067397003","14.157264067397003",true
+"frozen_data_regression","C2018-2de7f0263e0db9154478 large-positive balance","9.581734839984566","9.581734839984566",true
 "frozen_data_regression","2018/2020.6 linked A","14.157264067397003","14.157264067397003",true
 "frozen_data_regression","2018/2020.6 linked B","-3.77998417530203","-3.77998417530203",true
-"frozen_data_regression","2018:DEM|PP|PSD|PSL links","1","1",true
-"frozen_data_regression","2018:DEM|PP|PSD|PSL gross A closure","13.736547441845","13.736547441845001",true
-"frozen_data_regression","2018:DEM|PP|PSD|PSL large-positive balance","9.161018214432564","9.161018214432564",true
+"frozen_data_regression","C2018-1912bcf9ddddecf78512 links","1","1",true
+"frozen_data_regression","C2018-1912bcf9ddddecf78512 gross A closure","13.736547441845","13.736547441845001",true
+"frozen_data_regression","C2018-1912bcf9ddddecf78512 large-positive balance","9.161018214432564","9.161018214432564",true
 "frozen_data_regression","2018/2020.7 linked A","13.736547441845001","13.736547441845001",true
 "frozen_data_regression","2018/2020.7 linked B","-2.60038704607926","-2.60038704607926",true
-"frozen_data_regression","2018:DEM|PSD|PSL links","1","1",true
-"frozen_data_regression","2018:DEM|PSD|PSL gross A closure","6.417770812501248","6.417770812501248",true
-"frozen_data_regression","2018:DEM|PSD|PSL large-positive balance","1.8422415850888108","1.8422415850888112",true
+"frozen_data_regression","C2018-e4f0aaa55c13b90ddeff links","1","1",true
+"frozen_data_regression","C2018-e4f0aaa55c13b90ddeff gross A closure","6.417770812501248","6.417770812501248",true
+"frozen_data_regression","C2018-e4f0aaa55c13b90ddeff large-positive balance","1.8422415850888108","1.8422415850888112",true
 "frozen_data_regression","2018/2020.8 linked A","6.417770812501248","6.417770812501248",true
 "frozen_data_regression","2018/2020.8 linked B","-4.045479696073178","-4.045479696073178",true
-"frozen_data_regression","2018:DEM|PSC|PSD|PSL links","1","1",true
-"frozen_data_regression","2018:DEM|PSC|PSD|PSL gross A closure","3.3446540578149824","3.3446540578149824",true
-"frozen_data_regression","2018:DEM|PSC|PSD|PSL large-positive balance","-1.2308751695974545","-1.2308751695974542",true
+"frozen_data_regression","C2018-64af9fe5690d39041c41 links","1","1",true
+"frozen_data_regression","C2018-64af9fe5690d39041c41 gross A closure","3.3446540578149824","3.3446540578149824",true
+"frozen_data_regression","C2018-64af9fe5690d39041c41 large-positive balance","-1.2308751695974545","-1.2308751695974542",true
 "frozen_data_regression","2018/2020.9 linked A","3.3446540578149824","3.3446540578149824",true
 "frozen_data_regression","2018/2020.9 linked B","-2.9505451459112666","-2.9505451459112666",true
-"frozen_data_regression","2018:DEM|PRB|PSC|PSD|PSL links","1","1",true
-"frozen_data_regression","2018:DEM|PRB|PSC|PSD|PSL gross A closure","7.7260268760179","7.726026876017899",true
-"frozen_data_regression","2018:DEM|PRB|PSC|PSD|PSL large-positive balance","3.150497648605463","3.1504976486054628",true
+"frozen_data_regression","C2018-c7968aa474db2a20c1cf links","1","1",true
+"frozen_data_regression","C2018-c7968aa474db2a20c1cf gross A closure","7.7260268760179","7.726026876017899",true
+"frozen_data_regression","C2018-c7968aa474db2a20c1cf large-positive balance","3.150497648605463","3.1504976486054628",true
 "frozen_data_regression","2018/2021.1 linked A","7.726026876017899","7.726026876017899",true
 "frozen_data_regression","2018/2021.1 linked B","-4.354244754779226","-4.354244754779226",true
-"frozen_data_regression","2018:DEM|PR|PRB|PSC|PSD|PSL links","1","1",true
-"frozen_data_regression","2018:DEM|PR|PRB|PSC|PSD|PSL gross A closure","14.094407727474625","14.094407727474627",true
-"frozen_data_regression","2018:DEM|PR|PRB|PSC|PSD|PSL large-positive balance","9.51887850006219","9.51887850006219",true
+"frozen_data_regression","C2018-34cdc0bb5ecda010a795 links","1","1",true
+"frozen_data_regression","C2018-34cdc0bb5ecda010a795 gross A closure","14.094407727474625","14.094407727474627",true
+"frozen_data_regression","C2018-34cdc0bb5ecda010a795 large-positive balance","9.51887850006219","9.51887850006219",true
 "frozen_data_regression","2018/2021.2 linked A","14.094407727474627","14.094407727474627",true
 "frozen_data_regression","2018/2021.2 linked B","-4.998230106715732","-4.998230106715732",true
-"frozen_data_regression","2018:DEM|PP|PR|PRB|PSC|PSD|PSL links","1","1",true
-"frozen_data_regression","2018:DEM|PP|PR|PRB|PSC|PSD|PSL gross A closure","21.41318435681838","21.41318435681838",true
-"frozen_data_regression","2018:DEM|PP|PR|PRB|PSC|PSD|PSL large-positive balance","16.837655129405942","16.837655129405945",true
+"frozen_data_regression","C2018-a86e04ffb7898c05a4c4 links","1","1",true
+"frozen_data_regression","C2018-a86e04ffb7898c05a4c4 gross A closure","21.41318435681838","21.41318435681838",true
+"frozen_data_regression","C2018-a86e04ffb7898c05a4c4 large-positive balance","16.837655129405942","16.837655129405945",true
 "frozen_data_regression","2018/2021.3 linked A","21.41318435681838","21.41318435681838",true
 "frozen_data_regression","2018/2021.3 linked B","-3.5531374567218146","-3.5531374567218146",true
-"frozen_data_regression","2018:DEM|PP|PR|PRB|PSC|PSL links","2","2",true
-"frozen_data_regression","2018:DEM|PP|PR|PRB|PSC|PSL gross A closure","17.149687275538703","17.149687275538703",true
-"frozen_data_regression","2018:DEM|PP|PR|PRB|PSC|PSL large-positive balance","12.574158048126268","12.574158048126268",true
+"frozen_data_regression","C2018-83de36410e62c9cde06e links","2","2",true
+"frozen_data_regression","C2018-83de36410e62c9cde06e gross A closure","17.149687275538703","17.149687275538703",true
+"frozen_data_regression","C2018-83de36410e62c9cde06e large-positive balance","12.574158048126268","12.574158048126268",true
 "frozen_data_regression","2018/2022.1 linked A","17.149687275538703","17.149687275538703",true
 "frozen_data_regression","2018/2022.1 linked B","-4.276243531688579","-4.276243531688579",true
 "frozen_data_regression","2018/2022.3 linked A","17.149687275538703","17.149687275538703",true
 "frozen_data_regression","2018/2022.3 linked B","-4.276243531688579","-4.276243531688579",true
-"frozen_data_regression","2018:DEM|PP|PR|PSC|PSL links","1","1",true
-"frozen_data_regression","2018:DEM|PP|PR|PSC|PSL gross A closure","12.768314457335787","12.768314457335787",true
-"frozen_data_regression","2018:DEM|PP|PR|PSC|PSL large-positive balance","8.192785229923352","8.19278522992335",true
+"frozen_data_regression","C2018-f6b3d49ea0397e55d78b links","1","1",true
+"frozen_data_regression","C2018-f6b3d49ea0397e55d78b gross A closure","12.768314457335787","12.768314457335787",true
+"frozen_data_regression","C2018-f6b3d49ea0397e55d78b large-positive balance","8.192785229923352","8.19278522992335",true
 "frozen_data_regression","2018/2022.2 linked A","12.768314457335787","12.768314457335787",true
 "frozen_data_regression","2018/2022.2 linked B","-2.8725439228206198","-2.8725439228206198",true
-"frozen_data_regression","2018:DEM|PP|PR|PRB|PSL links","1","1",true
-"frozen_data_regression","2018:DEM|PP|PR|PRB|PSL gross A closure","20.22280403022497","20.22280403022497",true
-"frozen_data_regression","2018:DEM|PP|PR|PRB|PSL large-positive balance","15.647274802812534","15.647274802812534",true
+"frozen_data_regression","C2018-6cf3fea166c95e7d65b7 links","1","1",true
+"frozen_data_regression","C2018-6cf3fea166c95e7d65b7 gross A closure","20.22280403022497","20.22280403022497",true
+"frozen_data_regression","C2018-6cf3fea166c95e7d65b7 large-positive balance","15.647274802812534","15.647274802812534",true
 "frozen_data_regression","2018/2022.4 linked A","20.22280403022497","20.22280403022497",true
 "frozen_data_regression","2018/2022.4 linked B","-5.371178081850491","-5.371178081850491",true
-"frozen_data_regression","2018:PP|PRB|PSD links","1","1",true
-"frozen_data_regression","2018:PP|PRB|PSD gross A closure","15.963646528826347","15.963646528826347",true
-"frozen_data_regression","2018:PP|PRB|PSD large-positive balance","15.963646528826347","15.963646528826347",true
+"frozen_data_regression","C2018-d3b46be51d2f587dc04d links","1","1",true
+"frozen_data_regression","C2018-d3b46be51d2f587dc04d gross A closure","15.963646528826347","15.963646528826347",true
+"frozen_data_regression","C2018-d3b46be51d2f587dc04d large-positive balance","15.963646528826347","15.963646528826347",true
 "frozen_data_regression","2018/2022.5 linked A","15.963646528826347","15.963646528826347",true
 "frozen_data_regression","2018/2022.5 linked B","0.7644991160927233","0.7644991160927233",true
-"frozen_data_regression","2018:DEM|PP|PRB|PSD|PSL links","1","1",true
-"frozen_data_regression","2018:DEM|PP|PRB|PSD|PSL gross A closure","18.117920260047917","18.117920260047917",true
-"frozen_data_regression","2018:DEM|PP|PRB|PSD|PSL large-positive balance","13.542391032635482","13.542391032635482",true
+"frozen_data_regression","C2018-47d7f4182c86096c3d11 links","1","1",true
+"frozen_data_regression","C2018-47d7f4182c86096c3d11 gross A closure","18.117920260047917","18.117920260047917",true
+"frozen_data_regression","C2018-47d7f4182c86096c3d11 large-positive balance","13.542391032635482","13.542391032635482",true
 "frozen_data_regression","2018/2022.6 linked A","18.117920260047917","18.117920260047917",true
 "frozen_data_regression","2018/2022.6 linked B","-4.00408665494722","-4.00408665494722",true
-"frozen_data_regression","2018:DEM|NOVO|PRB|PSD|PSL links","1","1",true
-"frozen_data_regression","2018:DEM|NOVO|PRB|PSD|PSL gross A closure","5.916863899126858","5.916863899126858",true
-"frozen_data_regression","2018:DEM|NOVO|PRB|PSD|PSL large-positive balance","1.3413346717144208","1.3413346717144208",true
+"frozen_data_regression","C2018-3d6dc0b0e630f95b3cc9 links","1","1",true
+"frozen_data_regression","C2018-3d6dc0b0e630f95b3cc9 gross A closure","5.916863899126858","5.916863899126858",true
+"frozen_data_regression","C2018-3d6dc0b0e630f95b3cc9 large-positive balance","1.3413346717144208","1.3413346717144208",true
 "frozen_data_regression","2018/2022.7 linked A","5.916863899126858","5.916863899126858",true
 "frozen_data_regression","2018/2022.7 linked B","-6.913575885456771","-6.913575885456771",true
-"frozen_data_regression","2022:MDB|PCdoB|PDT|PSB|PSD|PSOL|PT|REDE|UNIÃO links","1","1",true
-"frozen_data_regression","2022:MDB|PCdoB|PDT|PSB|PSD|PSOL|PT|REDE|UNIÃO gross A closure","13.196247377886202","13.196247377886202",true
-"frozen_data_regression","2022:MDB|PCdoB|PDT|PSB|PSD|PSOL|PT|REDE|UNIÃO large-positive balance","13.01996556652768","13.019965566527683",true
+"frozen_data_regression","C2022-259238bde0cf94feb03e links","1","1",true
+"frozen_data_regression","C2022-259238bde0cf94feb03e gross A closure","13.196247377886202","13.196247377886202",true
+"frozen_data_regression","C2022-259238bde0cf94feb03e large-positive balance","13.01996556652768","13.019965566527683",true
 "frozen_data_regression","2022/2023.1 linked A","13.196247377886202","13.196247377886202",true
 "frozen_data_regression","2022/2023.1 linked B","-0.9919087234670415","-0.9919087234670415",true
-"frozen_data_regression","2022:MDB|PCdoB|PDT|PP|PSB|PSD|PSOL|PT|REDE|REPUBLICANOS|UNIÃO links","5","5",true
-"frozen_data_regression","2022:MDB|PCdoB|PDT|PP|PSB|PSD|PSOL|PT|REDE|REPUBLICANOS|UNIÃO gross A closure","17.64430125426816","17.64430125426816",true
-"frozen_data_regression","2022:MDB|PCdoB|PDT|PP|PSB|PSD|PSOL|PT|REDE|REPUBLICANOS|UNIÃO large-positive balance","17.46801944290964","17.46801944290964",true
+"frozen_data_regression","C2022-d7aa8241899cd03a076c links","5","5",true
+"frozen_data_regression","C2022-d7aa8241899cd03a076c gross A closure","17.64430125426816","17.64430125426816",true
+"frozen_data_regression","C2022-d7aa8241899cd03a076c large-positive balance","17.46801944290964","17.46801944290964",true
 "frozen_data_regression","2022/2023.2 linked A","17.64430125426816","17.64430125426816",true
 "frozen_data_regression","2022/2023.2 linked B","5.1174142827201985","5.1174142827201985",true
 "frozen_data_regression","2022/2023.4 linked A","17.64430125426816","17.64430125426816",true
@@ -563,25 +563,25 @@
 "frozen_data_regression","2022/2025.2 linked B","5.1174142827201985","5.1174142827201985",true
 "frozen_data_regression","2022/2025.4 linked A","17.64430125426816","17.64430125426816",true
 "frozen_data_regression","2022/2025.4 linked B","5.1174142827201985","5.1174142827201985",true
-"frozen_data_regression","2022:MDB|PCdoB|PDT|PP|PSB|PSD|PSDB|PSOL|PT|REDE|REPUBLICANOS|UNIÃO links","2","2",true
-"frozen_data_regression","2022:MDB|PCdoB|PDT|PP|PSB|PSD|PSDB|PSOL|PT|REDE|REPUBLICANOS|UNIÃO gross A closure","15.664808130329527","15.664808130329527",true
-"frozen_data_regression","2022:MDB|PCdoB|PDT|PP|PSB|PSD|PSDB|PSOL|PT|REDE|REPUBLICANOS|UNIÃO large-positive balance","15.488526318971006","15.488526318971008",true
+"frozen_data_regression","C2022-3c430566b3ad1a9e9050 links","2","2",true
+"frozen_data_regression","C2022-3c430566b3ad1a9e9050 gross A closure","15.664808130329527","15.664808130329527",true
+"frozen_data_regression","C2022-3c430566b3ad1a9e9050 large-positive balance","15.488526318971006","15.488526318971008",true
 "frozen_data_regression","2022/2023.3 linked A","15.664808130329527","15.664808130329527",true
 "frozen_data_regression","2022/2023.3 linked B","4.581928278121978","4.581928278121978",true
 "frozen_data_regression","2022/2024.1 linked A","15.664808130329527","15.664808130329527",true
 "frozen_data_regression","2022/2024.1 linked B","4.581928278121978","4.581928278121978",true
-"frozen_data_regression","2022:MDB|PCdoB|PDT|PP|PSB|PSD|PSDB|PSOL|PT|REDE|REPUBLICANOS links","3","3",true
-"frozen_data_regression","2022:MDB|PCdoB|PDT|PP|PSB|PSD|PSDB|PSOL|PT|REDE|REPUBLICANOS gross A closure","6.308145812537818","6.308145812537819",true
-"frozen_data_regression","2022:MDB|PCdoB|PDT|PP|PSB|PSD|PSDB|PSOL|PT|REDE|REPUBLICANOS large-positive balance","6.131864001179297","6.131864001179299",true
+"frozen_data_regression","C2022-42b85b2eb82566171721 links","3","3",true
+"frozen_data_regression","C2022-42b85b2eb82566171721 gross A closure","6.308145812537818","6.308145812537819",true
+"frozen_data_regression","C2022-42b85b2eb82566171721 large-positive balance","6.131864001179297","6.131864001179299",true
 "frozen_data_regression","2022/2025.1 linked A","6.308145812537819","6.308145812537819",true
 "frozen_data_regression","2022/2025.1 linked B","2.8350270121558196","2.8350270121558196",true
 "frozen_data_regression","2022/2025.3 linked A","6.308145812537819","6.308145812537819",true
 "frozen_data_regression","2022/2025.3 linked B","2.8350270121558196","2.8350270121558196",true
 "frozen_data_regression","2022/2025.6 linked A","6.308145812537819","6.308145812537819",true
 "frozen_data_regression","2022/2025.6 linked B","2.8350270121558196","2.8350270121558196",true
-"frozen_data_regression","2022:MDB|PCdoB|PDT|PP|PSB|PSD|PSOL|PT|REDE|REPUBLICANOS links","2","2",true
-"frozen_data_regression","2022:MDB|PCdoB|PDT|PP|PSB|PSD|PSOL|PT|REDE|REPUBLICANOS gross A closure","8.287638936476451","8.287638936476451",true
-"frozen_data_regression","2022:MDB|PCdoB|PDT|PP|PSB|PSD|PSOL|PT|REDE|REPUBLICANOS large-positive balance","8.11135712511793","8.111357125117932",true
+"frozen_data_regression","C2022-3efc1198104236b10e04 links","2","2",true
+"frozen_data_regression","C2022-3efc1198104236b10e04 gross A closure","8.287638936476451","8.287638936476451",true
+"frozen_data_regression","C2022-3efc1198104236b10e04 large-positive balance","8.11135712511793","8.111357125117932",true
 "frozen_data_regression","2022/2025.5 linked A","8.287638936476451","8.287638936476451",true
 "frozen_data_regression","2022/2025.5 linked B","3.3705130167540402","3.3705130167540402",true
 "frozen_data_regression","2022/2025.7 linked A","8.287638936476451","8.287638936476451",true

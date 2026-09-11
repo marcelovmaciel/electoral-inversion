@@ -59,6 +59,7 @@ def read(path):
 
 
 def truth(value):
+    value = str(value).lower()
     require(value in ("true", "false"), f"invalid boolean {value!r}")
     return value == "true"
 
@@ -240,8 +241,8 @@ def validate_registry(data):
             minimal = int(r["seats"]) >= 257 and not any(w < member_set for w in winners)
             exact(minimal, truth(r["minimal_seat_majority"]), "proper-set minimality")
     # Consume the canonical cabinet observations without a second deduplication.
-    cabinet_source = read(PAPER / "raw/cabinet_coalition_metrics.csv")
-    require(len({(r["election_year"], r["period"]) for r in cabinet_source}) == len(cabinet_source), "unique cabinet observation registry")
+    cabinet_source = read(PAPER / "raw/cabinet_party_sets.csv")
+    require(len({r["cabinet_party_set_id"] for r in cabinet_source}) == len(cabinet_source), "unique cabinet observation registry")
     cabinets = []
     for source in cabinet_source:
         year = int(source["election_year"])
@@ -260,12 +261,12 @@ def validate_registry(data):
     for source in cabinets:
         year = int(source["election_year"])
         period = source["period"]
-        cases.append(dict(inversion_id=f"cabinet/{year}/{period}", election=year,
+        cases.append(dict(inversion_id=f"cabinet/{source['cabinet_party_set_id']}", election=year,
                           domain="cabinet", k="", period=period,
-                          period_ranges=f"{period}: {source['period_start']} to {source['period_end']}",
+                          period_ranges=source["observation_intervals"],
                           period_days=int(source["period_days"]), source_periods=source["source_periods"],
                           coalition="Cabinet " + period, members=parties(source["parties"]), omitted_party="",
-                          source_coalition_id=f"{year}/{period}",
+                          source_coalition_id=source["cabinet_party_set_id"],
                           is_main_focal=True, is_strongest_k1=False))
     for r in all_domains:
         if not truth(r["minimal_inversion"]):
@@ -299,7 +300,7 @@ def validate_registry(data):
                 close(c[comp], r[comp], c["inversion_id"] + ": prior " + comp, "baseline")
     CHECKS["domain_rows"] = len(all_domains)
     CHECKS["unique_domain_configurations"] = len(cached)
-    CHECKS["cabinet_periods"] = len(cabinet_source)
+    CHECKS["cabinet_party_sets"] = len(cabinet_source)
     return cases
 
 
@@ -431,7 +432,7 @@ def assign_codes(cases):
     for c in cases:
         if c["domain"] == "cabinet":
             cabinet_counts[c["election"]] += 1
-            c["report_code"] = f"C{str(c['election'])[2:]}-{cabinet_counts[c['election']]:02d}"
+            c["report_code"] = c["period"]
             continue
         c["report_code"] = mapping.get((c["election"], c["coalition"]),
                                       f"G{str(c['election'])[2:]}" if c["is_strongest_k1"] else "")
@@ -448,15 +449,19 @@ def report(data, cases, member_rows, provenance_digest):
     unknown_days = sum(int(r["days"]) for r in unidentified)
     out = ["# Party components and coalition inversions", "## Scope and definitions"]
     put = out.append
-    put(f"The current sample contains {len(cabinets)} identified cabinet inversion periods, "
+    put(f"The current sample contains {len(cabinets)} inverted cabinet party sets, "
         f"{len(k0)} minimal connected (k=0) ideological inversions and {len(k1)} at-most-one-gap (k=1) minimal inversions. "
         "This standalone diagnostic retains its original **all-party ideological sensitivity**, including zero-seat parties. "
         "The manuscript's primary seat-winning ideological baseline is generated separately and is unchanged.")
+    daily = read(ROOT / "generated/cabinet_v5/cabinet_analysis_daily.csv")
+    provisional_days = sum(truth(r["provisional_day"]) for r in daily)
+    inversion_days = sum(truth(r["inversion_status"]) for r in daily)
     put(f"Cabinet history comes from the pinned contemporaneous-affiliation release. "
-        f"There are {CHECKS['cabinet_periods']} identified reporting periods; {len(unidentified)} historical intervals "
-        f"covering {unknown_days} of 4,096 calendar days have an unidentified full cabinet set and unavailable inversion status. "
-        "The confirmed core of such a period is never treated as a complete coalition. "
-        "Convention-coded date boundaries and their local sensitivity remain explicit in the release and the cabinet date-sensitivity CSVs.")
+        f"There are {CHECKS['cabinet_party_sets']} distinct election-year cabinet party sets, "
+        f"observed on {len(daily):,} dates ({len(daily)-provisional_days:,} established and {provisional_days} provisional). "
+        f"The inverted sets occupy {inversion_days} days. "
+        "UNKNOWN historical affiliations remain UNKNOWN; provisional primary assumptions add no party. "
+        "Set counts are unweighted. Actual intervals, evidence status and date-level sensitivities remain linked separately.")
     put(r"For each party, $q_i=S v_i/V$, $d_i=s_i-q_i$, $R_i=s_i/q_i$, "
         r"$A_i=\sum_d(s_{id}-S_dv_{id}/V_d)$ and $B_i=\sum_d S_dv_{id}/V_d-Sv_i/V$. "
         r"All components are in seats. The exact checks require $d_i=A_i+B_i$, "
@@ -469,7 +474,7 @@ def report(data, cases, member_rows, provenance_digest):
     put(f"The maintained Julia decomposition supplies the complete district-party panel. "
         f"This diagnostic independently sums integer district votes/seats with rational arithmetic, checks every selected member vector "
         f"and deletion, and verifies domain-relative minimality against all winning proper subsets. "
-        f"All {CHECKS['domain_rows']:,} all-party k=0/k=1 registry rows and {CHECKS['cabinet_periods']} identified cabinet observations passed. "
+        f"All {CHECKS['domain_rows']:,} all-party k=0/k=1 registry rows and {CHECKS['cabinet_party_sets']} cabinet party sets passed. "
         f"The maximum saved-accounting discrepancy is {MAX_RESIDUAL['baseline']:.2e}; the maximum serialized closure discrepancy is "
         f"{MAX_RESIDUAL['csv']:.2e}, against an absolute tolerance of 1e-10 and zero relative tolerance.")
     put(f"Input/code provenance SHA-256: `{provenance_digest}`. The manuscript source is preserved at SHA-256 `{hash_file(MANUSCRIPT)}`.")
@@ -625,13 +630,14 @@ def main():
         export_and_check(stage,data,cases,members)
         inputs=[HERE/'party_AB_diagnostic.py',HERE/'export_party_AB_panel.jl',HERE/'CoalitionDecomposition.jl',
                 DECOMP/'raw/party_accounting_all_years.csv',PAPER/'raw/party_seat_differentials_all_years.csv',
-                PAPER/'raw/ideology_k_gap_coalitions_all_parties.csv',PAPER/'raw/cabinet_coalition_metrics.csv',
+                PAPER/'raw/ideology_k_gap_coalitions_all_parties.csv',PAPER/'raw/cabinet_party_sets.csv',
                 PAPER/'all_parties/raw/accounting_all_inversion_decomposition.csv',PAPER/'tables/ideology_k_gap_summary_all_parties.csv']
         inputs += [ROOT/f'data/raw/electionsBR/{year}/{name}.csv' for year in YEARS for name in ('party_mun_zone','candidate','seats')]
         inputs += list((ROOT/'processing/Processing/data').glob('*.csv'))
         inputs += list((ROOT/'processing/Processing/src').glob('*.jl'))
         inputs += [PAPER/f'raw/ideology_order_{year}_all_parties.csv' for year in YEARS]
         inputs += [PAPER/'raw/cabinet_calendar_status.csv', PAPER/'raw/cabinet_unidentified_intervals.csv',
+                   ROOT/'generated/cabinet_v5/cabinet_analysis_daily.csv',
                    DECOMP/'raw/party_district_accounting_all_years.csv',
                    ROOT/'processing/Processing/data/cabinet_release_pin.json']
         digest=hashlib.sha256(''.join(f'{p.relative_to(ROOT)} {hash_file(p)}\n' for p in sorted(inputs)).encode()).hexdigest()

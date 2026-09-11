@@ -11,7 +11,7 @@ from cabinet_v5 import *
 
 REFERENCE=DATA/'cabinet_v5_comparison_baseline/noncabinet_signatures.json'
 BEFORE=ROOT/'audit/cabinet_v5_before'
-CABINET_FIELDS={'ever_in_cabinet','cabinet_observation_count','cabinet_source_period_count','cabinet_days',
+CABINET_FIELDS={'cabinet_distinct_set_count','cabinet_analytical_period_count','ever_in_cabinet','cabinet_observation_count','cabinet_source_period_count','cabinet_days',
     'identified_cabinet_days','calendar_cabinet_days','unidentified_cabinet_days','cabinet_participation_status',
     'established_cabinet_days','provisional_cabinet_days','primary_covered_cabinet_days'}
 ORDINALS={'focal_order','registry_order','case_order'}

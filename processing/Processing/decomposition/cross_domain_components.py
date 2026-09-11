@@ -299,20 +299,8 @@ def build_cross_domain_components(artifact_root: Path, domains=("cabinet", "k=0"
     unidentified_intervals = []
     bounded_date_periods = 0
     if "cabinet" in domains:
-        source = audit.read(artifact_root / "raw/cabinet_coalition_metrics.csv")
-        canonical = Path(__file__).resolve().parents[3] / "generated/cabinet_v5/cabinet_analysis_periods.csv"
-        production = Path(__file__).resolve().parents[3] / "processing/Processing/output/paper"
-        if artifact_root.resolve() == production and canonical.exists():
-            canonical_rows = audit.read(canonical)
-            if canonical_rows and "q_C" in canonical_rows[0]:
-                source = [dict(r, parties=r["election_party_set"].replace(";", ", "),
-                    period_start=r["start_inclusive"],
-                    period_end=(date.fromisoformat(r["end_exclusive"])-timedelta(days=1)).isoformat(),
-                    period_days=r["days"],source_periods=json.dumps(r["source_period_ids"].split(";")),
-                    quota=r["q_C"],seat_diff=r["d_C"],representation_ratio=r["R_C"],
-                    coalition_inversion=r["inversion_status"],composition_status=r["historical_status"])
-                    for r in canonical_rows]
-
+        # Sole analytical registry view, generated from the shared daily set identity.
+        source = audit.read(artifact_root / "raw/cabinet_party_sets.csv")
         unavailable_path = artifact_root / "raw/cabinet_unidentified_intervals.csv"
         if unavailable_path.exists():
             unidentified_intervals = audit.read(unavailable_path)
@@ -324,9 +312,9 @@ def build_cross_domain_components(artifact_root: Path, domains=("cabinet", "k=0"
         for row in source:
             audit.require(row.get("composition_status", "identified") != "unidentified",
                           "unidentified core cannot be supplied as a full cabinet set")
-        audit.exact(len({(r["election_year"], r["period"]) for r in source}), len(source),
+        audit.exact(len({r["cabinet_party_set_id"] for r in source}), len(source),
                     "unique cabinet observations")
-        chronological_periods = len(source)
+        chronological_periods = sum(int(r["analytical_period_count"]) for r in source)
         for row in sorted(source, key=lambda r: (int(r["election_year"]), r["period_start"])):
             year = int(row["election_year"])
             names = tuple(sorted(audit.parties(row["parties"])))
@@ -340,12 +328,12 @@ def build_cross_domain_components(artifact_root: Path, domains=("cabinet", "k=0"
                 else:
                     audit.close(values[actual], row[column], "cabinet registry " + actual, "cabinet_regression")
             period = row["period"]
-            rows.append(dict(domain="cabinet", ideological_universe="not_applicable", election=year, configuration_id=f"cabinet/{year}/{period}",
-                             display_label=period, cabinet_periods_if_applicable=period,
+            rows.append(dict(domain="cabinet", ideological_universe="not_applicable", election=year, configuration_id=f"cabinet/{row['cabinet_party_set_id']}",
+                             display_label=row["display_label"], cabinet_periods_if_applicable=row["analytical_period_labels"],
                              source_periods=row["source_periods"], period_start=row["period_start"],
                              period_end=row["period_end"], period_days=int(row["period_days"]),
-                             party_set="; ".join(names), repeated_vector_count=1, start_party="", end_party="",
-                             omitted_party="", k="", source_coalition_id=period, party_count=len(names),
+                             party_set="; ".join(names), repeated_vector_count=int(row["analytical_period_count"]), start_party="", end_party="",
+                             omitted_party="", k="", source_coalition_id=row["cabinet_party_set_id"], party_count=len(names),
                              is_strongest_inversion=False, **values))
     requested_k = {int(domain[-1]) for domain in domains if domain.startswith("k=")}
     if requested_k:

@@ -21,7 +21,7 @@ DOMAINS = ('cabinet', 'k=0')
 
 
 def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
-    """Draw cabinet periods and all exact-connected minimal winners."""
+    """Draw distinct cabinet party sets and all exact-connected minimal winners."""
     validation = data.attrs.get("validation", {})
     unavailable_count = int(validation.get("unidentified_periods", 0))
     unavailable_days = int(validation.get("unidentified_days", 0))
@@ -53,7 +53,7 @@ def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
         'pdf.fonttype': 42, 'ps.fonttype': 42,
     }):
         fig, axes = plt.subplots(1, 2, figsize=(7.6, 4.5), sharex=True, sharey=True)
-        titles = ('A  Observed cabinet periods',
+        titles = ('A  Cabinet party sets',
                   'B  Minimal connected winning coalitions')
         for ax, domain, title in zip(axes, DOMAINS, titles):
             group = data.loc[data.domain == domain]
@@ -77,7 +77,7 @@ def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
             ax.yaxis.set_major_locator(MultipleLocator(2))
             ax.tick_params(labelsize=9)
             ax.set_title(title, fontsize=10, loc='left', pad=38 if unavailable_count else 29)
-            unit = 'periods' if domain == 'cabinet' else 'configurations'
+            unit = 'party sets' if domain == 'cabinet' else 'configurations'
             count_label = f'{len(group)} {unit}; {int(group.inversion.sum())} inversions'
             if zero_quota:
                 count_label += f'\n{zero_quota} zero-quota sets (normalized coordinates unavailable)'
@@ -115,11 +115,7 @@ def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
                 position = (min(xlim[1] - 3, row.A_pct_quota + 2.5), row.B_pct_quota - 1.7)
             label(axes[1], row, text, position)
 
-        bounded_dates = int(validation.get('bounded_date_periods', 0)) > 0
-        fig.supxlabel('Within-district contribution (% of coalition quota)', y=.16 if bounded_dates else .125, fontsize=10)
-        if bounded_dates:
-            fig.text(.53, .105, 'Cabinet dates include bounded conventions; local date sensitivity is reported separately.',
-                     ha='center', fontsize=7)
+        fig.supxlabel('Within-district contribution (% of coalition quota)', y=.125, fontsize=10)
         fig.supylabel('Between-district contribution (% of coalition quota)', x=.016, fontsize=10)
         handles = [Line2D([], [], ls='', marker='o', mfc=COLORS[year], mec='none',
                           label=str(year), markersize=6) for year in YEARS]
@@ -131,7 +127,7 @@ def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
         ])
         fig.legend(handles=handles, ncol=5, loc='lower center', bbox_to_anchor=(.53, .015),
                    frameon=False, handlelength=1.5, columnspacing=1.1, fontsize=9.5)
-        fig.subplots_adjust(left=.105, right=.99, bottom=.29 if bounded_dates else .25, top=.77 if unavailable_count else .80, wspace=.14)
+        fig.subplots_adjust(left=.105, right=.99, bottom=.25, top=.77 if unavailable_count else .80, wspace=.14)
         output.parent.mkdir(parents=True, exist_ok=True)
         fig.savefig(output, facecolor='white', metadata={'CreationDate': None, 'ModDate': None})
         plt.close(fig)

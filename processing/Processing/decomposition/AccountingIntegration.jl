@@ -1407,7 +1407,7 @@ function focal_case_latex(data::DataFrame)
         "\\bottomrule",
         "\\end{tabularx}",
         "\\begin{minipage}{0.96\\linewidth}",
-        "\\footnotesize Notes: Cabinet rows include every identified period satisfying the inversion criterion; recurring vectors retain their period identities. The ideological rows are focal endpoint-minimal cases; all minimal connected ideological inversions are reported in Table~\\ref{tab:minimal-intervals}. The identities are descriptive, not causal.",
+        "\\footnotesize Notes: Cabinet rows include each distinct election-year party set satisfying the inversion criterion once; occurrence linkage is separate. The ideological rows are focal endpoint-minimal cases; all minimal connected ideological inversions are reported in Table~\\ref{tab:minimal-intervals}. The identities are descriptive, not causal.",
         "\\end{minipage}",
         "\\end{table}",
     ])

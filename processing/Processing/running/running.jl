@@ -533,28 +533,6 @@ function validate_cabinet_composition_table!(display_df, source_df)
     return true
 end
 
-function cabinet_inversion_tabular_latex(df)
-    io = IOBuffer()
-    println(io, raw"\begin{tabularx}{\textwidth}{@{}llrrrrrr>{\raggedright\arraybackslash}X@{}}")
-    println(io, raw"\toprule")
-    println(io, "Election & Period & Days & Vote \\% & Seats & Quota \\(q_C\\) & Diff. \\(d_C\\) & Req. \\(r_C\\) & Parties " * repeat("\\", 2))
-    println(io, raw"\midrule")
-    nrow(df)==0 && println(io, raw"\multicolumn{9}{l}{No identified cabinet inversion periods.}\\")
-    for row in eachrow(df)
-        println(
-            io,
-            "$(row.election_year) & $(latex_escape(row.period)) & $(row.period_days) & " *
-            "$(fmt2(row.vote_share_pct)) & $(row.seats) & $(fmt2(row.quota_display)) & " *
-            "$(fmt2(row.seat_diff_display)) & $(fmt2(row.required_diff_display)) & " *
-            "$(latex_escape(row.parties)) \\\\",
-        )
-    end
-    println(io, raw"\bottomrule")
-    println(io, raw"\end{tabularx}")
-    println(io, "\\par\\smallskip\\footnotesize Identified complete sets only; $(sum(cabinet_unidentified.days)) of 4096 days have unavailable full composition.\\par")
-    return String(take!(io))
-end
-
 function minimal_inversion_tabular_latex(df)
     io = IOBuffer()
     println(io, raw"\begin{tabularx}{\textwidth}{@{}lllrrrrrr>{\raggedright\arraybackslash}X@{}}")
@@ -721,52 +699,6 @@ function ideology_order_appendix_latex(df)
     end
     println(io, raw"\bottomrule")
     println(io, raw"\end{longtable}")
-    return String(take!(io))
-end
-
-function cabinet_composition_appendix_latex(df)
-    io = IOBuffer()
-    println(io, raw"\begin{landscape}")
-    println(io, raw"\scriptsize")
-    println(io, raw"\setlength{\tabcolsep}{0.7pt}")
-    println(io, raw"\renewcommand{\arraystretch}{1.00}")
-    println(io)
-    println(io, raw"\begin{longtable}{|l|l|l|r|r|r|r|l|L{0.28\linewidth}|L{0.105\linewidth}|L{0.105\linewidth}|}")
-    println(io, "\\caption{Cabinet-period composition and transitions after cabinet-label harmonization and election-year label translation}\\label{tab:full-cabinet-composition}\\\\")
-    println(io, raw"\hline")
-    println(io, "Election & Period & Dates & Days & Vote \\% & Seats & Seat diff. & Status & Composition & Entered & Left \\\\")
-    println(io, raw"\hline")
-    println(io, raw"\endfirsthead")
-    println(io)
-    println(io, raw"\hline")
-    println(io, "Election & Period & Dates & Days & Vote \\% & Seats & Seat diff. & Status & Composition & Entered & Left \\\\")
-    println(io, raw"\hline")
-    println(io, raw"\endhead")
-    println(io)
-    for (row_index, row) in enumerate(eachrow(df))
-        dates = "$(csv_text(row.period_start))--$(csv_text(row.period_end))"
-        status = replace(csv_text(row.majority_status), "_" => " ")
-        println(
-            io,
-            "$(row.election_year) & $(latex_escape(row.period)) & $(latex_escape(dates)) & " *
-            "$(row.period_days) & $(ismissing(row.vote_share_pct) ? "--" : fmt2(row.vote_share_pct)) & $(ismissing(row.seats) ? "--" : row.seats) & " *
-            "$(ismissing(row.seat_diff_display) ? "--" : fmt2(row.seat_diff_display)) & $(latex_escape(status)) & " *
-            "$(latex_escape(row.parties)) & $(latex_escape(csv_text(row.entered_parties))) & " *
-            "$(latex_escape(csv_text(row.left_parties))) \\\\",
-        )
-        println(io, raw"\hline")
-        if row_index < nrow(df) && Int(df.election_year[row_index + 1]) != Int(row.election_year)
-            println(io)
-        end
-    end
-    println(io)
-    println(io, raw"\end{longtable}")
-    println(io, raw"\begin{flushleft}")
-    println(io, raw"\scriptsize Notes: Composition, Entered, and Left are reported using the election-year party")
-    println(io, raw"labels used for vote-seat accounting. Period windows are constructed from the")
-    println(io, raw"contemporaneous affiliations in the pinned cabinet release. The release chronology retains contemporaneous party names and the underlying historical compositions, including every source period ID; the accounting column here displays election-party labels. Unidentified sets have unavailable metrics; they remain in the full calendar denominator. Adjacent historical periods with the same election-party set may be combined within an administration. Source period IDs are retained in the CSV. Entered/Left are blank at administration boundaries and across unidentified gaps.")
-    println(io, raw"\end{flushleft}")
-    println(io, raw"\end{landscape}")
     return String(take!(io))
 end
 
@@ -1452,7 +1384,7 @@ for year in analysis_years
     sum(before.period_days) == sum(after.period_days) || error("Cabinet coalescing changed covered days for $(year).")
     push!(coalescing_audit, (election_year = year, observations_before = nrow(before), observations_after = nrow(after), inversions_before = count(before.coalition_inversion), inversions_after = count(after.coalition_inversion), inversion_days_before = days_before, inversion_days_after = days_after))
 end
-write_artifact_csv(joinpath(diagnostics_dir, "cabinet_period_coalescing.csv"), DataFrame(coalescing_audit), "diagnostic", "Cabinet observation counts and unchanged inversion days after adjacent equal-party-set coalescing; source IDs remain in source_periods.")
+write_artifact_csv(joinpath(diagnostics_dir, "cabinet_period_coalescing.csv"), DataFrame(coalescing_audit), "diagnostic", "Chronological period counts and unchanged inversion days after adjacent equal-party-set coalescing; source IDs remain in source_periods.")
 validate_coalition_accounting!(observed_cabinet_coalitions_2014, party_seat_differentials_2014; domain = "cabinet", id_columns = (:election_year, :period))
 validate_coalition_accounting!(observed_cabinet_coalitions_2018, party_seat_differentials_2018; domain = "cabinet", id_columns = (:election_year, :period))
 validate_coalition_accounting!(observed_cabinet_coalitions_2022, party_seat_differentials_2022; domain = "cabinet", id_columns = (:election_year, :period))
@@ -1490,14 +1422,22 @@ write_artifact_csv(joinpath(raw_dir, "observed_cabinet_coalitions_2014.csv"), ob
 write_artifact_csv(joinpath(raw_dir, "observed_cabinet_coalitions_2018.csv"), observed_cabinet_coalitions_2018, "raw", "Observed cabinet-period coalition metrics for the 2018 election.")
 write_artifact_csv(joinpath(raw_dir, "observed_cabinet_coalitions_2022.csv"), observed_cabinet_coalitions_2022, "raw", "Observed cabinet-period coalition metrics for the 2022 election.")
 write_artifact_csv(joinpath(raw_dir, "cabinet_coalition_metrics.csv"), observed_cabinet_coalitions_all_years, "raw", "Full-precision observed cabinet-period coalition accounting metrics for all elections.")
+# Period files above are chronology products. Every analytical consumer below
+# receives the same membership registry, including nonconsecutive recurrences.
+cabinet_chronology = observed_cabinet_coalitions_all_years
+observed_cabinet_coalitions_all_years = Processing.cabinet_set_view(cabinet_chronology)
+observed_cabinet_inversions_only = observed_cabinet_coalitions_all_years[observed_cabinet_coalitions_all_years.coalition_inversion, :]
+cabinet_coalition_focal_cases = build_cabinet_focal_cases(observed_cabinet_coalitions_all_years)
+write_artifact_csv(joinpath(raw_dir, "cabinet_party_sets.csv"), observed_cabinet_coalitions_all_years, "raw", "Shared distinct-set registry view; period is a legacy display-label alias and dates are extrema, not a continuous interval.")
 write_artifact_csv(joinpath(raw_dir, "cabinet_coalition_focal_cases.csv"), cabinet_coalition_focal_cases, "raw", "All observed cabinet inversions, with Julia-generated display values.")
-write_artifact_csv(joinpath(raw_dir, "observed_cabinet_inversions_only.csv"), observed_cabinet_inversions_only, "raw", "Observed cabinet-period coalition inversions only.")
+write_artifact_csv(joinpath(raw_dir, "observed_cabinet_inversions_only.csv"), observed_cabinet_inversions_only, "raw", "Distinct inverted cabinet party sets only.")
 write_artifact_csv(joinpath(raw_dir, "observed_cabinet_duration_summary.csv"), observed_cabinet_duration_summary, "raw", "Observed cabinet coverage and inversion duration summary.")
 
 function observed_display_table(df)
     return select(
         df,
         :election_year,
+        :cabinet_party_set_id, :display_label, :canonical_membership,
         :period,
         :source_periods,
         :period_start,
@@ -1519,7 +1459,7 @@ function observed_display_table(df)
 end
 
 function cabinet_composition_table(df)
-    out = select(copy(df), :election_year, :period, :source_periods, :period_start, :period_end,
+    out = select(copy(df), :election_year, :cabinet_party_set_id, :display_label, :canonical_membership, :period, :source_periods, :period_start, :period_end,
         :period_days, :vote_share => ByRow(pct) => :vote_share_pct, :seats,
         :seat_diff => ByRow(display_round) => :seat_diff_display, :majority_status, :parties,
         :administration_id, :composition_status)
@@ -1534,7 +1474,7 @@ function cabinet_composition_table(df)
     entered=String[]; left=String[]; previous=nothing
     for row in eachrow(out)
         known=row.majority_status != "unidentified"
-        adjacent=previous !== nothing && previous.administration_id==row.administration_id &&
+        adjacent=false && previous !== nothing && previous.administration_id==row.administration_id &&
             previous.period_end+Day(1)==row.period_start && previous.majority_status != "unidentified" && known
         current=party_set_from_cell(row.parties)
         push!(entered, adjacent ? join(sort(collect(setdiff(current,party_set_from_cell(previous.parties)))), ", ") : "")
@@ -1548,8 +1488,8 @@ end
 table_03_observed_cabinet_coalitions = observed_display_table(observed_cabinet_coalitions_all_years)
 table_04_observed_cabinet_inversions_only = observed_display_table(observed_cabinet_inversions_only)
 table_appendix_cabinet_composition = cabinet_composition_table(observed_cabinet_coalitions_all_years)
-write_artifact_csv(joinpath(tables_dir, "table_03_observed_cabinet_coalitions.csv"), table_03_observed_cabinet_coalitions, "table", "Observed cabinet-period coalitions with rounded display columns.")
-cabinet_composition_csv_path = write_artifact_csv(joinpath(tables_dir, "table_appendix_cabinet_composition.csv"), table_appendix_cabinet_composition, "table", "Full cabinet-period composition and party transitions shown in the manuscript appendix.")
+write_artifact_csv(joinpath(tables_dir, "table_03_observed_cabinet_coalitions.csv"), table_03_observed_cabinet_coalitions, "table", "Distinct cabinet party sets with rounded display columns.")
+cabinet_composition_csv_path = write_artifact_csv(joinpath(tables_dir, "table_appendix_cabinet_composition.csv"), table_appendix_cabinet_composition, "table", "Distinct cabinet party sets; full occurrence linkage is separate.")
 cabinet_composition_from_csv = CSV.read(cabinet_composition_csv_path, DataFrame; types=Dict(:period=>String))
 validate_csv_roundtrip!(
     cabinet_composition_from_csv,
@@ -1562,24 +1502,14 @@ validate_csv_roundtrip!(
     "Cabinet-composition appendix table",
 )
 validate_cabinet_composition_table!(cabinet_composition_from_csv, observed_cabinet_coalitions_all_years)
-cabinet_composition_latex_path = write_artifact_text(
-    joinpath(latex_dir, "table_appendix_cabinet_composition.tex"),
-    cabinet_composition_appendix_latex(cabinet_composition_from_csv),
-    "latex",
-    "CSV-driven landscape longtable for the full cabinet-composition appendix.";
-    rows = nrow(cabinet_composition_from_csv),
-    columns = 11,
-)
-sync_review_latex_asset(cabinet_composition_latex_path)
-cabinet_inversion_table_csv_path = write_artifact_csv(joinpath(tables_dir, "table_04_observed_cabinet_inversions_only.csv"), table_04_observed_cabinet_inversions_only, "table", "Observed cabinet-period coalition inversions with rounded q_C, d_C, and r_C display columns.")
+# Cabinet TeX has one producer: cabinet_v5_assets.py after exact accounting.
+cabinet_inversion_table_csv_path = write_artifact_csv(joinpath(tables_dir, "table_04_observed_cabinet_inversions_only.csv"), table_04_observed_cabinet_inversions_only, "table", "Distinct inverted cabinet party sets with rounded electoral display columns.")
 cabinet_inversion_table_from_csv = CSV.read(cabinet_inversion_table_csv_path, DataFrame; types=Dict(:period=>String))
 validate_cabinet_inversion_table!(cabinet_inversion_table_from_csv, observed_cabinet_inversions_only)
-cabinet_inversion_tabular_path = write_artifact_text(joinpath(latex_dir, "table_02_cabinet_inversion_tabular.tex"), cabinet_inversion_tabular_latex(cabinet_inversion_table_from_csv), "latex", "CSV-driven tabularx for manuscript Table 2."; rows = nrow(cabinet_inversion_table_from_csv), columns = 9)
-sync_review_latex_asset(cabinet_inversion_tabular_path)
 all(cabinet_coalition_focal_cases.focal_case_type .== "observed_inversion") || error("Cabinet focal cases must all be identified observed inversions.")
 focal_keys = Set(zip(cabinet_coalition_focal_cases.election_year, cabinet_coalition_focal_cases.period))
 focal_keys == Set(zip(observed_cabinet_inversions_only.election_year, observed_cabinet_inversions_only.period)) || error("Cabinet focal selection mismatch")
-println("Identified cabinet inversion reporting periods: ", nrow(cabinet_coalition_focal_cases))
+println("Distinct inverted cabinet party sets: ", nrow(cabinet_coalition_focal_cases))
 
 # =============================================================================
 # BLOCK 10. IDEOLOGY ORDERING
@@ -2511,7 +2441,7 @@ end
 
 function add_closest_interval_fields!(row, prefix, closest)
     if closest === nothing
-        for suffix in ["start_party", "end_party", "n_parties", "vote_share_pct", "seats", "seat_diff", "status", "overlap_n", "jaccard", "cabinet_coverage", "parties"]
+        for suffix in ["start_party", "end_party", "n_parties", "vote_share", "vote_share_pct", "seats", "seat_diff", "status", "overlap_n", "jaccard", "cabinet_coverage", "parties"]
             row[Symbol(prefix, "_", suffix)] = suffix in ["start_party", "end_party", "status", "parties"] ? "" : missing
         end
         return row
@@ -2520,6 +2450,7 @@ function add_closest_interval_fields!(row, prefix, closest)
     row[Symbol(prefix, "_start_party")] = String(interval.start_party)
     row[Symbol(prefix, "_end_party")] = String(interval.end_party)
     row[Symbol(prefix, "_n_parties")] = Int(interval.interval_size)
+    row[Symbol(prefix, "_vote_share")] = Float64(interval.vote_share)
     row[Symbol(prefix, "_vote_share_pct")] = pct(interval.vote_share)
     row[Symbol(prefix, "_seats")] = Int(interval.seats)
     row[Symbol(prefix, "_seat_diff")] = Float64(interval.seat_diff)
@@ -2536,17 +2467,17 @@ end
 function cabinet_bridge_latex(df)
     io = IOBuffer()
     println(io, "\\begin{landscape}")
-    println(io, "\\tiny")
+    println(io, raw"\fontsize{8}{9}\selectfont")
     println(io, "\\setlength{\\tabcolsep}{1pt}")
     println(io, "\\renewcommand{\\arraystretch}{1.08}")
-    println(io, "\\begin{longtable}{|l|l|L{0.10\\linewidth}|L{0.13\\linewidth}|L{0.10\\linewidth}|L{0.04\\linewidth}|L{0.13\\linewidth}|L{0.13\\linewidth}|L{0.11\\linewidth}|}")
-    println(io, "\\caption{Identified cabinet coalitions and ideological intervals}\\label{tab:cabinet-interval-bridge}\\\\")
+    println(io, "\\begin{longtable}{|l|l|L{0.10\\linewidth}|L{0.13\\linewidth}|L{0.11\\linewidth}|L{0.04\\linewidth}|L{0.13\\linewidth}|L{0.13\\linewidth}|L{0.11\\linewidth}|}")
+    println(io, "\\caption{Cabinet party sets and ideological intervals}\\label{tab:cabinet-interval-bridge}\\\\")
     println(io, "\\hline")
-    println(io, "Election & Period & Cabinet & Ideology summary & Span & Gaps & Closure summary & Minimal winning & Minimal inversion \\\\")
+    println(io, "Election & Set & Cabinet & Ideology summary & Span & Gaps & Closure summary & Minimal winning & Minimal inversion \\\\")
     println(io, "\\hline")
     println(io, "\\endfirsthead")
     println(io, "\\hline")
-    println(io, "Election & Period & Cabinet & Ideology summary & Span & Gaps & Closure summary & Minimal winning & Minimal inversion \\\\")
+    println(io, "Election & Set & Cabinet & Ideology summary & Span & Gaps & Closure summary & Minimal winning & Minimal inversion \\\\")
     println(io, "\\hline")
     println(io, "\\endhead")
     for row in eachrow(df)
@@ -2559,7 +2490,7 @@ function cabinet_bridge_latex(df)
         println(io, "\\hline")
     end
     println(io, "\\end{longtable}")
-    println(io, "\\noindent Identified compositions only. $(sum(cabinet_unidentified.days)) of 4096 observation days have an unidentified full party set; these intervals are listed in the full composition appendix and have no point-coded ideological bridge.")
+    println(io, "\\noindent One row per distinct election-year cabinet party set. Set labels refer to Appendix~\\ref{app:composition}; full occurrence linkage is retained in the replication CSVs.")
     println(io, "\\end{landscape}")
     return String(take!(io))
 end
@@ -2631,6 +2562,9 @@ function build_cabinet_interval_bridge(cabinets, party_summary_all, ideology_ord
         row[:ideological_universe] = string(universe)
         row[:excluded_zero_seat_cabinet_parties] = join(sort(collect(excluded_zero_seat)), ", ")
         row[:cabinet_period] = String(cab.period)
+        row[:cabinet_party_set_id] = hasproperty(cab,:cabinet_party_set_id) ? cab.cabinet_party_set_id : missing
+        row[:display_label] = hasproperty(cab,:display_label) ? cab.display_label : missing
+        row[:canonical_membership] = join(sort(split_parties(cab.parties)), ";")
         row[:administration_id] = String(cab.administration_id)
         row[:source_periods] = String(cab.source_periods)
         row[:period_start] = cab.period_start
@@ -2682,8 +2616,8 @@ function build_cabinet_interval_bridge(cabinets, party_summary_all, ideology_ord
         add_closest_interval_fields!(row, "closest_mci", closest_mci)
 
         previous = get(previous_by_year, year, nothing)
-        adjacent = previous !== nothing && previous[:period_end] + Day(1) == cab.period_start && previous[:administration_id] == cab.administration_id
-        row[:transition_status] = adjacent ? "identified_adjacent" : previous === nothing ? "first_identified" : previous[:administration_id] != cab.administration_id ? "administration_boundary" : "unidentified_gap"
+        adjacent = !hasproperty(cab,:cabinet_party_set_id) && previous !== nothing && previous[:period_end] + Day(1) == cab.period_start && previous[:administration_id] == cab.administration_id
+        row[:transition_status] = hasproperty(cab,:cabinet_party_set_id) ? "not_applicable_set" : adjacent ? "identified_adjacent" : previous === nothing ? "first_identified" : previous[:administration_id] != cab.administration_id ? "administration_boundary" : "unidentified_gap"
         if !adjacent
             row[:delta_cabinet_mean_ideology_value_unweighted] = missing
             row[:delta_cabinet_mean_ideology_value_seat_weighted] = missing
@@ -2711,7 +2645,7 @@ function build_cabinet_interval_bridge(cabinets, party_summary_all, ideology_ord
     end
 
     ordered_cols = Symbol[
-        :election_year, :ideological_universe, :excluded_zero_seat_cabinet_parties, :cabinet_period, :administration_id, :transition_status, :source_periods, :period_start, :period_end, :days, :cabinet_status,
+        :election_year, :ideological_universe, :cabinet_party_set_id, :display_label, :canonical_membership, :excluded_zero_seat_cabinet_parties, :cabinet_period, :administration_id, :transition_status, :source_periods, :period_start, :period_end, :days, :cabinet_status,
         :cabinet_vote_share, :cabinet_vote_share_pct, :cabinet_seats, :cabinet_seat_diff,
         :cabinet_n_parties, :cabinet_parliamentary_n_parties, :cabinet_parties, :unmapped_cabinet_parties,
         :cabinet_min_ideology_index, :cabinet_max_ideology_index, :cabinet_leftmost_party,
@@ -2731,11 +2665,11 @@ function build_cabinet_interval_bridge(cabinets, party_summary_all, ideology_ord
     append!(ordered_cols, [Symbol("gap_", label_count_suffix(label), "_count") for label in labels])
     append!(ordered_cols, Symbol[
         :closest_mcw_start_party, :closest_mcw_end_party, :closest_mcw_n_parties,
-        :closest_mcw_vote_share_pct, :closest_mcw_seats, :closest_mcw_seat_diff,
+        :closest_mcw_vote_share, :closest_mcw_vote_share_pct, :closest_mcw_seats, :closest_mcw_seat_diff,
         :closest_mcw_status, :closest_mcw_overlap_n, :closest_mcw_jaccard,
         :closest_mcw_cabinet_coverage, :closest_mcw_parties,
         :closest_mci_start_party, :closest_mci_end_party, :closest_mci_n_parties,
-        :closest_mci_vote_share_pct, :closest_mci_seats, :closest_mci_seat_diff,
+        :closest_mci_vote_share, :closest_mci_vote_share_pct, :closest_mci_seats, :closest_mci_seat_diff,
         :closest_mci_overlap_n, :closest_mci_jaccard, :closest_mci_cabinet_coverage,
         :closest_mci_parties, :delta_cabinet_mean_ideology_value_unweighted,
         :delta_cabinet_mean_ideology_value_seat_weighted, :delta_cabinet_span_width,
@@ -2756,12 +2690,16 @@ party_summary_bridge_all = vcat(
     select(party_seat_differentials_2022, :election_year, :party, :votes, :vote_share, :seats, :seat_share, :quota, :seat_diff);
     cols = :union,
 )
+chronology_bridge, _ = build_cabinet_interval_bridge(cabinet_chronology, party_summary_bridge_all, ideology_order_all_years, ideological_intervals_all_years)
+write_artifact_csv(joinpath(diagnostics_dir,"cabinet_interval_chronology.csv"),chronology_bridge,"diagnostic","Temporal cabinet transitions only; analytical comparisons use the distinct-set bridge.")
 table_appendix_cabinet_interval_bridge, cabinet_bridge_unmapped_warnings = build_cabinet_interval_bridge(observed_cabinet_coalitions_all_years, party_summary_bridge_all, ideology_order_all_years, ideological_intervals_all_years)
 cabinet_bridge_csv_path = write_artifact_csv(joinpath(tables_dir, "table_appendix_cabinet_interval_bridge.csv"), table_appendix_cabinet_interval_bridge, "table", "Observed cabinet coalitions compared with connected ideological closures and nearest minimal connected intervals.")
 cabinet_bridge_latex_path = write_artifact_text(joinpath(latex_dir, "table_appendix_cabinet_interval_bridge.tex"), cabinet_bridge_latex(table_appendix_cabinet_interval_bridge), "latex", "Landscape longtable comparing observed cabinet coalitions with connected ideological intervals."; rows = nrow(table_appendix_cabinet_interval_bridge), columns = 11)
 sync_review_latex_asset(cabinet_bridge_latex_path)
 write_artifact_csv(joinpath(tables_dir, "cabinet_interval_bridge_unidentified.csv"), cabinet_unidentified, "table", "Cabinet intervals excluded from ideological bridge because their complete set is unidentified.")
 
+chronology_bridge_all_parties, _ = build_cabinet_interval_bridge(cabinet_chronology, party_summary_bridge_all, ideology_order_all_parties, ideological_intervals_all_parties; universe=:all_parties)
+write_artifact_csv(joinpath(diagnostics_dir,"cabinet_interval_chronology_all_parties.csv"),chronology_bridge_all_parties,"diagnostic","Temporal transitions in the all-party ideological universe; analytical comparisons use distinct sets.")
 robustness_bridge, robustness_bridge_warnings = build_cabinet_interval_bridge(observed_cabinet_coalitions_all_years, party_summary_bridge_all, ideology_order_all_parties, ideological_intervals_all_parties; universe=:all_parties)
 write_artifact_csv(joinpath(tables_dir, "table_appendix_cabinet_interval_bridge_all_parties.csv"), robustness_bridge, "table", "All-party robustness cabinet closures, gaps, and nearest intervals.")
 
@@ -2769,13 +2707,13 @@ cabinet_bridge_unmapped_count = sum(table_appendix_cabinet_interval_bridge.unmap
 closure_inversion_count = sum((table_appendix_cabinet_interval_bridge.closure_vote_share .< 0.5) .& (table_appendix_cabinet_interval_bridge.closure_seats .>= seat_majority_threshold))
 println("Cabinet-interval bridge CSV written: ", cabinet_bridge_csv_path)
 println("Cabinet-interval bridge LaTeX written: ", cabinet_bridge_latex_path)
-println("Cabinet periods processed: ", nrow(table_appendix_cabinet_interval_bridge))
-println("Cabinet periods with unmapped ideology parties: ", cabinet_bridge_unmapped_count)
+println("Cabinet party sets processed: ", nrow(table_appendix_cabinet_interval_bridge))
+println("Cabinet party sets with unmapped ideology parties: ", cabinet_bridge_unmapped_count)
 if !isempty(cabinet_bridge_unmapped_warnings)
     println("Unmapped cabinet parties in ideology order:")
     foreach(w -> println("- ", w), cabinet_bridge_unmapped_warnings)
 end
-println("Cabinet periods whose connected closure is itself an inversion: ", closure_inversion_count)
+println("Cabinet party sets whose connected closure is itself an inversion: ", closure_inversion_count)
 
 cabinet_bridge_inversions = table_appendix_cabinet_interval_bridge[table_appendix_cabinet_interval_bridge.cabinet_status .== "seats only", :]
 println("Observed cabinet inversion bridge diagnostics:")
@@ -2816,10 +2754,10 @@ write_artifact_csv(joinpath(tables_dir, "table_07_audit_vote_columns_crosswalk.c
 print_block("BLOCK 13. FIGURE-INPUT DATA")
 party_vote_share_vs_seat_share = select(party_seat_differentials_all_years, :election_year, :party, :votes, :national_vote_total, :vote_share, :seats, :seat_share, :quota, :seat_diff, :representation_ratio)
 ideological_interval_heatmap = select(ideological_intervals_all_years, :election_year, :ideological_universe, :ideological_party_count, :start_index, :end_index, :start_party, :end_party, :interval_size, :vote_share, :seat_share, :seats, :seat_diff, :majority_status, :coalition_inversion, :minimal_ideological_interval_inversion)
-observed_coalition_timeline = select(observed_cabinet_coalitions_all_years, :election_year, :coalition_year, :period, :source_periods, :period_start, :period_end, :period_days, :days_overlapping_mandate, :parties, :votes, :national_vote_total, :vote_share, :seats, :seat_share, :quota, :seat_diff, :required_diff, :representation_ratio, :vote_majority, :seat_majority, :majority_status, :coalition_inversion)
+observed_coalition_timeline = select(cabinet_chronology, :election_year, :coalition_year, :period, :source_periods, :period_start, :period_end, :period_days, :days_overlapping_mandate, :parties, :votes, :national_vote_total, :vote_share, :seats, :seat_share, :quota, :seat_diff, :required_diff, :representation_ratio, :vote_majority, :seat_majority, :majority_status, :coalition_inversion)
 write_artifact_csv(joinpath(figure_data_dir, "party_vote_share_vs_seat_share.csv"), party_vote_share_vs_seat_share, "figure_data", "Party vote share versus seat share figure input.")
 write_artifact_csv(joinpath(figure_data_dir, "ideological_interval_heatmap.csv"), ideological_interval_heatmap, "figure_data", "Ideological interval heatmap figure input.")
-write_artifact_csv(joinpath(figure_data_dir, "observed_coalition_timeline.csv"), observed_coalition_timeline, "figure_data", "Observed cabinet coalition timeline used by Figure 2.")
+write_artifact_csv(joinpath(figure_data_dir, "observed_coalition_timeline.csv"), observed_coalition_timeline, "figure_data", "Full cabinet chronology for audit and duration reconstruction; Figure 2 uses cabinet_party_set_comparison.csv.")
 
 # =============================================================================
 # BLOCK 14. DIAGNOSTICS

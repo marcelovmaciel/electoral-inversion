@@ -8,12 +8,12 @@
   "k1_minimal": 84,
   "member_rows": 1327,
   "checks": {
-    "exact": 206093,
-    "baseline": 100259,
+    "exact": 205960,
+    "baseline": 100202,
     "cabinet_inversions": 2,
     "domain_rows": 19837,
     "unique_domain_configurations": 18151,
-    "cabinet_periods": 53,
+    "cabinet_party_sets": 34,
     "csv": 1803,
     "report": 33
   },
@@ -22,16 +22,16 @@
     "csv": 3.552713678800501e-15,
     "report": 2.999378523327323e-12
   },
-  "manuscript_sha256": "1b2c0eb3fb8cd05531d739c2e4f95c7f71051019e0c8676fcce3c3735ed68c33",
-  "input_code_digest": "431ea0dad82dbf86fc8d45b906448bc44d01e1865ef8632c2e6e681297e8a819",
+  "manuscript_sha256": "0a9d81e35801f8d6e6a7ddb30de8e61eb364e37f115d9b518618c8dbc1667cb1",
+  "input_code_digest": "8ba29fff9b7e26159696ddb245f1d36094bda14b532e7c35e9ec93856aa0ad58",
   "output_sha256": {
     "party_components_all_years.csv": "cce55f2ad4024aae888e6afcdbef30f1b3544056b29ed20a7174681a41ff3612",
     "party_AB_by_year.csv": "cce55f2ad4024aae888e6afcdbef30f1b3544056b29ed20a7174681a41ff3612",
-    "inversion_party_components.csv": "b5f694d66f1e169ca959e78870d197b8ce101aa9652877123df84eb7cfcb2a5e",
-    "inversion_party_AB.csv": "b5f694d66f1e169ca959e78870d197b8ce101aa9652877123df84eb7cfcb2a5e",
-    "inversion_AB_summary.csv": "840ddf15ebfd1305ff265202195fd4e117f54c49d91d79aa909c6d3c9e048512",
-    "party_component_report.md": "5623cbc5407aa288c1c2e852ecb258f4169ed1ca908f113973b55dd412b0a5fd",
-    "party_AB_report.md": "5623cbc5407aa288c1c2e852ecb258f4169ed1ca908f113973b55dd412b0a5fd",
+    "inversion_party_components.csv": "c932c964ca59cb789f741c270990d064ba22efbbf17336f3d3a814ecd6f74878",
+    "inversion_party_AB.csv": "c932c964ca59cb789f741c270990d064ba22efbbf17336f3d3a814ecd6f74878",
+    "inversion_AB_summary.csv": "b8c36166ca1a168d17bc15810ff42516c1156aa84f545ab8f672d0a1a588e897",
+    "party_component_report.md": "3b6922e0a57385ac1818489bc32fb4b37805e6644d43c522f99858dded262618",
+    "party_AB_report.md": "3b6922e0a57385ac1818489bc32fb4b37805e6644d43c522f99858dded262618",
     "party_AB_scatter.png": "ee2a28578bb3a5f56a85ea95a577938cf62f4817b0b9d1e8cee46bfe4090e00e",
     "party_AB_scatter.pdf": "7a7b85c6c7da56af84581a7e7891f374f968341024e496db9e3820086fe3eecf"
   }

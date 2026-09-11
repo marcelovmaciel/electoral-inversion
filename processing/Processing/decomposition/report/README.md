@@ -182,52 +182,60 @@ this intermediate report performs no such synchronization.
 
 The main `run_decomposition.jl` and the report runner both use
 `PartySizeDiagnostics.jl`, included in `IntermediateAccountingReport.jl`.
-It consumes the existing in-memory exact accounting objects and current
-translated/coalesced cabinet registry. It never changes that registry.
+The shared identity registry is prepared by `processing/cabinet_party_sets.py`
+after audited V5 translation. `Processing.cabinet_set_view` verifies identical
+electoral vectors across every linked period; this diagnostic attaches the
+existing exact Julia accounting to the same membership-based IDs.
 
-The existing `raw/party_accounting_all_years.csv` is extended with `A_over_q`,
-`B_over_q`, `ever_in_cabinet`, `cabinet_observation_count`,
-`cabinet_source_period_count`, and `cabinet_days`. Existing columns retain
-their definitions and values. Days sum inclusive `days_overlapping_mandate`.
+The primary sample has 34 sets (12/17/5 by election), including two inverted
+sets with 260 observed inversion days. These are distinct analytical and
+temporal denominators. All 34 have positive A and 11 positive B; 32 have R>1
+and two R<1. The registry retains the provisional-only sets and mixed histories.
+
+`raw/party_accounting_all_years.csv` keeps `A_over_q`, `B_over_q`,
+`ever_in_cabinet` and actual `cabinet_days`. `cabinet_observation_count` now equals
+`cabinet_distinct_set_count`; `cabinet_analytical_period_count` and
+`cabinet_source_period_count` describe chronology. No electoral party quantity
+changes. `generated/cabinet_party_sets/party_participation.csv` also separates
+days in established and provisional primary sets; this is the evidence status
+of the full dated set, not a new judgment about an individual party witness.
 
 Permanent outputs under `output/decomposition/` are:
 
-- `tables/report/party_size_cabinet_summary.csv`: eight election/pooled,
-  ever/never size-comparison rows.
-- `tables/report/party_size_correlations.csv`: Pearson and Spearman
-  associations with absolute and normalized A, by election and pooled.
-- `tables/report/party_size_groups.csv`: the four descriptive vote-share
-  bins, including counts, means, medians, and positive-A shares.
-- `raw/cabinet_party_set_accounting.csv`: 22 distinct translated sets,
-  associated period IDs, signed gross contributions, contributions from
-  members with at least 5% of votes, and contributor ranks.
-- `raw/cabinet_party_set_period_linkage.csv`: all 23 chronology rows with
-  stable composition-based set IDs and exact A/B totals.
-- `audit/party_size_diagnostic_checks.csv` and
-  `audit/party_size_diagnostic_metadata.csv`: separate mathematical identity
-  and frozen-data regression checks, plus definitions and qualifications.
-- `latex/report/party_size_diagnostics.tex`: the compact central-report
-  section after Generated interpretation. It is not a manuscript asset.
+- `raw/cabinet_party_set_accounting.csv`: the full exact set registry, stable IDs,
+  canonical members, display labels, electoral vector, signed/gross components,
+  large-party contributions, evidence/day summaries and recurrence links.
+- `raw/cabinet_party_set_period_linkage.csv`: all 53 analytical chronology rows,
+  linked to their 34 membership IDs and exact A/B totals.
+- `raw/cabinet_party_set_{party,district}_contributions.csv`: one vector per
+  set/member or set/district, without recurrence or duration weights.
+- `tables/report/party_size_cabinet_summary.csv`, `party_size_correlations.csv`
+  and `party_size_groups.csv`: election-party descriptive size comparisons,
+  correlations and bins; the 5% benchmark remains descriptive.
+- `audit/party_size_diagnostic_checks.csv` and metadata: separate exact
+  accounting and preserved baseline checks.
+- `latex/report/party_size_diagnostics.tex`: the central-report section.
 
-The main decomposition runner mirrors the reusable outputs into
-`output/paper/` and registers them in its artifact manifest. Its normal rebuild also refreshes the complete party and district accounting
-base and the standalone report fragments. The standalone report runner updates
-`output/decomposition/` plus the shared dual-universe replication outputs under
-`output/paper/`; it does not synchronize manuscript assets.
+The main runner mirrors reusable outputs under `output/paper/`. The full exact
+registry is mirrored to `generated/cabinet_party_sets/cabinet_party_sets.csv`.
+Its label lookup, date/period/provenance linkage, separate sensitivity registries,
+unweighted summaries and current consumer inventory form the replication handoff.
+The standalone report runner uses the same set view and never restores period
+weighting. It does not synchronize manuscript assets.
 
-Five percent is strictly a descriptive national-vote benchmark, not an
-institutional threshold or theoretical cutoff. All pooled rows give equal
-weight to each election-year party, including zero-seat parties. The
-negative gross contribution is signed: `A_C = gross_positive_A +
-gross_negative_A`. Normalizing by q does not turn the association into a
-causal estimate. A distinct-set grouping may combine the nonadjacent
-2020.4/2021.1 repetition, but their chronology rows remain separate.
+All pooled party-size rows still give equal weight to each election-year party,
+including zero-seat parties. Negative gross contribution is signed:
+`A_C = gross_positive_A + gross_negative_A`. Normalization is descriptive.
+Large-party positive A exceeds all negative member A in 33 of the 34 sets; the
+exception is 18-08. Actual durations use unions of dates, not first-to-last spans.
 
-Frozen-data expectations live separately from accounting identities in the
-shared implementation and the focused tests. They assert the 23 observations,
-22 sets, positive A in 23 and positive B in 6 observations, the 21/23 versus
-12/76 sign comparison, the size correlations, and the descriptive sufficiency
-of contributions from members with at least 5%. The test fixture
-`../../test/fixtures/cabinet_party_size_chronology.csv` preserves the complete
-current chronology and metrics. Discrepancies fail loudly and require review;
-expected values are never inferred from a changed output.
+The pre-migration working tree is saved under `audit/cabinet_party_sets_before/`.
+A compact immutable semantic baseline is under
+`processing/Processing/data/cabinet_party_set_migration_baseline/`.
+`processing/cabinet_party_set_validation.py` independently groups those baseline
+dates, checks every electoral vector, the same two inverted memberships and
+260 days, evidence totals, unique analytical inputs and unchanged ideological
+results. Synthetic tests exercise recurrence, permutations and period splitting.
+Older fixtures/reports retain historical definitions and are not current sample
+counts. See the root `CABINET_PARTY_SET_MIGRATION_REPORT.md` for current commands,
+validation status and the compiled manuscript/handoff paths.

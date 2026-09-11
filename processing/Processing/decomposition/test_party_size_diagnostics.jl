@@ -63,8 +63,10 @@ end
     end
     for p in eachrow(parties)
         member_links = diagnostic.period_linkage[(diagnostic.period_linkage.election_year .== p.election_year) .&
-            [p.party in split(split(id, ":"; limit = 2)[2], "|") for id in diagnostic.period_linkage.cabinet_party_set_id], :]
-        @test p.cabinet_observation_count == nrow(member_links)
+            [p.party in split(only(diagnostic.cabinet_sets.canonical_membership[diagnostic.cabinet_sets.cabinet_party_set_id .== id]), ";") for id in diagnostic.period_linkage.cabinet_party_set_id], :]
+        @test p.cabinet_observation_count == length(unique(member_links.cabinet_party_set_id))
+        @test p.cabinet_distinct_set_count == p.cabinet_observation_count
+        @test p.cabinet_analytical_period_count == nrow(member_links)
         @test p.cabinet_days == sum(member_links.days_overlapping_mandate)
         @test p.ever_in_cabinet == (nrow(member_links) > 0)
         @test p.A_over_q == Float64(size_test_exact(p.A_i_exact)/size_test_exact(p.q_i_exact))
@@ -76,7 +78,8 @@ end
     @test Set(String.(periods.source_periods)) == Set(String.(current.source_periods))
     for year in (2014, 2018, 2022)
         party_year = parties[parties.election_year .== year, :]
-        identified = sum(periods.days_overlapping_mandate[periods.election_year .== year])
+        identity = Processing.cabinet_set_identity()
+        identified = sum(identity.established_days[identity.election_year .== year])
         @test all(party_year.identified_cabinet_days .== identified)
         @test all(party_year.calendar_cabinet_days .== (year == 2022 ? 1174 : 1461))
         @test all(party_year.identified_cabinet_days .+ party_year.unidentified_cabinet_days .== party_year.calendar_cabinet_days)

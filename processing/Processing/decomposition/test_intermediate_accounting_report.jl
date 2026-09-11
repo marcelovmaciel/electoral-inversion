@@ -212,7 +212,7 @@ generation_checks = require_report_csv("audit/intermediate_accounting_generation
 report_manifest = require_report_csv("audit/intermediate_accounting_report_artifact_manifest.csv")
 
 # Cabinet keys come from direct vote/seat criterion, not an inherited chronology.
-report_periods = require_report_csv("raw/coalition_period_quantities.csv")
+report_periods = Processing.cabinet_set_view(require_report_csv("raw/coalition_period_quantities.csv"))
 report_inversions = report_periods[(2 .* report_periods.v_C .< report_periods.V) .& (report_periods.s_C .>= 257), :]
 const EXPECTED_REPORT_CABINET_KEYS = Set(String.(report_inversions.coalition_id))
 const REPORT_CABINET_N = nrow(report_inversions)

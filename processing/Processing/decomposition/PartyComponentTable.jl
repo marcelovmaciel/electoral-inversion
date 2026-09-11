@@ -105,7 +105,7 @@ function party_component_extremes_latex(data::DataFrame)
         "\\end{tabularx}",
         "\\begin{minipage}{0.98\\linewidth}",
         "\\vspace{0.35em}",
-        "\\footnotesize\\textit{Notes:} Entries show the two largest positive and two most negative contributions in seats; values are rounded to two decimals. Cases are identified by election year and cabinet period or interval endpoints. \\(A_i\\) and \\(B_i\\) are ex post accounting contributions: \\(d_i=A_i+B_i\\), \\(A_C=\\sum_{i\\in C}A_i\\), and \\(B_C=\\sum_{i\\in C}B_i\\). For 2014 and 2018, party-level attribution is ex post because seats were often allocated through joint electoral lists. These values do not identify party-specific causal effects of electoral rules.",
+        "\\footnotesize\\textit{Notes:} Entries show the two largest positive and two most negative contributions in seats; values are rounded to two decimals. Cases are identified by election year and cabinet party-set label or interval endpoints. \\(A_i\\) and \\(B_i\\) are ex post accounting contributions: \\(d_i=A_i+B_i\\), \\(A_C=\\sum_{i\\in C}A_i\\), and \\(B_C=\\sum_{i\\in C}B_i\\). For 2014 and 2018, party-level attribution is ex post because seats were often allocated through joint electoral lists. These values do not identify party-specific causal effects of electoral rules.",
         "\\end{minipage}",
         "\\end{table}",
     ])

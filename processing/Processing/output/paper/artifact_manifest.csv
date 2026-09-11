@@ -14,19 +14,18 @@ tables/table_02_party_over_underrepresentation.csv,table,Top overrepresented and
 tables/table_01_selected_party_differentials.csv,table,Selected large positive and negative party-level seat differentials shown in manuscript Table 1.,15,6
 latex/table_01_party_differential_tabular.tex,latex,CSV-driven tabular for manuscript Table 1.,15,6
 diagnostics/cabinet_coalitions_before_coalescing.csv,diagnostic,Translated historical cabinet rows before adjacent equal-party-set coalescing.,53,26
-diagnostics/cabinet_period_coalescing.csv,diagnostic,Cabinet observation counts and unchanged inversion days after adjacent equal-party-set coalescing; source IDs remain in source_periods.,3,7
+diagnostics/cabinet_period_coalescing.csv,diagnostic,Chronological period counts and unchanged inversion days after adjacent equal-party-set coalescing; source IDs remain in source_periods.,3,7
 raw/observed_cabinet_coalitions_2014.csv,raw,Observed cabinet-period coalition metrics for the 2014 election.,20,26
 raw/observed_cabinet_coalitions_2018.csv,raw,Observed cabinet-period coalition metrics for the 2018 election.,20,26
 raw/observed_cabinet_coalitions_2022.csv,raw,Observed cabinet-period coalition metrics for the 2022 election.,13,26
 raw/cabinet_coalition_metrics.csv,raw,Full-precision observed cabinet-period coalition accounting metrics for all elections.,53,26
-raw/cabinet_coalition_focal_cases.csv,raw,"All observed cabinet inversions, with Julia-generated display values.",2,32
-raw/observed_cabinet_inversions_only.csv,raw,Observed cabinet-period coalition inversions only.,2,26
+raw/cabinet_party_sets.csv,raw,"Shared distinct-set registry view; period is a legacy display-label alias and dates are extrema, not a continuous interval.",34,49
+raw/cabinet_coalition_focal_cases.csv,raw,"All observed cabinet inversions, with Julia-generated display values.",2,55
+raw/observed_cabinet_inversions_only.csv,raw,Distinct inverted cabinet party sets only.,2,49
 raw/observed_cabinet_duration_summary.csv,raw,Observed cabinet coverage and inversion duration summary.,3,14
-tables/table_03_observed_cabinet_coalitions.csv,table,Observed cabinet-period coalitions with rounded display columns.,53,18
-tables/table_appendix_cabinet_composition.csv,table,Full cabinet-period composition and party transitions shown in the manuscript appendix.,53,45
-latex/table_appendix_cabinet_composition.tex,latex,CSV-driven landscape longtable for the full cabinet-composition appendix.,53,11
-tables/table_04_observed_cabinet_inversions_only.csv,table,"Observed cabinet-period coalition inversions with rounded q_C, d_C, and r_C display columns.",2,18
-latex/table_02_cabinet_inversion_tabular.tex,latex,CSV-driven tabularx for manuscript Table 2.,2,9
+tables/table_03_observed_cabinet_coalitions.csv,table,Distinct cabinet party sets with rounded display columns.,34,21
+tables/table_appendix_cabinet_composition.csv,table,Distinct cabinet party sets; full occurrence linkage is separate.,34,81
+tables/table_04_observed_cabinet_inversions_only.csv,table,Distinct inverted cabinet party sets with rounded electoral display columns.,2,21
 raw/ideology_order_2014_all_parties.csv,raw,All-party robustness ideological order; original estimates and rank preserved.,32,9
 raw/ideology_order_2018_all_parties.csv,raw,All-party robustness ideological order; original estimates and rank preserved.,35,9
 raw/ideology_order_2022_all_parties.csv,raw,All-party robustness ideological order; original estimates and rank preserved.,32,9
@@ -69,15 +68,17 @@ tables/table_06_minimal_ideological_interval_inversions.csv,table,"Endpoint-mini
 latex/table_04_minimal_connected_inversion_tabular.tex,latex,CSV-driven tabularx for manuscript Table 4.,7,10
 tables/table_appendix_minimal_connected_winning_intervals.csv,table,Endpoint-minimal connected winning ideological intervals.,20,14
 latex/table_appendix_minimal_connected_winning_intervals.tex,latex,Landscape longtable for endpoint-minimal connected winning ideological intervals.,20,10
-tables/table_appendix_cabinet_interval_bridge.csv,table,Observed cabinet coalitions compared with connected ideological closures and nearest minimal connected intervals.,53,86
-latex/table_appendix_cabinet_interval_bridge.tex,latex,Landscape longtable comparing observed cabinet coalitions with connected ideological intervals.,53,11
+diagnostics/cabinet_interval_chronology.csv,diagnostic,Temporal cabinet transitions only; analytical comparisons use the distinct-set bridge.,53,91
+tables/table_appendix_cabinet_interval_bridge.csv,table,Observed cabinet coalitions compared with connected ideological closures and nearest minimal connected intervals.,34,91
+latex/table_appendix_cabinet_interval_bridge.tex,latex,Landscape longtable comparing observed cabinet coalitions with connected ideological intervals.,34,11
 tables/cabinet_interval_bridge_unidentified.csv,table,Cabinet intervals excluded from ideological bridge because their complete set is unidentified.,0,22
-tables/table_appendix_cabinet_interval_bridge_all_parties.csv,table,"All-party robustness cabinet closures, gaps, and nearest intervals.",53,86
+diagnostics/cabinet_interval_chronology_all_parties.csv,diagnostic,Temporal transitions in the all-party ideological universe; analytical comparisons use distinct sets.,53,91
+tables/table_appendix_cabinet_interval_bridge_all_parties.csv,table,"All-party robustness cabinet closures, gaps, and nearest intervals.",34,91
 tables/table_01_definitions_classification_rules.csv,table,"Definitions, thresholds, ideology classification rules, and vote-column rules.",10,3
 tables/table_07_audit_vote_columns_crosswalk.csv,table,Audit table for selected vote columns and converted legend-vote checks.,5,7
 figure_data/party_vote_share_vs_seat_share.csv,figure_data,Party vote share versus seat share figure input.,99,10
 figure_data/ideological_interval_heatmap.csv,figure_data,Ideological interval heatmap figure input.,1147,15
-figure_data/observed_coalition_timeline.csv,figure_data,Observed cabinet coalition timeline used by Figure 2.,53,22
+figure_data/observed_coalition_timeline.csv,figure_data,Full cabinet chronology for audit and duration reconstruction; Figure 2 uses cabinet_party_set_comparison.csv.,53,22
 diagnostics/party_mapping_votes.csv,diagnostic,Raw-to-canonical party mapping for vote inputs.,99,7
 diagnostics/party_mapping_seats.csv,diagnostic,Raw-to-canonical party mapping for seat inputs.,99,7
 diagnostics/party_mapping_coalitions.csv,diagnostic,Raw-to-canonical party mapping for coalition inputs.,0,0
@@ -137,7 +138,9 @@ raw/accounting_focal_state_contributions.csv,raw,Complete 27-state vectors for t
 raw/accounting_gross_component_concentration.csv,raw,"Gross positive, negative, cancellation, and concentration diagnostics.",36,29
 raw/accounting_minimal_ideological_decomposition.csv,raw,All primary minimal connected ideological inversion decompositions.,7,68
 raw/accounting_selected_party_geography.csv,raw,Selected party differentials and state-level accounting geography.,17,28
-raw/cabinet_party_set_accounting.csv,raw,Party-size diagnostic: cabinet_sets; descriptive accounting only.,34,37
+raw/cabinet_party_set_accounting.csv,raw,Party-size diagnostic: cabinet_sets; descriptive accounting only.,34,81
+raw/cabinet_party_set_district_contributions.csv,raw,One cabinet-set/member or cabinet-set/district vector; occurrence linkage is separate.,918,19
+raw/cabinet_party_set_party_contributions.csv,raw,One cabinet-set/member or cabinet-set/district vector; occurrence linkage is separate.,236,24
 raw/cabinet_party_set_period_linkage.csv,raw,Party-size diagnostic: period_linkage; descriptive accounting only.,53,16
 raw/coalition_party_contribution_named_aggregates.csv,raw,Named exact party aggregation used for the PP-PL substantive diagnostic.,1,12
 raw/coalition_party_contribution_summary.csv,raw,"Case-level gross, net, concentration, and top-two party contribution diagnostics.",14,53
@@ -145,9 +148,9 @@ raw/coalition_party_contributions.csv,raw,Canonical complete case-party contribu
 raw/coalition_period_quantities.csv,raw,Release-derived coalition quantities for every observed cabinet period.,53,25
 raw/district_accounting_all_years.csv,raw,Existing district accounting weights and closure.,81,16
 raw/inversion_decomposition.csv,raw,Exact-audited A_C/B_C decomposition for all observed inversions.,2,24
-raw/inversion_district_contributions.csv,raw,State-level a_Cd and b_Cd contributions for all observed inversions.,54,16
-raw/inversion_party_contributions.csv,raw,"Full party-level d_i, A_i, and B_i vectors for all observed inversions.",16,19
-raw/party_accounting_all_years.csv,raw,"Exact national party accounting, normalized components and cabinet participation.",99,31
+raw/inversion_district_contributions.csv,raw,State-level a_Cd and b_Cd contributions for all observed inversions.,54,18
+raw/inversion_party_contributions.csv,raw,"Full party-level d_i, A_i, and B_i vectors for all observed inversions.",16,23
+raw/party_accounting_all_years.csv,raw,"Exact national party accounting, normalized components and cabinet participation.",99,33
 raw/party_district_accounting_all_years.csv,raw,Complete existing party-district accounting panel.,2673,38
 tables/prose_analysis_summaries.csv,table,Raw aggregates from existing analysis CSVs; summary/metric/aggregation/universe/k/election keys and upstream selections. No TeX or display values.,144,12
 tables/report/party_fragmentation_summary.csv,table,Effective electoral and parliamentary party counts from the exact national party panel.,3,5
@@ -166,9 +169,12 @@ tables/table_observed_inversion_decomposition.csv,table,Manuscript summary of co
 diagnostics/decomposition_identity_checks.csv,diagnostic,Exact and floating-point decomposition identity results.,8,10
 raw/ideology_k_gap_accounting_both_universes.csv,raw,Exact-audited ideological accounting with explicit party universe and all-valid-vote denominator.,31238,46
 raw/ideology_k_gap_minimal_accounting_both_universes.csv,raw,Exact-audited ideological accounting with explicit party universe and all-valid-vote denominator.,533,46
-figure_data/cross_domain_components_seat_winning.csv,figure_data,Exact-audited ideological accounting with explicit party universe and all-valid-vote denominator.,307,46
-figure_data/cross_domain_components_all_parties.csv,figure_data,Exact-audited ideological accounting with explicit party universe and all-valid-vote denominator.,332,46
+figure_data/cross_domain_components_seat_winning.csv,figure_data,Exact-audited ideological accounting with explicit party universe and all-valid-vote denominator.,288,46
+figure_data/cross_domain_components_all_parties.csv,figure_data,Exact-audited ideological accounting with explicit party universe and all-valid-vote denominator.,313,46
 raw/ideology_k_gap_party_contributions_both_universes.csv.gz,raw,Complete exact member-party vectors for both ideological universes (deterministic gzip CSV).,475290,25
 diagnostics/ideological_accounting_both_universes.json,diagnostic,Both-universe exact accounting and domain-relative minimality audit.,1,1
+latex/table_02_cabinet_inversion_tabular.tex,latex,Generated from the shared distinct cabinet party-set registry.,2,9
+latex/table_appendix_cabinet_composition.tex,latex,Generated from the shared distinct cabinet party-set registry.,34,7
 figure_data/party_representation_profile.csv,figure_data,Full-precision party representation-ratio profile used by the manuscript figure.,99,11
-artifact_manifest.csv,manifest,Manifest of every generated paper-runner and decomposition artifact.,173,5
+artifact_manifest.csv,manifest,Manifest of every generated paper-runner and decomposition artifact.,178,5
+figure_data/cabinet_party_set_comparison.csv,figure_data,One observation per shared distinct cabinet party set; Figure 2 point comparison.,34,50

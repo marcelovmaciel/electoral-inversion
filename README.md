@@ -5,7 +5,7 @@ Coalition Inversions in Brazil's Chamber of Deputies."
 
 The repository computes whether party coalitions in Brazil's Chamber of
 Deputies hold a seat majority without a national federal-deputy vote majority.
-It covers observed cabinet-period coalitions and ideologically constrained
+It covers distinct election-year cabinet party sets and ideologically constrained
 potential coalitions for the mandates tied to the 2014, 2018, and 2022
 elections. The primary ideological analysis filters the existing election-year order to
 seat-winning parties (`seat_winning`). Exact-connected intervals form the
@@ -21,12 +21,15 @@ The complete production workflow, including both universes, exact accounting,
 figures, independent audits, and `main_rw_again.pdf`, is:
 
 ```bash
-JULIA_BIN=processing/julia_paper_runtime.sh processing/rebuild_manuscript.sh --freeze-prose
+JULIA_BIN=processing/julia_paper_runtime.sh processing/rebuild_manuscript.sh
 ```
 
-`--freeze-prose` preserves manuscript source and reports stale narrative separately;
-submission packaging is omitted in that mode. The cabinet stage reads the immutable V5 release; it never invokes the historical builder.
-The reader verifies the release pin, translates every daily set, then recompresses equal election-year sets. Set `PYTHON_BIN`
+The normal build validates the revised literal prose and its numerical provenance,
+compiles both PDFs, and creates the submission and cabinet party-set handoffs.
+`--freeze-prose` is a diagnostic compatibility option, not a completed submission build.
+The cabinet stage verifies the immutable V5 release pin, translates daily memberships,
+retains consecutive periods for chronology, and groups distinct translated memberships
+across the full election window. It never invokes the historical builder. Set `PYTHON_BIN`
 or `JULIA_BIN` to select a runtime. For the exact existing numerical baseline,
 use Julia 1.12.7 with `-Cgeneric --compiled-modules=no --pkgimages=no --threads=1
 --gcthreads=1` (the repository wrapper above supplies those flags; set `JULIA_PAPER_EXECUTABLE` if installed elsewhere). An overwrite rebuild
@@ -39,11 +42,15 @@ The equivalent individual stages are listed below.
 julia --project=processing/Processing -e 'using Pkg; Pkg.instantiate()'
 ```
 
-2. Run the main analysis from a stable Julia 1.12.2 invocation.
+2. Prepare the registry and run the analysis using the documented Julia runtime.
 
 ```bash
-ALLOW_OVERWRITE=true SYNC_REVIEW_ASSETS=true julia -O0 --startup-file=no --project=processing/Processing processing/Processing/running/running.jl
-ALLOW_OVERWRITE=true SYNC_REVIEW_ASSETS=true julia -O0 --startup-file=no --project=processing/Processing processing/Processing/decomposition/run_decomposition.jl
+python3 processing/cabinet_v5.py prepare
+ALLOW_OVERWRITE=true SYNC_REVIEW_ASSETS=true processing/julia_paper_runtime.sh -O0 --startup-file=no --project=processing/Processing processing/Processing/running/running.jl
+ALLOW_OVERWRITE=true SYNC_REVIEW_ASSETS=true processing/julia_paper_runtime.sh -O0 --startup-file=no --project=processing/Processing processing/Processing/decomposition/run_decomposition.jl
+python3 processing/cabinet_v5.py analyze
+python3 processing/cabinet_party_sets.py
+python3 processing/cabinet_v5_assets.py
 ```
 
 This writes the paper analysis artifacts under:
@@ -56,7 +63,7 @@ processing/Processing/output/paper/
 representation profile.
 
 ```bash
-julia -O0 --startup-file=no --project=processing/Processing processing/make_representation_profile.jl
+processing/julia_paper_runtime.sh -O0 --startup-file=no --project=processing/Processing processing/make_representation_profile.jl
 python writing/make_coalition_figures.py --artifact-root processing/Processing/output/paper --figure-dir writing/submission_inversions_review/manuscript
 ```
 
@@ -92,11 +99,11 @@ legacy draft and should not be used to build the submission.
 The decomposition rebuild also produces permanent party-size/cabinet
 accounting diagnostics. The existing party accounting panel gains normalized
 A/B components and cabinet participation counts/days. Descriptive summaries,
-distinct-set decompositions, and links to the identified cabinet
-observations are documented in
+distinct-set decompositions, and links to dated cabinet
+occurrences are documented in
 [`processing/Processing/decomposition/report/README.md`](processing/Processing/decomposition/report/README.md#permanent-party-size-and-cabinet-diagnostics).
-They enter the central accounting report and are not manuscript tables or
-figures. The 5% national-vote benchmark is descriptive only.
+The shared cabinet set registry now also supplies all manuscript cabinet tables
+and figures; the additional party-size diagnostics enter the central accounting report. The 5% national-vote benchmark is descriptive only.
 
 ## Data Inputs
 
@@ -147,20 +154,42 @@ Manuscript compilation requires a LaTeX installation with `latexmk`.
 
 After running the main analysis, the high-level replication results should be:
 
-Cabinet period counts, inversions, and durations are empirical outputs, not fixed
-acceptance targets. Current values, provenance, full sensitivities and before/after comparisons appear in
-[`generated/cabinet_v5/`](generated/cabinet_v5/README.md). The authoritative daily and
-analytical-period CSVs feed cabinet assets; 55 historical periods become 53 analytical
-periods after daily election-year translation. See the
-[integration report](CABINET_V5_INTEGRATION_REPORT.md),
-[manuscript modification map](CABINET_V5_MANUSCRIPT_MODIFICATIONS.org), and
-[upload handoff](handoff/cabinet_v5_analysis_handoff.zip).
-The current manuscript prose is deliberately frozen and contains stale claims.
-The normal `--freeze-prose` pipeline compiles it with the new generated assets,
-records all required changes, and packages a self-contained ZIP. The release pin is
-`processing/Processing/data/cabinet_release_pin.json`; no history builder or scraper runs.
-Independent rational party/district closure and protected non-cabinet output/slice
-signatures are checked by `processing/cabinet_v5_validation.py`.
+The current V5 chronology contains 55 historical periods and 53 translated
+analytical periods. These supply **34 distinct election-year cabinet party sets**:
+12 for 2014, 17 for 2018, and 5 for 2022. **Two sets invert**, occupying **260 of
+4,096 covered days** (5 for Dilma's 2014-election set and 255 for Lula's
+2022-election set). Deduplication changes observation counts, never the
+membership-determined electoral vector or inversion days. These invariants are
+independently checked against the saved pre-migration working tree.
+
+The [current migration report](CABINET_PARTY_SET_MIGRATION_REPORT.md),
+[canonical registry and linkage](generated/cabinet_party_sets/README.md), and
+[compact upload handoff](handoff/cabinet_party_sets_handoff.zip) document the
+production workflow. `cabinet_party_sets.py` defines identity from election year
+and sorted translated membership. Its identity/temporal registry is shared by
+Julia's verified set view; `PartySizeDiagnostics.jl` attaches exact accounting in
+`output/decomposition/raw/cabinet_party_set_accounting.csv`. The copy in
+`generated/cabinet_party_sets/cabinet_party_sets.csv` is a documented mirror.
+Short labels are resolved by `label_lookup.csv`; stable IDs depend on membership,
+not order, dates, administration, evidence status or numerical coordinates.
+
+All cabinet comparisons use one electoral vector per set. Recurrent appearances
+remain in `occurrences.csv`, `period_linkage.csv`, `provenance_intervals.csv` and
+`daily_linkage.csv`. Dates use inclusive starts and exclusive ends. Durations
+sum actual dates, never the span between the first and last appearance. Set
+frequencies are unweighted descriptive counts, not independent observations or
+formation probabilities. Provisional-only sets remain included; scenarios have
+separate registries. Party participation distinguishes set counts from days.
+
+`generated/cabinet_v5/` retains chronology, evidence and date-level sensitivities;
+its current tables/figures are compatibility mirrors. The root V5 integration
+report, Org modification map, and old handoff describe the earlier historical
+integration and are preserved archives. The current prose is revised and
+validated. The release pin remains `processing/Processing/data/cabinet_release_pin.json`;
+no history builder or scraper runs. Independent rational party/district closure
+and protected non-cabinet output/slice signatures are checked by
+`processing/cabinet_v5_validation.py`; the unit migration is checked by
+`processing/cabinet_party_set_validation.py`.
 
 The generated [universe comparison](processing/Processing/output/paper/tables/ideological_universe_comparison.csv)
 contains all twelve election/universe/k headline rows. Primary exact-connected
@@ -260,8 +289,8 @@ rounding rule. `note:` is available for short clarifications.
 
 Direct claims cite their existing production CSVs. Multi-row counts, extrema,
 and means use `tables/prose_analysis_summaries.csv`, generated by
-`decomposition/ProseSummaries.jl` from current output CSVs. Existing prose
-aggregation rules are preserved. The full summary key is
+`decomposition/ProseSummaries.jl` from current output CSVs. Cabinet summaries use one observation per distinct election-year set;
+party and ideological aggregation rules are preserved. The full summary key is
 `summary; metric; aggregation; ideological_universe; k; election`, with an
 unrounded `value`, upstream source, filter, and row count. Existing prose rows
 remain uniquely selectable by `summary; metric; aggregation`. This CSV contains no macro names, display rules, or TeX.
@@ -306,7 +335,7 @@ Run focused checks without rerunning the analysis:
 python3 processing/Processing/decomposition/validate_prose_provenance.py
 python3 processing/Processing/decomposition/audit_empirical_assets.py
 python3 -m unittest discover -s processing/Processing/decomposition/tests -v
-julia -O0 --startup-file=no --project=processing/Processing processing/Processing/decomposition/test_prose_summaries.jl
+processing/julia_paper_runtime.sh -O0 --startup-file=no --project=processing/Processing processing/Processing/decomposition/test_prose_summaries.jl
 ```
 
 The [migration audit](processing/Processing/decomposition/MANUSCRIPT_VALUE_MIGRATION.md)
@@ -317,27 +346,34 @@ The inventory is an audit record; no production code reads it.
 
 ## Tests
 
-The manuscript cabinet output combines adjacent periods only when their translated
-election-year party sets match. Original IDs are preserved as JSON in
-`source_periods`; uncombined translated rows and before/after counts are saved
-under `output/paper/diagnostics/`. Historical release IDs are retained across every reporting merge; administration
-and election boundaries, gaps, and accounting quantities are checked.
+Cabinet chronology still combines adjacent periods only when translated
+memberships match. The primary analytical registry additionally deduplicates
+nonconsecutive appearances within election. Original periods and dates remain
+linked, with evidence status and actual days. Independent tests check stable
+membership IDs under input permutations, period-splitting invariance, evidence
+and scenario separation, unique contributions/figure rows, exact accounting and
+unchanged primary dates and ideological outputs.
+
+```bash
+python3 -m unittest discover -s processing/tests -p test_cabinet_party_sets.py -v
+python3 processing/cabinet_party_set_validation.py
+```
 
 Run its regression checks after generating the analysis outputs:
 
 ```bash
-julia -O0 --startup-file=no --project=processing/Processing processing/Processing/test/test_cabinet_period_coalescing.jl
+processing/julia_paper_runtime.sh -O0 --startup-file=no --project=processing/Processing processing/Processing/test/test_cabinet_period_coalescing.jl
 ```
 
 Run the focused decomposition suite from the repository root:
 
 ```bash
-julia -O0 --startup-file=no --project=processing/Processing processing/Processing/decomposition/runtests.jl
+processing/julia_paper_runtime.sh -O0 --startup-file=no --project=processing/Processing processing/Processing/decomposition/runtests.jl
 ```
 
 Run the focused ideological-domain suite with:
 
-    julia -O0 --startup-file=no --project=processing/Processing processing/Processing/test/test_ideological_interval_coalitions.jl
+    processing/julia_paper_runtime.sh -O0 --startup-file=no --project=processing/Processing processing/Processing/test/test_ideological_interval_coalitions.jl
 
 This focused suite is the empirical gate for the decomposition and checks the
 current identified-case registry, coalition compositions, district accounting identities, and

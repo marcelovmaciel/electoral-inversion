@@ -18,7 +18,7 @@ const SOURCE_FILES = Dict(
     "cabinet" => (:accounting, "raw/accounting_all_inversion_decomposition.csv"),
     "summary" => (:paper, "tables/ideological_universe_comparison.csv"),
     "ideology" => (:paper, "raw/ideology_k_gap_accounting_both_universes.csv"),
-    "periods" => (:accounting, "raw/coalition_period_quantities.csv"),
+    "sets" => (:accounting, "raw/cabinet_party_set_accounting.csv"),
     "linkage" => (:accounting, "raw/cabinet_party_set_period_linkage.csv"),
     "bridge" => (:paper, "tables/table_appendix_cabinet_interval_bridge.csv"),
     "district" => (:accounting, "raw/district_accounting_all_years.csv"),
@@ -50,20 +50,20 @@ const SUMMARY_SPECS = [
        source = "ideology", filters = (; election = "2014", ideological_universe = "seat_winning", k = "1", minimal_inversion = "true")),
     (; summary = "seat-winning-2022-k1-mdb-uniao-gapped", metric = :count, aggregation = :sum,
        source = "ideology", filters = (; election = "2022", ideological_universe = "seat_winning", k = "1", minimal_inversion = "true", left_endpoint = "MDB", right_endpoint = "UNIÃO", gap_count = "1")),
-    (; summary = "cabinet-periods", metric = :count, aggregation = :sum,
-       source = "periods", filters = NamedTuple()),
-    (; summary = "cabinet-periods", metric = :d_C, aggregation = :count_positive,
-       source = "periods", filters = NamedTuple()),
-    (; summary = "cabinet-periods", metric = :d_C, aggregation = :count_negative,
-       source = "periods", filters = NamedTuple()),
+    (; summary = "cabinet-party-sets", metric = :count, aggregation = :sum,
+       source = "sets", filters = NamedTuple()),
+    (; summary = "cabinet-party-sets", metric = :d_C, aggregation = :count_positive,
+       source = "sets", filters = NamedTuple()),
+    (; summary = "cabinet-party-sets", metric = :d_C, aggregation = :count_negative,
+       source = "sets", filters = NamedTuple()),
     (; summary = "cabinet-inversions", metric = :count, aggregation = :sum,
        source = "cabinet", filters = (; case_domain = "cabinet")),
     (; summary = "cabinet-inversions", metric = :numerical_vector_group, aggregation = :unique_count,
        source = "cabinet", filters = (; case_domain = "cabinet")),
     (; summary = "cabinet-component-signs", metric = :B_C, aggregation = :count_positive,
-       source = "linkage", filters = NamedTuple()),
+       source = "sets", filters = NamedTuple()),
     (; summary = "cabinet-component-signs", metric = :A_C, aggregation = :count_positive,
-       source = "linkage", filters = NamedTuple()),
+       source = "sets", filters = NamedTuple()),
     (; summary = "cabinet-closure-gaps", metric = :closure_gap_n, aggregation = :min,
        source = "bridge", filters = (; ideological_universe = "seat_winning")),
     (; summary = "cabinet-closure-gaps", metric = :closure_gap_n, aggregation = :max,
@@ -182,7 +182,7 @@ function build_summaries(sources; specs = SUMMARY_SPECS)
         rows = filter(sources[spec.source]) do row
             all(string(row[key]) == value for (key, value) in pairs(spec.filters))
         end
-        cabinet_source = spec.source in ("cabinet", "periods", "linkage", "bridge", "cabinet_district")
+        cabinet_source = spec.source in ("cabinet", "sets", "linkage", "bridge", "cabinet_district")
         isempty(rows) && spec.summary != DOMINANCE_SUMMARY && !cabinet_source && error("Empty source selection for $(spec.summary)")
         if get(spec, :selection, nothing) == :lowest_vote_share && !isempty(rows)
             rows = first(sort(rows, [:vote_share, :coalition_party_count, :case_id]), 1)

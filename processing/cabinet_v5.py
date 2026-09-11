@@ -22,7 +22,7 @@ OUT = ROOT / 'generated/cabinet_v5'
 PAPER = ROOT / 'processing/Processing/output/paper'
 DECOMP = ROOT / 'processing/Processing/output/decomposition'
 START, END = '2015-01-01', '2026-03-20'
-COMMAND = 'JULIA_BIN=processing/julia_paper_runtime.sh processing/rebuild_manuscript.sh --freeze-prose'
+COMMAND = 'JULIA_BIN=processing/julia_paper_runtime.sh processing/rebuild_manuscript.sh'
 
 
 def read(path):
@@ -226,6 +226,8 @@ def prepare():
         days=4096,established_days=3996,provisional_days=100,historical_periods=len(periods),
         analytical_periods=len(analytical),read_inputs={k:len(v) for k,v in tables.items()}),indent=2)+'\n')
     print(f'V5 adapter: {len(periods)} historical periods -> {len(analytical)} analytical periods; 4096 days (3996 established, 100 provisional).')
+    from cabinet_party_sets import prepare_registry
+    prepare_registry(daily, analytical)
     return daily, analytical
 
 
@@ -248,10 +250,10 @@ class Quantities:
         q = Fraction(513*v,V)
         d, A, B = s-q, exact('A_i_exact'), exact('B_i_exact')
         assert exact('q_i_exact') == q and exact('d_i_exact') == d and A+B == d
-        R = Fraction(s,1)/q
-        assert R == 1+d/q
+        R = Fraction(s,1)/q if q else None
+        assert not q or R == 1+d/q
         result = dict(votes=v,national_vote_total=V,vote_share=v/V,seats=s,seat_share=s/513,
-            q_C=float(q),d_C=float(d),R_C=float(R),A_C=float(A),B_C=float(B),
+            q_C=float(q),d_C=float(d),R_C=float(R) if R is not None else "",A_C=float(A),B_C=float(B),
             inversion_status=2*v<V and s>=257)
         self.cache[key] = result
         return dict(result)

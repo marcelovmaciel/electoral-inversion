@@ -12,7 +12,7 @@ mkdir -p -- "$output_dir"
 
 ALLOW_OVERWRITE=true \
 SYNC_REVIEW_ASSETS=false \
-julia -O0 --startup-file=no --project="$processing_root" "$runner"
+"${JULIA_BIN:-$processing_root/../julia_paper_runtime.sh}" -O0 --startup-file=no --project="$processing_root" "$runner"
 
 latexmk -cd -pdf -interaction=nonstopmode -halt-on-error \
   -outdir=../../output/decomposition/report \

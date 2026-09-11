@@ -14,15 +14,15 @@ const PS_ACCOUNTING = normpath(joinpath(@__DIR__, "..", "output", "decomposition
     @test all(endswith.(data.source_file, ".csv"))
     value(summary, metric, op) = parse(Float64, only(filter(r -> r.summary == summary &&
         r.metric == metric && r.aggregation == op, data).value))
-    @test value("cabinet-periods", "count", "sum") == nrow(sources["periods"])
-    @test value("cabinet-periods", "d_C", "count_positive") == count(>(0), sources["periods"].d_C)
-    @test value("cabinet-component-signs", "A_C", "count_positive") == count(>(0), sources["linkage"].A_C)
+    @test value("cabinet-party-sets", "count", "sum") == nrow(sources["sets"])
+    @test value("cabinet-party-sets", "d_C", "count_positive") == count(>(0), sources["sets"].d_C)
+    @test value("cabinet-component-signs", "A_C", "count_positive") == count(>(0), sources["sets"].A_C)
     @test value("seat-winning-k1-negative-within", "A_C", "count_negative") == 3
     @test value("district-magnitude", "S_d", "median") == 10
     @test value("district-magnitude", "S_d", "mean") == 19
-    empty = copy(sources); empty["periods"] = sources["periods"][1:0, :]
+    empty = copy(sources); empty["sets"] = sources["sets"][1:0, :]
     empty_result = build_summaries(empty)
-    @test only(filter(r -> r.summary == "cabinet-periods" && r.metric == "count", empty_result).value) == "0"
+    @test only(filter(r -> r.summary == "cabinet-party-sets" && r.metric == "count", empty_result).value) == "0"
     @test_throws ErrorException build_summaries(sources; specs = [SUMMARY_SPECS[1], SUMMARY_SPECS[1]])
     mktempdir() do temp
         # Use the existing source CSVs, then check serialization without TeX.

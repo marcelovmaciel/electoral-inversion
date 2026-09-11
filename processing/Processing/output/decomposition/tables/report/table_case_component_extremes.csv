@@ -1,16 +1,16 @@
 "case_id","case_domain","election_year","case_order","case_label","case_display","aggregation_level","component","largest_positive_unit","largest_positive_value","largest_negative_unit","largest_negative_value"
-"cabinet/2014/2016.3","cabinet",2014,1,"2016.3","Cabinet 2014/2016.3","party","A_i","PR",5.0428381901786,"PT",-1.215411226585322
-"cabinet/2014/2016.3","cabinet",2014,1,"2016.3","Cabinet 2014/2016.3","party","B_i","PMDB",4.224685645373679,"PT",-1.2063121025702577
-"cabinet/2014/2016.3","cabinet",2014,1,"2016.3","Cabinet 2014/2016.3","party","d_i","PMDB",8.133380861621642,"PT",-2.4217233291555798
-"cabinet/2014/2016.3","cabinet",2014,1,"2016.3","Cabinet 2014/2016.3","district","a_Cd","RJ",4.719045361414271,"MT",-1.3255823546072767
-"cabinet/2014/2016.3","cabinet",2014,1,"2016.3","Cabinet 2014/2016.3","district","b_Cd","AC",3.0431133715438876,"SP",-15.331280017322854
-"cabinet/2014/2016.3","cabinet",2014,1,"2016.3","Cabinet 2014/2016.3","district","d_Cd","RJ",7.657001236932485,"SP",-14.847482399375796
-"cabinet/2022/2023.1","cabinet",2022,2,"2023.1","Cabinet 2022/2023.1","party","A_i","UNIÃO",9.356662317791708,"PSB",-5.545916698920125
-"cabinet/2022/2023.1","cabinet",2022,2,"2023.1","Cabinet 2022/2023.1","party","B_i","UNIÃO",1.7469012659661585,"PSOL",-2.6596964876850473
-"cabinet/2022/2023.1","cabinet",2022,2,"2023.1","Cabinet 2022/2023.1","party","d_i","UNIÃO",11.103563583757866,"PSOL",-6.0617753157133025
-"cabinet/2022/2023.1","cabinet",2022,2,"2023.1","Cabinet 2022/2023.1","district","a_Cd","RJ",2.9208916803521645,"DF",-1.7259055725002317
-"cabinet/2022/2023.1","cabinet",2022,2,"2023.1","Cabinet 2022/2023.1","district","b_Cd","RR",3.1517294702711056,"SP",-18.347999826686895
-"cabinet/2022/2023.1","cabinet",2022,2,"2023.1","Cabinet 2022/2023.1","district","d_Cd","RJ",5.700134356353879,"SP",-17.992496813099166
+"cabinet/C2014-a264923b9881ebab3d9b","cabinet",2014,1,"14-05","Cabinet 2014/14-05","party","A_i","PR",5.0428381901786,"PT",-1.215411226585322
+"cabinet/C2014-a264923b9881ebab3d9b","cabinet",2014,1,"14-05","Cabinet 2014/14-05","party","B_i","PMDB",4.224685645373679,"PT",-1.2063121025702577
+"cabinet/C2014-a264923b9881ebab3d9b","cabinet",2014,1,"14-05","Cabinet 2014/14-05","party","d_i","PMDB",8.133380861621642,"PT",-2.4217233291555798
+"cabinet/C2014-a264923b9881ebab3d9b","cabinet",2014,1,"14-05","Cabinet 2014/14-05","district","a_Cd","RJ",4.719045361414271,"MT",-1.3255823546072767
+"cabinet/C2014-a264923b9881ebab3d9b","cabinet",2014,1,"14-05","Cabinet 2014/14-05","district","b_Cd","AC",3.0431133715438876,"SP",-15.331280017322854
+"cabinet/C2014-a264923b9881ebab3d9b","cabinet",2014,1,"14-05","Cabinet 2014/14-05","district","d_Cd","RJ",7.657001236932485,"SP",-14.847482399375796
+"cabinet/C2022-259238bde0cf94feb03e","cabinet",2022,2,"22-01","Cabinet 2022/22-01","party","A_i","UNIÃO",9.356662317791708,"PSB",-5.545916698920125
+"cabinet/C2022-259238bde0cf94feb03e","cabinet",2022,2,"22-01","Cabinet 2022/22-01","party","B_i","UNIÃO",1.7469012659661585,"PSOL",-2.6596964876850473
+"cabinet/C2022-259238bde0cf94feb03e","cabinet",2022,2,"22-01","Cabinet 2022/22-01","party","d_i","UNIÃO",11.103563583757866,"PSOL",-6.0617753157133025
+"cabinet/C2022-259238bde0cf94feb03e","cabinet",2022,2,"22-01","Cabinet 2022/22-01","district","a_Cd","RJ",2.9208916803521645,"DF",-1.7259055725002317
+"cabinet/C2022-259238bde0cf94feb03e","cabinet",2022,2,"22-01","Cabinet 2022/22-01","district","b_Cd","RR",3.1517294702711056,"SP",-18.347999826686895
+"cabinet/C2022-259238bde0cf94feb03e","cabinet",2022,2,"22-01","Cabinet 2022/22-01","district","d_Cd","RJ",5.700134356353879,"SP",-17.992496813099166
 "ideological/2014/05-16","ideological",2014,1,"5-16 PSB-PTN","Ideological 2014/5-16 PSB-PTN","party","A_i","PSD",4.645941310001025,"PT DO B",-3.614965224246245
 "ideological/2014/05-16","ideological",2014,1,"5-16 PSB-PTN","Ideological 2014/5-16 PSB-PTN","party","B_i","PMDB",4.224685645373679,"PSDB",-5.011331274299147
 "ideological/2014/05-16","ideological",2014,1,"5-16 PSB-PTN","Ideological 2014/5-16 PSB-PTN","party","d_i","PMDB",8.133380861621642,"PSDB",-4.4303847839739765

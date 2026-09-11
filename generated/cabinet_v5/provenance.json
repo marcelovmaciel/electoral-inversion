@@ -56,7 +56,7 @@
     "v4_interval_resolutions.csv": "95e9f727dd6eb1c55ad5ef5077e63da9c7bba61d551220d484bf6d533513fe25",
     "witnesses.csv": "7d345a0e31b89afc5ed2ebaacdcd234f5c3ae29c63ab4f173a841eea65123930"
   },
-  "build_command": "JULIA_BIN=processing/julia_paper_runtime.sh processing/rebuild_manuscript.sh --freeze-prose",
+  "build_command": "JULIA_BIN=processing/julia_paper_runtime.sh processing/rebuild_manuscript.sh",
   "transformation": "daily historical set -> audited election-year mapping -> maximal recompression -> electoral quantities",
   "days": 4096,
   "established_days": 3996,

@@ -96,7 +96,10 @@ coalition_periods = recompute_coalition_periods(
     accounting_by_year;
     party_baseline = party_baseline,
 )
-cabinet_reference = decompose_inversions(coalition_periods, accounting_by_year)
+chronology_periods = coalition_periods
+coalition_sets = Processing.cabinet_set_view(chronology_periods)
+
+cabinet_reference = decompose_inversions(coalition_sets, accounting_by_year)
 ideological_regression = validate_ideological_counts(ideological_intervals)
 
 full = build_full_accounting_outputs(accounting_by_year)
@@ -104,7 +107,7 @@ party_size_diagnostics = build_party_size_diagnostics!(
     full.parties, coalition_periods, accounting_by_year,
 )
 registry = build_inversion_case_registry(
-    coalition_periods,
+    coalition_sets,
     ideological_intervals,
     accounting_by_year,
 )
@@ -121,6 +124,10 @@ processing_source_paths = sort(filter(
 ))
 input_paths = String[
     observed_path,
+    joinpath(REPO_ROOT, "generated", "cabinet_party_sets", "identity.csv"),
+    joinpath(REPO_ROOT, "generated", "cabinet_party_sets", "period_linkage.csv"),
+    joinpath(REPO_ROOT, "processing", "cabinet_party_sets.py"),
+    joinpath(REPO_ROOT, "processing", "cabinet_v5.py"),
     party_path,
     ideological_path,
     joinpath(DECOMPOSITION_DIR, "CoalitionDecomposition.jl"),
@@ -159,8 +166,17 @@ manifest = write_intermediate_report_outputs(
     party_size_diagnostics = party_size_diagnostics,
 )
 
+# The standalone report must refresh the complete set vectors as well.
+all_set_vectors = decompose_inversions(coalition_sets, accounting_by_year; inversions_only=false)
+for (name,frame) in (("party",all_set_vectors.party_contributions),("district",all_set_vectors.district_contributions))
+    frame[!, :cabinet_party_set_id] = frame.coalition_id
+    for root in (OUTPUT_ROOT, PAPER_ROOT)
+        CSV.write(joinpath(root,"raw","cabinet_party_set_$(name)_contributions.csv"),frame)
+    end
+end
+
 DualUniverseAccounting.write_dual_universe_outputs(
-    PAPER_ROOT, OUTPUT_ROOT, coalition_periods, accounting_by_year,
+    PAPER_ROOT, OUTPUT_ROOT, coalition_sets, accounting_by_year,
 )
 
 println("Validated ideological inversion counts:")

@@ -143,11 +143,12 @@ class CabinetUnavailableAndEmptyTests(unittest.TestCase):
             (root / "figure_data").mkdir()
             (root / "raw").mkdir()
             (root / "figures").mkdir()
-            pd.DataFrame([dict(election_year=2014, period="fixture-identified",
+            pd.DataFrame([dict(election_year=2014, period="14-01", cabinet_party_set_id="synthetic-pt",
+                display_label="14-01", first_observed="2015-01-01",
                 period_start="2015-01-01", period_end="2015-01-03",
                 vote_share=.4, seat_share=200 / 513, seats=200,
                 representation_ratio=200 / (.4 * 513), coalition_inversion=False)]).to_csv(
-                root / "figure_data/observed_coalition_timeline.csv", index=False)
+                root / "raw/cabinet_party_sets.csv", index=False)
             pd.DataFrame(columns=["coalition_id", "election_year", "cabinet_period", "component", "seats"]).to_csv(
                 root / "figure_data/inversion_decomposition_components.csv", index=False)
             pd.DataFrame([dict(period_id="fixture-unidentified", start_inclusive="2015-01-04",
@@ -174,7 +175,7 @@ class CabinetUnavailableAndEmptyTests(unittest.TestCase):
 class CoalitionFigureOutputRegressions(unittest.TestCase):
     def test_actual_artifacts_match_primary_registry_and_cabinet_regressions(self) -> None:
         observed = figures.load_observed_coalition_timeline(ARTIFACT_ROOT)
-        source = pd.read_csv(ARTIFACT_ROOT / "raw" / "cabinet_coalition_metrics.csv")
+        source = pd.read_csv(ARTIFACT_ROOT / "raw" / "cabinet_party_sets.csv")
         self.assertEqual(len(observed), len(source))
         direct = (source["votes"] * 2 < source["national_vote_total"]) & (source["seats"] >= 257)
         self.assertEqual(int(observed["coalition_inversion"].sum()), int(direct.sum()))

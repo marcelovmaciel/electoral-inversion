@@ -1,32 +1,38 @@
-# Cabinet V5 analytical handoff
+# V5 chronology and compatibility assets
 
-This is downstream electoral analysis, not a historical evidence archive.
+The current analytical unit is the distinct election-year cabinet party set.
+Read [the current registry documentation](../cabinet_party_sets/README.md) and
+[the migration report](../../CABINET_PARTY_SET_MIGRATION_REPORT.md).
 
-**Transformation:** V5 historical daily party set -> audited election-year party mapping -> maximal consecutive analytical recompression -> electoral quantities.
+This directory retains the unchanged V5 daily reconstruction and dated electoral
+analysis: 4,096 days, 3,996 established and 100 provisional; 55 historical
+periods become 53 translated analytical periods. The periods are chronology,
+not the primary sample. Grouping their translated memberships across the full
+election window gives 34 sets and the same two inverted sets/260 inversion days.
+Historical UNKNOWN affiliations and all primary assumptions keep their meanings.
+No history builder runs in manuscript production.
 
-The source is `cabinet_dataset/releases/2026-03-19-history-v5-candidate`. Historical identities and all historical UNKNOWN records remain unchanged. The 2014, 2018 and 2022 elections apply respectively to 2015-2018, 2019-2022 and 2023-2026-03-19. The audited crosswalk is unchanged. DEM/PSL -> UNIÃO maps to DEM+PSL for 2018; renames retain election-year identities. No historical reconstruction runs in the paper pipeline.
+- `cabinet_analysis_daily.csv`: every primary date, membership, evidence and electoral vector.
+- `cabinet_analysis_periods.csv`, `historical_analytical_linkage.csv`: maximal dated periods and source links.
+- `cabinet_inversions.csv`, `cabinet_timeline_source.csv`: temporal inversion and full chronology products.
+- `cabinet_sensitivity_results.csv`, `cabinet_sensitivity_periods.csv`, `sensitivity_register.csv`: preserved date-level comparisons and uncertainty records. Scenario set registries are separate under `generated/cabinet_party_sets/`.
+- `tables/`, `figures/`, `figure_data/`, `figure5_panel_a_source.csv`: compatibility mirrors refreshed from current set-based analytical outputs. Figure 2's historical filename is retained; its current PDF is a point comparison of distinct sets.
+- `cabinet_analysis_before_after.csv`, old manuscript change checklists and dependency inventories: historical V5 integration records. They do not describe the current revised manuscript.
+- `provenance.json`, `v5_provenance/`, `quantitative_validation.csv`, `noncabinet_invariance.csv`: release and validation metadata.
 
-There are **53 analytical periods** and **2 primary inversions**. All 4,096 dates have primary sets: 3,996 established and 100 provisional. The 100 days rely on separate no-additional-party assumptions for nine historically unresolved people, not evidence of non-affiliation. Both inversions are entirely evidence-established. Period status is established, mixed or provisional; daily historical_status retains V5's established/unidentified meaning while primary_set_status records primary_adjudicated/primary_provisional.
+The release pin and audited crosswalk remain unchanged. Shares are proportions;
+A, B, q and d use seats; R is dimensionless. A strict vote minority with at least
+257 seats is an inversion. Dates use [start_inclusive,end_exclusive). Full
+recurrences remain separate temporal intervals even when they share a set ID.
 
-- `cabinet_analysis_daily.csv`: exactly one row per date, historical display labels/stable IDs, election parties, provenance and all quantities.
-- `cabinet_analysis_periods.csv`: authoritative maximal periods, stable CV5 IDs plus compatibility year.sequence labels, full quantities and evidence counts.
-- `cabinet_inversions.csv`: primary inversion registry and recorded-concrete-sensitivity robustness.
-- `cabinet_sensitivity_results.csv`: each nonbaseline concrete alternative, recompressed over its affected window. Blank affected-party fields mark composition-neutral or unbounded records, not invented parties.
-- `cabinet_sensitivity_periods.csv`: complete recompressed calendar for every scenario. Cases are changed one at a time. All comparisons change one released fact at a time and hold all other facts at their primary values. Unknown affiliations remain unbounded.
-- `cabinet_analysis_before_after.csv`: interval-overlap comparison for BOTH the 23-period manuscript narrative and the 33-period preintegration generated baseline. Do not add repeated old/new durations across overlap rows. Old unavailable days have blank quantities/status, never false inversion flags. Changed memberships are diagnosed using V5 historical comparison decisions; date-boundary differences are recorded separately. No new party mapping is introduced.
-- `historical_analytical_linkage.csv`: exact historical starts, exclusive ends and overlaps underlying each analytical period.
-- `cabinet_timeline_source.csv`, `figure5_panel_a_source.csv`, `figure_data/`, `tables/`, `figures/`: reviewable figure data and generated assets.
-- `CABINET_INVERSION_ROBUSTNESS.md`, `quantitative_validation.csv`, `noncabinet_invariance.csv`, `cabinet_dependency_inventory.csv`: outcome and verification records.
-- `cabinet_code_dependency_search.csv`: repository-wide code references, separated from historical audits and tests; maintained asset producers are in the dependency inventory.
-- `manuscript_required_changes.csv` and root `CABINET_V5_MANUSCRIPT_MODIFICATIONS.org`: editing checklist, with no replacement prose. The PDF intentionally retains stale prose.
-- `v5_provenance/`: compact release metadata/assumptions/constraints, without raw evidence snapshots.
-
-Shares are proportions, not percentages; A, B, q and d use seats. R is dimensionless. An inversion requires vote share < 0.5 and seats >=257. Dates are ISO; end_exclusive is half-open. Semicolons separate parties/IDs; historical_party_sets is a JSON array. Repeated periods with the same set at nonconsecutive dates remain separate.
-
-Reproduce from the repository root:
+Run the complete validated workflow from the repository root:
 
 ```bash
-JULIA_BIN=processing/julia_paper_runtime.sh processing/rebuild_manuscript.sh --freeze-prose
+JULIA_BIN=processing/julia_paper_runtime.sh processing/rebuild_manuscript.sh
 ```
 
-`processing/Processing/data/cabinet_release_pin.json` is the single release selector. Reproduction validates hashes, runs the existing Julia election/decomposition pipelines, independently checks exact district/party closure, regenerates all figures/tables, compiles both PDFs and creates the reports/ZIP. Manuscript prose is never changed. The checked-in comparison inputs/signatures are under `processing/Processing/data/cabinet_v5_comparison_baseline/`.
+The current manuscript source is revised in place, with literal numerical values
+and validated adjacent provenance. Root `CABINET_V5_INTEGRATION_REPORT.md` and
+`CABINET_V5_MANUSCRIPT_MODIFICATIONS.org` are preserved historical documents;
+the current report and upload are `CABINET_PARTY_SET_MIGRATION_REPORT.md` and
+`handoff/cabinet_party_sets_handoff.zip`.

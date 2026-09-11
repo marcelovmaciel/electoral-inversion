@@ -30,7 +30,7 @@ end
 function cabinet_district_concentration_latex(data)
     lines = String[
         raw"\begin{tabular}{llcrrrr}", raw"\toprule",
-        raw"Election & Period &",
+        raw"Election & Set &",
         raw"\shortstack{Districts\\positive/negative} &",
         raw"\shortstack{Positive\\sum} &",
         raw"\shortstack{Negative\\sum} &",

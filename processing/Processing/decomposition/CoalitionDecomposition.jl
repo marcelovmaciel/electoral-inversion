@@ -536,8 +536,8 @@ the full member-party d_i vector and state-level contributions. All internal
 identities are checked with exact rational arithmetic; decimal residuals are
 also checked under ACCOUNTING_ATOL/ACCOUNTING_RTOL for output regressions.
 """
-function decompose_inversions(coalition_periods::DataFrame, accounting_by_year::AbstractDict)
-    inversion_rows = coalition_periods[coalition_periods.coalition_inversion .== true, :]
+function decompose_inversions(coalition_periods::DataFrame, accounting_by_year::AbstractDict; inversions_only=true)
+    inversion_rows = inversions_only ? coalition_periods[coalition_periods.coalition_inversion .== true, :] : coalition_periods
     decomposition_rows = NamedTuple[]
     party_rows = NamedTuple[]
     district_rows = NamedTuple[]
@@ -549,8 +549,8 @@ function decompose_inversions(coalition_periods::DataFrame, accounting_by_year::
         key = (year, period)
         accounting = accounting_by_year[year]
         parties = split_parties(coalition.coalition_parties)
-        coalition.vote_share < 0.5 || error("$(year)/$(period): decomposed coalition is not below 50% of votes.")
-        coalition.s_C >= accounting.seat_majority_threshold || error(
+        !inversions_only || coalition.vote_share < 0.5 || error("$(year)/$(period): decomposed coalition is not below 50% of votes.")
+        !inversions_only || coalition.s_C >= accounting.seat_majority_threshold || error(
             "$(year)/$(period): decomposed coalition lacks a Chamber seat majority.",
         )
 
@@ -574,6 +574,7 @@ function decompose_inversions(coalition_periods::DataFrame, accounting_by_year::
                 a_Cd = Float64(values.a_exact),
                 b_Cd = Float64(values.b_exact),
                 b_Cd_factored = Float64(values.b_factored_exact),
+                a_Cd_exact=string(values.a_exact), b_Cd_exact=string(values.b_exact),
                 b_crosscheck_residual = Float64(values.b_exact - values.b_factored_exact),
             ))
         end
@@ -617,6 +618,8 @@ function decompose_inversions(coalition_periods::DataFrame, accounting_by_year::
                 q_i = Float64(member.quota_exact),
                 R_i = member.R_exact === missing ? missing : Float64(member.R_exact),
                 d_i = Float64(member.d_exact),
+                q_i_exact=string(member.quota_exact), d_i_exact=string(member.d_exact),
+                A_i_exact=string(member.A_exact), B_i_exact=string(member.B_exact),
                 A_i = Float64(member.A_exact),
                 B_i = Float64(member.B_exact),
                 q_times_R_minus_1 = member.R_exact === missing ? missing :
@@ -642,7 +645,7 @@ function decompose_inversions(coalition_periods::DataFrame, accounting_by_year::
             q_C = Float64(q_exact),
             d_C = Float64(d_exact),
             r_C = Float64(r_exact),
-            R_C = Float64(coalition.R_C),
+            R_C = ismissing(coalition.R_C) ? missing : Float64(coalition.R_C),
             A_C = Float64(A_exact),
             B_C = Float64(B_exact),
             A_plus_B_residual = Float64(A_exact + B_exact - d_exact),
@@ -762,7 +765,7 @@ function decomposition_latex(data::DataFrame)
     io = IOBuffer()
     println(io, "\\begin{tabularx}{\\textwidth}{@{}llrrrrrr>{\\raggedright\\arraybackslash}X@{}}")
     println(io, "\\toprule")
-    println(io, "Election & Period & Days & Vote \\% & Seats & \\(d_C\\) & \\(A_C\\) & \\(B_C\\) & Parties \\\\")
+    println(io, "Election & Set & Days & Vote \\% & Seats & \\(d_C\\) & \\(A_C\\) & \\(B_C\\) & Parties \\\\")
     println(io, "\\midrule")
     isempty(data) && println(io, raw"\multicolumn{9}{l}{No identified cabinet inversions satisfy the criterion.} \\")
     for row in eachrow(data)
@@ -783,7 +786,7 @@ function party_extremes_latex(data::DataFrame)
     io = IOBuffer()
     println(io, "\\begin{tabular}{lllrlr}")
     println(io, "\\toprule")
-    println(io, "Election & Period & Largest positive & \\(d_i\\) & Largest negative & \\(d_i\\) \\\\")
+    println(io, "Election & Set & Largest positive & \\(d_i\\) & Largest negative & \\(d_i\\) \\\\")
     println(io, "\\midrule")
     for row in eachrow(data)
         println(io,

@@ -32,15 +32,18 @@ fi
 "$python_cmd" processing/Processing/psc_baseline_repair/build_cabinet_diagnostics.py
 "$julia_cmd" -O0 --startup-file=no --project=processing/Processing processing/Processing/running/running.jl
 "$julia_cmd" -O0 --startup-file=no --project=processing/Processing processing/Processing/decomposition/run_decomposition.jl
-"$python_cmd" processing/Processing/decomposition/party_AB_diagnostic.py
-"$python_cmd" processing/cabinet_v5_validation.py check
 "$python_cmd" processing/cabinet_v5.py analyze
 "$python_cmd" processing/cabinet_v5_validation.py quantitative
+"$python_cmd" processing/cabinet_party_sets.py
+"$python_cmd" processing/Processing/decomposition/party_AB_diagnostic.py
+"$python_cmd" processing/cabinet_v5_validation.py check
 "$python_cmd" processing/cabinet_v5_assets.py
 "$julia_cmd" -O0 --startup-file=no --project=processing/Processing processing/make_representation_profile.jl
 "$python_cmd" writing/make_coalition_figures.py --artifact-root processing/Processing/output/paper --figure-dir writing/submission_inversions_review/manuscript
 "$python_cmd" writing/make_coalition_figures.py --artifact-root processing/Processing/output/paper --figure-dir writing/figures
+"$python_cmd" processing/cabinet_party_set_report.py --sync-assets
 "$python_cmd" processing/audit_ideological_universes.py
+"$python_cmd" processing/cabinet_party_set_validation.py
 latexmk -cd -g -pdf -synctex=1 -interaction=nonstopmode -halt-on-error -outdir=../../output/decomposition/report processing/Processing/decomposition/report/intermediate_accounting_report.tex
 cd writing/submission_inversions_review/manuscript
 latexmk -g -pdf -synctex=1 -interaction=nonstopmode -halt-on-error main_rw_again.tex
@@ -52,4 +55,5 @@ if $freeze_prose; then
 else
   "$python_cmd" processing/Processing/decomposition/audit_empirical_assets.py
   "$python_cmd" writing/package_submission_assets.py
+  "$python_cmd" processing/cabinet_party_set_report.py
 fi

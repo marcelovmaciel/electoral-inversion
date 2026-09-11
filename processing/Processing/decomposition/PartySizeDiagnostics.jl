@@ -98,7 +98,7 @@ end
 """
 Extend the existing persistable party panel, deriving summaries from the exact
 in-memory party objects and the unchanged, already translated cabinet registry.
-The distinct-set grouping has no path back into that registry.
+The shared production registry controls set identity; linked periods retain chronology.
 """
 function build_party_size_diagnostics!(parties::DataFrame, periods::DataFrame, accounting_by_year::AbstractDict)
     chronology_before = deepcopy(periods)
@@ -117,17 +117,20 @@ function build_party_size_diagnostics!(parties::DataFrame, periods::DataFrame, a
     counts = Dict(k => 0 for k in keys(source))
     days = copy(counts)
     raw_counts = copy(counts)
+    identity = CD.Processing.cabinet_set_identity()
+    registry = Dict((Int(r.election_year), String(r.canonical_membership)) => NamedTuple(r) for r in eachrow(identity))
     sets = Dict{String,Any}()
     set_order = String[]
     link_rows = NamedTuple[]
     for period in eachrow(periods)
         year = Int(period.election_year)
         names = sort(ordered_parties(period.coalition_parties))
-        set_id = string(year, ":", join(names, "|"))
+        reg = registry[year, join(names, ";")]
+        set_id = reg.cabinet_party_set_id
         members = [source[year, name] for name in names]
         source_periods = String.(JSON3.read(String(period.source_periods)))
         for name in names
-            counts[year, name] += 1
+            counts[year, name] += !haskey(sets, set_id)
             days[year, name] += Int(period.days_overlapping_mandate)
             raw_counts[year, name] += length(source_periods)
         end
@@ -176,6 +179,16 @@ function build_party_size_diagnostics!(parties::DataFrame, periods::DataFrame, a
                 row = merge(row, NamedTuple{(name_col, value_col)}((rank <= length(ranked) ? String(ranked[rank].party) : missing,
                     rank <= length(ranked) ? Float64(ranked[rank].A_exact) : missing)))
             end
+            q == 0 || (A/q+B/q == CD.exact_fraction(period.s_C,1)/q-1) || error("Normalized closure")
+            row = merge(row, reg, (v_C=Int(period.v_C), votes=Int(period.v_C), V=Int(period.V), national_vote_total=Int(period.V),
+                s_C=Int(period.s_C), seats=Int(period.s_C), S=Int(period.S),
+                vote_share=period.vote_share, seat_share=period.seat_share, d_C=period.d_C, R_C=period.R_C,
+                vote_majority=period.vote_majority, seat_majority=period.seat_majority,
+                coalition_inversion=period.coalition_inversion, inversion_status=period.coalition_inversion,
+                A_over_q=iszero(q) ? missing : Float64(A/q), B_over_q=iszero(q) ? missing : Float64(B/q),
+                q_C_exact=exact_text(q), d_C_exact=exact_text(A+B),
+                R_C_exact=iszero(q) ? missing : exact_text(CD.exact_fraction(period.s_C,1)/q),
+                A_over_q_exact=iszero(q) ? missing : exact_text(A/q),B_over_q_exact=iszero(q) ? missing : exact_text(B/q)))
             sets[set_id] = row
         end
     end
@@ -188,7 +201,7 @@ function build_party_size_diagnostics!(parties::DataFrame, periods::DataFrame, a
         linked = links[links.cabinet_party_set_id .== id, :]
         push!(set_rows, merge(sets[id], (cabinet_periods = JSON3.write(String.(linked.cabinet_period)),
             coalition_ids = JSON3.write(String.(linked.coalition_id)),
-            cabinet_observation_count = nrow(linked), total_cabinet_days = sum(linked.days_overlapping_mandate))))
+            cabinet_observation_count = nrow(linked), total_cabinet_days = sets[id].total_observed_days)))
     end
     keys_in_order = [(Int(r.election_year), String(r.party)) for r in eachrow(parties)]
     for key in sort(collect(keys(source)))
@@ -200,6 +213,8 @@ function build_party_size_diagnostics!(parties::DataFrame, periods::DataFrame, a
     parties[!, :B_over_q] = [Float64(source[k].B_exact/source[k].quota_exact) for k in keys_in_order]
     parties[!, :ever_in_cabinet] = [counts[k] > 0 for k in keys_in_order]
     parties[!, :cabinet_observation_count] = [counts[k] for k in keys_in_order]
+    parties[!, :cabinet_distinct_set_count] = [counts[k] for k in keys_in_order]
+    parties[!, :cabinet_analytical_period_count] = [count(r -> r.election_year==k[1] && k[2] in ordered_parties(r.coalition_parties), eachrow(periods)) for k in keys_in_order]
     parties[!, :cabinet_source_period_count] = [raw_counts[k] for k in keys_in_order]
     parties[!, :cabinet_days] = [days[k] for k in keys_in_order]
     primary_days = Dict(y => sum(periods.days_overlapping_mandate[periods.election_year .== y])
@@ -300,7 +315,7 @@ function party_size_report_latex(d)
     shares_range = isempty(shares) ? "unavailable" : "$(fmtpct(minimum(shares)))--$(fmtpct(maximum(shares)))"
     top_three_shares = collect(skipmissing(sets.top_three_by_q_share_gross_positive_A))
     top_three_minimum = isempty(top_three_shares) ? "unavailable" : fmtpct(minimum(top_three_shares))
-    println(io, "\\par Among $(nrow(links)) cabinet observations, $(count(>(0), links.A_C)) have positive \\(A_C\\); \\(B_C>0\\) in $(count(>(0), links.B_C)). " *
+    println(io, "\\par Among $(nrow(sets)) cabinet party sets, $(count(>(0), sets.A_C)) have positive \\(A_C\\); \\(B_C>0\\) in $(count(>(0), sets.B_C)). " *
         "There are $(nrow(sets)) distinct election-year party sets. Positive contributions from members with at least 5\\% of votes exceed all negative member contributions in $(count(>(0), sets.large_positive_minus_all_negative_A)) sets; they supply $(shares_range)\\% of gross positives. " *
         "The smallest such remaining balance is $(fmt2(minimum(sets.large_positive_minus_all_negative_A))) seats. Net \\(A_C\\) ranges from $(fmt2(minimum(sets.A_C))) to $(fmt2(maximum(sets.A_C))) seats.")
     println(io, raw"\begin{itemize}")
@@ -311,12 +326,12 @@ function party_size_report_latex(d)
         selected = union(Set(first(by_A, min(3, nrow(pp))).party),
             Set(first(by_frequency, min(2, nrow(pp))).party))
         top = by_A[in.(by_A.party, Ref(selected)), :]
-        entries = ["$(CD.latex_escape(r.party)): \\(A_i=$(fmt2(r.A_i))\\), $(r.cabinet_observation_count) observations" for r in eachrow(top)]
+        entries = ["$(CD.latex_escape(r.party)): \\(A_i=$(fmt2(r.A_i))\\), $(r.cabinet_observation_count) distinct sets" for r in eachrow(top)]
         println(io, "\\item $(year) recurring positive members: " * join(entries, "; ") * ".")
     end
     println(io, raw"\end{itemize}")
     worst = sets[argmin(sets.A_C), :]
-    println(io, "The weakest net total belongs to period(s) $(CD.latex_escape(join(String.(JSON3.read(worst.cabinet_periods)), ", "))): " *
+    println(io, "The weakest net total belongs to cabinet party set $(worst.display_label): " *
         "\\(A_C=$(fmt2(worst.A_C))\\), with gross positives $(fmt2(worst.gross_positive_A)) and negatives $(fmt2(worst.gross_negative_A)). " *
         "The three largest members by \\(q_i\\) supply as little as $(top_three_minimum)\\% of gross positive \\(A_i\\); the explanation concerns a broader group of relatively large members. " *
         "All distinct-set decompositions and all $(nrow(links)) period links are retained in the machine-readable outputs. The group arithmetic holds fixed the observed party contributions; it is not a simulated seat allocation after removing parties.")

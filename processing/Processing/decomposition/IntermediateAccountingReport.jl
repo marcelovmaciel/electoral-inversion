@@ -281,7 +281,7 @@ function build_inversion_case_registry(
             d_C = Float64(row.d_C),
             r_C = Float64(row.r_C),
             R_C = Float64(row.R_C),
-            source_registry = "Pinned contemporaneous-affiliation cabinet release (identified compositions)",
+            source_registry = "Distinct translated cabinet party sets from pinned V5 chronology",
         ))
     end
 
@@ -1272,8 +1272,8 @@ function generated_interpretation_latex(
     for group in duplicate_groups
         labels = join(tex.(String.(group.case_label)), " and ")
         println(io,
-            "The $(labels) cabinet periods share the same accounting vector. They remain " *
-            "separate cabinet-period observations, but their duplicated numerical " *
+            "The $(labels) cabinet party sets share the same accounting vector. They remain " *
+            "separate membership observations, but their coincident numerical " *
             "decomposition is not independent evidence."
         )
     end

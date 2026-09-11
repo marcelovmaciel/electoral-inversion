@@ -11,7 +11,7 @@ Its accounting inputs live under the sibling output/decomposition directory.
 
 Expected input tree:
   <artifact-root>/figure_data/party_vote_share_vs_seat_share.csv
-  <artifact-root>/figure_data/observed_coalition_timeline.csv
+  <artifact-root>/raw/cabinet_party_sets.csv
   <artifact-root>/figure_data/ideological_interval_heatmap.csv
   <artifact-root>/figure_data/inversion_decomposition_components.csv
   <artifact-root>/figure_data/accounting_state_weighting_anatomy.csv
@@ -162,14 +162,10 @@ def load_party_vote_share_vs_seat_share(artifact_root: Path) -> pd.DataFrame:
 
 
 def load_observed_coalition_timeline(artifact_root: Path) -> pd.DataFrame:
-    input_path = artifact_root / "figure_data" / "observed_coalition_timeline.csv"
-    canonical = Path(__file__).resolve().parents[1] / "generated/cabinet_v5/cabinet_analysis_periods.csv"
-    production = Path(__file__).resolve().parents[1] / "processing/Processing/output/paper"
-    if artifact_root.resolve() == production and canonical.exists():
-        observed = read_csv(canonical).rename(columns={"start_inclusive":"period_start", "R_C":"representation_ratio", "inversion_status":"coalition_inversion"})
-        observed["period_end"] = pd.to_datetime(observed["end_exclusive"]) - pd.Timedelta(days=1)
-    else:
-        observed = read_csv(input_path)
+    input_path = artifact_root / "raw" / "cabinet_party_sets.csv"
+    observed = read_csv(input_path)
+    if observed.duplicated(["cabinet_party_set_id"]).any():
+        raise ValueError("Duplicate cabinet party set in shared registry")
     require_columns(
         observed,
         input_path,
@@ -492,69 +488,48 @@ def save_party_vote_share_vs_seat_share(artifact_root: Path, figure_dir: Path) -
     return output
 
 
+ELECTION_COLORS = {2014: "#1f77b4", 2018: "#ff7f0e", 2022: "#2ca02c"}
+
 def plot_observed_coalition_starts(axes, observed: pd.DataFrame) -> None:
-    """Connect cabinet start dates within each election and circle inversion cases."""
+    """One point per distinct set; horizontal order is first appearance."""
     series = (("vote_share", 100, "o"), ("seat_share", 100, "s"),
               ("representation_ratio", 1, "^"))
-    for year, rows in observed.groupby("election_year"):
-        rows = rows.sort_values("period_start")
+    for year, rows in observed.groupby("election_year", sort=True):
         for ax, (column, scale, marker) in zip(axes, series, strict=True):
-            ax.plot(rows["period_start"], rows[column] * scale,
-                    marker=marker, label=ELECTION_LABELS[year])
-
-    # Circle the same flagged cabinet inversions in every metric panel.
-    inversions = observed.loc[observed["coalition_inversion"]].sort_values("period_start")
-    if not inversions.empty:
-        for ax, (column, scale, _) in zip(axes, series, strict=True):
-            ax.plot(inversions["period_start"], inversions[column] * scale,
-                    linestyle="none", marker="o", markersize=12,
-                    markerfacecolor="none", markeredgecolor="black",
-                    markeredgewidth=1.2, label="Inversion", zorder=5)
+            ax.plot(rows.index, rows[column] * scale, linestyle="none",
+                    marker=marker, color=ELECTION_COLORS[year], label=ELECTION_LABELS[year], markersize=4)
+    inverted = observed.loc[observed.coalition_inversion]
+    for ax, (column, scale, _) in zip(axes, series, strict=True):
+        ax.plot(inverted.index, inverted[column] * scale, linestyle="none", marker="o",
+                markersize=10, markerfacecolor="none", markeredgecolor="black",
+                markeredgewidth=1.1, label="Inversion", zorder=5)
 
 
 def save_observed_coalition_timeline(artifact_root: Path, figure_dir: Path) -> Path:
-    observed = load_observed_coalition_timeline(artifact_root)
-
-    fig, (ax_vote, ax_seat, ax_ratio) = plt.subplots(1, 3, figsize=(10.8, 4.4), sharex=True)
-
-    unavailable = load_cabinet_unidentified_intervals(artifact_root)
-    plot_observed_coalition_starts((ax_vote, ax_seat, ax_ratio), observed)
-    for position, row in enumerate(unavailable.itertuples()):
-        for ax in (ax_vote, ax_seat, ax_ratio):
-            ax.axvspan(row.start_inclusive, row.end_exclusive, facecolor="#dddddd",
-                       edgecolor="#999999", hatch="////", linewidth=0,
-                       label="Composition unidentified" if position == 0 else None)
-
-    ax_vote.axhline(50, linestyle="--", linewidth=1)
-    ax_seat.axhline(SEAT_MAJORITY / EXPECTED_SEATS * 100, linestyle="--", linewidth=1)
-    ax_ratio.axhline(1, linestyle="--", linewidth=1)
-
-    ax_vote.set_title("Vote share")
-    ax_seat.set_title("Seat share")
-    ax_ratio.set_title("Representation ratio")
-    ax_vote.set_ylabel("Coalition share (%)")
-    ax_ratio.set_ylabel(r"$R_C$")
-    ax_vote.set_xlabel("Cabinet period start date")
-    ax_seat.set_xlabel("Cabinet period start date")
-    ax_ratio.set_xlabel("Cabinet period start date")
-
-    for ax in (ax_vote, ax_seat, ax_ratio):
-        ax.xaxis.set_major_formatter(DateFormatter("%Y"))
-        ax.grid(True, linewidth=0.35, alpha=0.35)
-
-    handles, labels = ax_vote.get_legend_handles_labels()
-    fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(.5, .93),
-               ncol=min(4, len(labels)), frameon=False)
-    fig.suptitle(
-        "Observed cabinet-period coalition vote shares, seat shares, and representation ratios",
-        y=.995, fontsize=12,
-    )
-
+    # Filename retained for manuscript label compatibility; chronology input
+    # remains separately exported as figure_data/observed_coalition_timeline.csv.
+    observed = load_observed_coalition_timeline(artifact_root).sort_values(
+        ["election_year", "first_observed", "cabinet_party_set_id"]).reset_index(drop=True)
+    observed.to_csv(artifact_root / "figure_data/cabinet_party_set_comparison.csv", index=False)
+    fig, axes = plt.subplots(1, 3, figsize=(9.2, 3.4), sharex=True)
+    plot_observed_coalition_starts(axes, observed)
+    year_positions = {str(year): (rows.index.min() + rows.index.max()) / 2
+                      for year, rows in observed.groupby("election_year", sort=True)}
+    for ax, threshold, title, ylabel in zip(axes, (50, SEAT_MAJORITY / EXPECTED_SEATS * 100, 1),
+            ("Vote share", "Seat share", "Representation ratio"), ("Vote (%)", "Seats (%)", r"$R_C$")):
+        ax.axhline(threshold, linestyle="--", color="#666666", linewidth=.8)
+        ax.set_title(title, loc="left", fontsize=10)
+        ax.set_ylabel(ylabel)
+        ax.grid(axis="y", linewidth=.35, alpha=.35)
+        for boundary in observed.index[observed.election_year.ne(observed.election_year.shift())][1:]:
+            ax.axvline(boundary-.5, color="#bbbbbb", lw=.6)
+        ax.set_xticks(list(year_positions.values()), list(year_positions), fontsize=9)
+    fig.supxlabel("Cabinet party set", y=.03, fontsize=10)
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", ncol=4, frameon=False, bbox_to_anchor=(.53,1.0))
+    fig.subplots_adjust(top=.80,bottom=.20,left=.065,right=.99,wspace=.42)
     output = figure_dir / "observed_coalition_timeline.pdf"
-    fig.autofmt_xdate()
-    fig.tight_layout()
-    fig.subplots_adjust(top=.80 if len(labels) <= 4 else .75, bottom=.16, wspace=.28)
-    fig.savefig(output)
+    fig.savefig(output, metadata={"CreationDate":None,"ModDate":None})
     plt.close(fig)
     return output
 
@@ -785,7 +760,7 @@ def save_inversion_decomposition_components(artifact_root: Path, figure_dir: Pat
     ax.set_yticks(positions, labels)
     ax.invert_yaxis()
     ax.set_xlabel("Seat contribution")
-    ax.set_title("Accounting decomposition of observed coalition inversions")
+    ax.set_title("Accounting decomposition of inverted cabinet party sets")
     ax.grid(True, axis="x", linewidth=0.35, alpha=0.35)
     ax.legend(frameon=False, fontsize=8, loc="upper center",
               bbox_to_anchor=(0.5, -0.20), ncol=2)

@@ -21,7 +21,7 @@ class IdeologicalAccountingTests(unittest.TestCase):
         }
         for universe in expected:
             frame = build_cross_domain_components(PAPER, domains=('cabinet', 'k=0', 'k=1'), universe=universe)
-            with (PAPER / 'raw/cabinet_coalition_metrics.csv').open(newline='', encoding='utf-8') as handle:
+            with (PAPER / 'raw/cabinet_party_sets.csv').open(newline='', encoding='utf-8') as handle:
                 cabinet = list(csv.DictReader(handle))
             expected_cabinet = (len(cabinet), sum(2 * int(r['votes']) < int(r['national_vote_total']) and
                                                 int(r['seats']) >= 257 for r in cabinet))

@@ -36,14 +36,30 @@ end
 
 display_milli(value) = parse(Int, replace(String(value), "." => ""))
 
-coalition_periods = required_csv(joinpath(OUTPUT_ROOT_TEST, "raw", "coalition_period_quantities.csv"))
+chronology_periods = required_csv(joinpath(OUTPUT_ROOT_TEST, "raw", "coalition_period_quantities.csv"))
+coalition_periods = Processing.cabinet_set_view(chronology_periods)
 decomposition = required_csv(joinpath(OUTPUT_ROOT_TEST, "raw", "inversion_decomposition.csv"))
 party_contributions = required_csv(joinpath(OUTPUT_ROOT_TEST, "raw", "inversion_party_contributions.csv"))
 district_contributions = required_csv(joinpath(OUTPUT_ROOT_TEST, "raw", "inversion_district_contributions.csv"))
 identity_checks = required_csv(joinpath(OUTPUT_ROOT_TEST, "audit", "decomposition_identity_checks.csv"))
 input_manifest = required_csv(joinpath(OUTPUT_ROOT_TEST, "audit", "decomposition_input_manifest.csv"))
 ideological = required_csv(joinpath(PAPER_ROOT_TEST, "raw", "ideological_interval_metrics.csv"))
-psc_baseline = required_csv(joinpath(PAPER_ROOT_TEST, "raw", "cabinet_coalition_metrics.csv"))
+psc_baseline = required_csv(joinpath(PAPER_ROOT_TEST, "raw", "cabinet_party_sets.csv"))
+
+@testset "Shared set view rejects changed recurrent electoral vectors" begin
+    @test nrow(coalition_periods) == 34
+    @test allunique(coalition_periods.coalition_id)
+    @test sum(coalition_periods.days_overlapping_mandate) == sum(chronology_periods.days_overlapping_mandate) == 4096
+    @test isequal(Processing.cabinet_set_view(chronology_periods[end:-1:1,:]), coalition_periods)
+    repeated = first(filter(r -> r.analytical_period_count > 1, eachrow(Processing.cabinet_set_identity())))
+    labels = split(repeated.analytical_period_labels, ';')
+    i = findfirst(==(labels[1]), chronology_periods.cabinet_period)
+    for column in (:v_C, :s_C, :q_C, :d_C, :R_C)
+        broken = deepcopy(chronology_periods)
+        broken[i, column] += 1
+        @test_throws r"electoral vector differs" Processing.cabinet_set_view(broken)
+    end
+end
 
 test_result = @testset "Release-derived dynamic coalition decomposition" begin
     expected = psc_baseline[(2 .* psc_baseline.votes .< psc_baseline.national_vote_total) .& (psc_baseline.seats .>= 257), :]
@@ -58,7 +74,7 @@ test_result = @testset "Release-derived dynamic coalition decomposition" begin
     observed_latex = CoalitionDecomposition.decomposition_latex(decomposition)
     @test occursin("\\begin{tabularx}", observed_latex)
     @test occursin(
-        "Election & Period & Days & Vote \\% & Seats & \\(d_C\\) & \\(A_C\\) & \\(B_C\\) & Parties",
+        "Election & Set & Days & Vote \\% & Seats & \\(d_C\\) & \\(A_C\\) & \\(B_C\\) & Parties",
         observed_latex,
     )
     @test !occursin("\\(q_C\\)", observed_latex)

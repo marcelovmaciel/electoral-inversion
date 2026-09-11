@@ -233,7 +233,10 @@ coalition_periods = recompute_coalition_periods(
     accounting_by_year;
     party_baseline = party_baseline,
 )
-outputs = decompose_inversions(coalition_periods, accounting_by_year)
+chronology_periods = coalition_periods
+coalition_sets = Processing.cabinet_set_view(chronology_periods)
+
+outputs = decompose_inversions(coalition_sets, accounting_by_year)
 full_accounting = build_full_accounting_outputs(accounting_by_year)
 party_size_diagnostics = build_party_size_diagnostics!(
     full_accounting.parties, coalition_periods, accounting_by_year,
@@ -244,7 +247,7 @@ ideological_regression = validate_ideological_counts(ideological_intervals)
 ideological_audit_path = joinpath(OUTPUT_ROOT, "audit", "ideological_regression.csv")
 CSV.write(ideological_audit_path, ideological_regression)
 case_registry = build_inversion_case_registry(
-    coalition_periods,
+    coalition_sets,
     ideological_intervals,
     accounting_by_year,
 )
@@ -254,13 +257,27 @@ party_size_artifacts = write_party_size_diagnostic_outputs(
     OUTPUT_ROOT, full_accounting, party_size_diagnostics,
 )
 
+# Complete member/district vectors for every registered cabinet set, unweighted.
+all_set_vectors = decompose_inversions(coalition_sets, accounting_by_year; inversions_only=false)
+for (name,frame) in (("party",all_set_vectors.party_contributions),("district",all_set_vectors.district_contributions))
+    frame[!, :cabinet_party_set_id] = frame.coalition_id
+    relative = "raw/cabinet_party_set_$(name)_contributions.csv"
+    path = joinpath(OUTPUT_ROOT,relative)
+    CSV.write(path,frame)
+    push!(party_size_artifacts,(path=relative,artifact_type="raw",description="One cabinet-set/member or cabinet-set/district vector; occurrence linkage is separate.",rows=nrow(frame),columns=ncol(frame),sha256=sha256_file(path)))
+end
+
 robustness_artifacts, dual_universe_paper_artifacts = DualUniverseAccounting.write_dual_universe_outputs(
-    PAPER_ROOT, OUTPUT_ROOT, coalition_periods, accounting_by_year,
+    PAPER_ROOT, OUTPUT_ROOT, coalition_sets, accounting_by_year,
 )
 
 
 input_paths = [
     observed_path,
+    joinpath(REPO_ROOT, "generated", "cabinet_party_sets", "identity.csv"),
+    joinpath(REPO_ROOT, "generated", "cabinet_party_sets", "period_linkage.csv"),
+    joinpath(REPO_ROOT, "processing", "cabinet_party_sets.py"),
+    joinpath(REPO_ROOT, "processing", "cabinet_v5.py"),
     party_path,
     ideology_input_path,
     joinpath(PAPER_ROOT, "raw", "ideological_interval_metrics_all_parties.csv"),

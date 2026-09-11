@@ -99,7 +99,7 @@ end
 @testset "Cabinet bridge does not infer transitions across unknown gaps" begin
     paper=joinpath(@__DIR__, "..", "output", "paper")
     for suffix in ("", "_all_parties")
-        bridge=CSV.read(joinpath(paper,"tables","table_appendix_cabinet_interval_bridge$(suffix).csv"),DataFrame;types=Dict(:cabinet_period=>String))
+        bridge=CSV.read(joinpath(paper,"diagnostics","cabinet_interval_chronology$(suffix).csv"),DataFrame;types=Dict(:cabinet_period=>String))
         @test issorted(bridge.period_start)
         for i in 1:nrow(bridge)
             row=bridge[i,:]
@@ -112,5 +112,18 @@ end
                 @test ismissing(row.left_ideology_summary) || isempty(row.left_ideology_summary)
             end
         end
+    end
+end
+
+@testset "Set bridges have one row per registry ID and no implied transitions" begin
+    paper=joinpath(@__DIR__, "..", "output", "paper")
+    expected=Set(Processing.cabinet_set_identity().cabinet_party_set_id)
+    for suffix in ("", "_all_parties")
+        bridge=CSV.read(joinpath(paper,"tables","table_appendix_cabinet_interval_bridge$(suffix).csv"),DataFrame;types=Dict(:cabinet_period=>String))
+        @test Set(bridge.cabinet_party_set_id)==expected
+        @test allunique(bridge.cabinet_party_set_id)
+        @test all(==("not_applicable_set"), bridge.transition_status)
+        @test all(ismissing, bridge.delta_cabinet_mean_ideology_value_unweighted)
+        @test all(ismissing, bridge.delta_cabinet_mean_ideology_value_seat_weighted)
     end
 end

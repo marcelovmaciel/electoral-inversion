@@ -2,9 +2,9 @@
 
 ## Scope and definitions
 
-The current sample contains 2 identified cabinet inversion periods, 6 minimal connected (k=0) ideological inversions and 84 at-most-one-gap (k=1) minimal inversions. This standalone diagnostic retains its original **all-party ideological sensitivity**, including zero-seat parties. The manuscript's primary seat-winning ideological baseline is generated separately and is unchanged.
+The current sample contains 2 inverted cabinet party sets, 6 minimal connected (k=0) ideological inversions and 84 at-most-one-gap (k=1) minimal inversions. This standalone diagnostic retains its original **all-party ideological sensitivity**, including zero-seat parties. The manuscript's primary seat-winning ideological baseline is generated separately and is unchanged.
 
-Cabinet history comes from the pinned contemporaneous-affiliation release. There are 53 identified reporting periods; 0 historical intervals covering 0 of 4,096 calendar days have an unidentified full cabinet set and unavailable inversion status. The confirmed core of such a period is never treated as a complete coalition. Convention-coded date boundaries and their local sensitivity remain explicit in the release and the cabinet date-sensitivity CSVs.
+Cabinet history comes from the pinned contemporaneous-affiliation release. There are 34 distinct election-year cabinet party sets, observed on 4,096 dates (3,996 established and 100 provisional). The inverted sets occupy 260 days. UNKNOWN historical affiliations remain UNKNOWN; provisional primary assumptions add no party. Set counts are unweighted. Actual intervals, evidence status and date-level sensitivities remain linked separately.
 
 For each party, $q_i=S v_i/V$, $d_i=s_i-q_i$, $R_i=s_i/q_i$, $A_i=\sum_d(s_{id}-S_dv_{id}/V_d)$ and $B_i=\sum_d S_dv_{id}/V_d-Sv_i/V$. All components are in seats. The exact checks require $d_i=A_i+B_i$, $A_C=\sum_{i\in C}A_i$, $B_C=\sum_{i\in C}B_i$ and $d_C=A_C+B_C$. The denominator includes every valid party vote, and the national seat total remains 513.
 
@@ -12,9 +12,9 @@ These are descriptive accounting contributions. The 2014/2018 joint-list allocat
 
 ## Validation and provenance
 
-The maintained Julia decomposition supplies the complete district-party panel. This diagnostic independently sums integer district votes/seats with rational arithmetic, checks every selected member vector and deletion, and verifies domain-relative minimality against all winning proper subsets. All 19,837 all-party k=0/k=1 registry rows and 53 identified cabinet observations passed. The maximum saved-accounting discrepancy is 1.14e-13; the maximum serialized closure discrepancy is 3.55e-15, against an absolute tolerance of 1e-10 and zero relative tolerance.
+The maintained Julia decomposition supplies the complete district-party panel. This diagnostic independently sums integer district votes/seats with rational arithmetic, checks every selected member vector and deletion, and verifies domain-relative minimality against all winning proper subsets. All 19,837 all-party k=0/k=1 registry rows and 34 cabinet party sets passed. The maximum saved-accounting discrepancy is 1.14e-13; the maximum serialized closure discrepancy is 3.55e-15, against an absolute tolerance of 1e-10 and zero relative tolerance.
 
-Input/code provenance SHA-256: `431ea0dad82dbf86fc8d45b906448bc44d01e1865ef8632c2e6e681297e8a819`. The manuscript source is preserved at SHA-256 `1b2c0eb3fb8cd05531d739c2e4f95c7f71051019e0c8676fcce3c3735ed68c33`.
+Input/code provenance SHA-256: `8ba29fff9b7e26159696ddb245f1d36094bda14b532e7c35e9ec93856aa0ad58`. The manuscript source is preserved at SHA-256 `0a9d81e35801f8d6e6a7ddb30de8e61eb364e37f115d9b518618c8dbc1667cb1`.
 
 ## Party component sign profiles
 
@@ -29,8 +29,8 @@ Input/code provenance SHA-256: `431ea0dad82dbf86fc8d45b906448bc44d01e1865ef8632c
 
 | Code | Election | Domain | Period/interval | Days | Vote % | Seats | A_C | B_C | d_C | Members |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| C14-01 | 2014 | cabinet | 2016.3: 2016-04-14 to 2016-04-18 | 5 | 46.5358 | 259 | 15.742 | 4.529 | 20.271 | PCdoB; PDT; PMDB; PR; PSD; PT; PTB |
-| C22-01 | 2022 | cabinet | 2023.1: 2023-01-01 to 2023-09-12 | 255 | 48.8880 | 263 | 13.196 | -0.992 | 12.204 | MDB; PCdoB; PDT; PSB; PSD; PSOL; PT; REDE; UNIÃO |
+| 14-05 | 2014 | cabinet | [["2016-04-14","2016-04-19"]] | 5 | 46.5358 | 259 | 15.742 | 4.529 | 20.271 | PCdoB; PDT; PMDB; PR; PSD; PT; PTB |
+| 22-01 | 2022 | cabinet | [["2023-01-01","2023-09-13"]] | 255 | 48.8880 | 263 | 13.196 | -0.992 | 12.204 | MDB; PCdoB; PDT; PSB; PSD; PSOL; PT; REDE; UNIÃO |
 | K14a | 2014 | k=0 minimal ideological | PSB--PTN |  | 48.9216 | 260 | 10.509 | -1.476 | 9.032 | PSB; PPS; PV; PTB; PT DO B; SOLIDARIEDADE; PMN; PHS; PMDB; PSD; PSDB; PTN |
 | K14b | 2014 | k=0 minimal ideological | PTB--PR |  | 47.5913 | 257 | 11.621 | 1.236 | 12.857 | PTB; PT DO B; SOLIDARIEDADE; PMN; PHS; PMDB; PSD; PSDB; PTN; PPL; PRTB; PROS; PRP; PR |
 | K14c | 2014 | k=0 minimal ideological | PT DO B--PSDC |  | 48.9868 | 257 | 6.267 | -0.569 | 5.697 | PT DO B; SOLIDARIEDADE; PMN; PHS; PMDB; PSD; PSDB; PTN; PPL; PRTB; PROS; PRP; PR; PRB; PTC; PSDC |
@@ -43,12 +43,12 @@ Input/code provenance SHA-256: `431ea0dad82dbf86fc8d45b906448bc44d01e1865ef8632c
 
 | Code | Component | Gross positive | Gross negative (signed) | Top two positive | Share | Top two negative | Share |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| C14-01 | A | 17.682 | -1.940 | PR; PSD | 54.8% | PT; PCdoB | 92.0% |
-| C14-01 | B | 6.567 | -2.038 | PMDB; PDT | 88.1% | PT; PR | 95.4% |
-| C14-01 | d | 22.773 | -2.502 | PMDB; PSD | 55.7% | PT; PCdoB | 100.0% |
-| C22-01 | A | 26.073 | -12.876 | UNIÃO; PT | 70.7% | PSB; PSOL | 69.5% |
-| C22-01 | B | 4.225 | -5.217 | UNIÃO; PDT | 65.6% | PSOL; PT | 91.8% |
-| C22-01 | d | 26.461 | -14.257 | UNIÃO; PT | 68.2% | PSOL; PSB | 81.6% |
+| 14-05 | A | 17.682 | -1.940 | PR; PSD | 54.8% | PT; PCdoB | 92.0% |
+| 14-05 | B | 6.567 | -2.038 | PMDB; PDT | 88.1% | PT; PR | 95.4% |
+| 14-05 | d | 22.773 | -2.502 | PMDB; PSD | 55.7% | PT; PCdoB | 100.0% |
+| 22-01 | A | 26.073 | -12.876 | UNIÃO; PT | 70.7% | PSB; PSOL | 69.5% |
+| 22-01 | B | 4.225 | -5.217 | UNIÃO; PDT | 65.6% | PSOL; PT | 91.8% |
+| 22-01 | d | 26.461 | -14.257 | UNIÃO; PT | 68.2% | PSOL; PSB | 81.6% |
 | K14a | A | 15.619 | -5.111 | PSD; PTB | 55.9% | PT DO B; PV | 98.2% |
 | K14a | B | 5.787 | -7.263 | PMDB; PMN | 79.2% | PSDB; PV | 85.0% |
 | K14a | d | 19.612 | -10.579 | PMDB; PSD | 64.7% | PSDB; PT DO B | 72.9% |
@@ -73,7 +73,7 @@ Input/code provenance SHA-256: `431ea0dad82dbf86fc8d45b906448bc44d01e1865ef8632c
 
 Every focal coalition and each strongest k=1 case has its complete member vector below. A party's components stay fixed within an election; only the membership selector changes.
 
-**C14-01: 2014 Cabinet 2016.3**
+**14-05: 2014 Cabinet 14-05**
 
 | Party | A_i | B_i | d_i |
 | --- | --- | --- | --- |
@@ -216,7 +216,7 @@ Every focal coalition and each strongest k=1 case has its complete member vector
 | Total | 5.742638772615 | 5.922784847118 | 11.665423619734 |
 
 
-**C22-01: 2022 Cabinet 2023.1**
+**22-01: 2022 Cabinet 22-01**
 
 | Party | A_i | B_i | d_i |
 | --- | --- | --- | --- |
@@ -289,8 +289,8 @@ Every deletion is recomputed directly from district inputs. A deletion can leave
 
 | Code | Deletions preserving inversion | Seat-pivotal members |
 | --- | --- | --- |
-| C14-01 | None | 7/7 |
-| C22-01 | PCdoB, REDE | 7/9 |
+| 14-05 | None | 7/7 |
+| 22-01 | PCdoB, REDE | 7/9 |
 | K14a | PT DO B, PMN | 10/12 |
 | K14b | PPL | 13/14 |
 | K14c | PPL | 15/16 |

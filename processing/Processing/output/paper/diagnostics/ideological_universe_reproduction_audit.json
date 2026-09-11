@@ -134,7 +134,7 @@
     }
   ],
   "member_rows": 475290,
-  "bridge_rows": 53,
+  "bridge_rows": 34,
   "assertions": "passed",
   "vote_denominator": "all_valid_federal_deputy_votes"
 }
