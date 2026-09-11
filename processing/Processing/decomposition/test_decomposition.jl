@@ -47,7 +47,7 @@ ideological = required_csv(joinpath(PAPER_ROOT_TEST, "raw", "ideological_interva
 psc_baseline = required_csv(joinpath(PAPER_ROOT_TEST, "raw", "cabinet_party_sets.csv"))
 
 @testset "Shared set view rejects changed recurrent electoral vectors" begin
-    @test nrow(coalition_periods) == 34
+    @test nrow(coalition_periods) == 35 # Independently audited V6: 12 + 18 + 5 memberships.
     @test allunique(coalition_periods.coalition_id)
     @test sum(coalition_periods.days_overlapping_mandate) == sum(chronology_periods.days_overlapping_mandate) == 4096
     @test isequal(Processing.cabinet_set_view(chronology_periods[end:-1:1,:]), coalition_periods)

@@ -31,7 +31,7 @@ def inversion_table(rows, components=True):
 
 def composition(rows):
     heading=r'Set & Election-year parties & Occ. & Days & Prov. & First observed & Last observed \\'
-    lines=[r'\begin{landscape}',r'\fontsize{9}{10.5}\selectfont',r'\setlength{\tabcolsep}{4pt}',r'\renewcommand{\arraystretch}{1.0}',
+    lines=[r'\begin{landscape}',r'\fontsize{9}{10}\selectfont',r'\setlength{\LTpost}{0pt}',r'\setlength{\tabcolsep}{4pt}',r'\renewcommand{\arraystretch}{1.0}',
         r'\begin{longtable}{@{}lp{12.2cm}rrrll@{}}',
         r'\caption{Distinct election-year cabinet party sets}\label{tab:full-cabinet-composition}\\',
         r'\toprule',heading,r'\midrule',r'\endfirsthead',r'\toprule',heading,r'\midrule',r'\endhead']

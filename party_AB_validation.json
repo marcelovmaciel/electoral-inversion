@@ -1,6 +1,6 @@
 {
-  "release_version": "2026-03-19-history-v5-candidate",
-  "release_metadata_sha256": "f8762399c7b3ef29928d8b1c55a4873575c06a6529f698af31ff87e8eedea1b3",
+  "release_version": "2026-03-19-history-v6-onyx-candidate",
+  "release_metadata_sha256": "750591b888bd7ca6d1bf8b22239f4927fb44579dd36dc9b2d6fea8dcbdda8a8f",
   "ideological_universe": "all_parties (original standalone sensitivity)",
   "party_years": 99,
   "configurations": 92,
@@ -8,12 +8,12 @@
   "k1_minimal": 84,
   "member_rows": 1327,
   "checks": {
-    "exact": 205960,
-    "baseline": 100202,
+    "exact": 205967,
+    "baseline": 100205,
     "cabinet_inversions": 2,
     "domain_rows": 19837,
     "unique_domain_configurations": 18151,
-    "cabinet_party_sets": 34,
+    "cabinet_party_sets": 35,
     "csv": 1803,
     "report": 33
   },
@@ -22,16 +22,16 @@
     "csv": 3.552713678800501e-15,
     "report": 2.999378523327323e-12
   },
-  "manuscript_sha256": "0a9d81e35801f8d6e6a7ddb30de8e61eb364e37f115d9b518618c8dbc1667cb1",
-  "input_code_digest": "8ba29fff9b7e26159696ddb245f1d36094bda14b532e7c35e9ec93856aa0ad58",
+  "manuscript_sha256": "f7ae224c700895c2a90ca46472d424daa1789af5f5c26fe660af4efd87362cc8",
+  "input_code_digest": "c3bd02ed0721bd0173dd8fdd8a569a10d2faaa564120366ab76d65dc47d7012a",
   "output_sha256": {
     "party_components_all_years.csv": "cce55f2ad4024aae888e6afcdbef30f1b3544056b29ed20a7174681a41ff3612",
     "party_AB_by_year.csv": "cce55f2ad4024aae888e6afcdbef30f1b3544056b29ed20a7174681a41ff3612",
     "inversion_party_components.csv": "c932c964ca59cb789f741c270990d064ba22efbbf17336f3d3a814ecd6f74878",
     "inversion_party_AB.csv": "c932c964ca59cb789f741c270990d064ba22efbbf17336f3d3a814ecd6f74878",
     "inversion_AB_summary.csv": "b8c36166ca1a168d17bc15810ff42516c1156aa84f545ab8f672d0a1a588e897",
-    "party_component_report.md": "3b6922e0a57385ac1818489bc32fb4b37805e6644d43c522f99858dded262618",
-    "party_AB_report.md": "3b6922e0a57385ac1818489bc32fb4b37805e6644d43c522f99858dded262618",
+    "party_component_report.md": "9b9c6200213df4adeb5f32e9ce161a0c4a0c8435f11b6e3a5d226ec6527eb14c",
+    "party_AB_report.md": "9b9c6200213df4adeb5f32e9ce161a0c4a0c8435f11b6e3a5d226ec6527eb14c",
     "party_AB_scatter.png": "ee2a28578bb3a5f56a85ea95a577938cf62f4817b0b9d1e8cee46bfe4090e00e",
     "party_AB_scatter.pdf": "7a7b85c6c7da56af84581a7e7891f374f968341024e496db9e3820086fe3eecf"
   }

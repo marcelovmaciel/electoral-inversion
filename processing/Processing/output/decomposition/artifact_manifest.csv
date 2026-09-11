@@ -33,14 +33,14 @@ audit/accounting_integration_checks.csv,audit,"Cardinality, registry, identity, 
 audit/coalition_party_component_checks.csv,audit,Exact and numerical closure audits of the focal member-party component vectors.,9,11,b48da615a32350e4b5727c8219d5c30d6993cbfaec6aae0218e5cf77f8999507
 audit/coalition_party_contribution_checks.csv,audit,"Per-case vote, seat, exact differential, source-regression, and inversion checks.",14,28,05f41d964795a8fc1ab3b4a426368f26e221ec027479d47463eb9c10e2f89fb6
 audit/decomposition_identity_checks.csv,audit,Exact and floating-point decomposition identity results.,8,10,eacfa383c770ad6375f49521bc2f5d4d13e7213201a95509f87243c5401c9d94
-audit/decomposition_input_manifest.csv,audit,SHA-256 provenance for corrected-baseline and district inputs.,34,3,c4908dcc9e9e4cf6e9f2c027191ed4d7b579584284f06fa58642a512fa745094
+audit/decomposition_input_manifest.csv,audit,SHA-256 provenance for corrected-baseline and district inputs.,34,3,ea4a046daad6f3495721585c9fdf806a3fc3444ec83fb59cc6f9a3c5a19f49cb
 audit/ideological_regression.csv,audit,Ideological inversion-count regression after the decomposition rebuild.,3,5,94cd433241652b715b146c41e92fc834617d92b5d6d766841f199d7eda2bb255
-audit/party_size_diagnostic_checks.csv,audit,Party-size diagnostic: checks; descriptive accounting only.,614,5,c3c5ec0913d471618fff8ff1eb3d7c35c83b8846e62b3cd4b7b30bb127cca303
+audit/party_size_diagnostic_checks.csv,audit,Party-size diagnostic: checks; descriptive accounting only.,617,5,2953285526239dd5e7727a463fbee5f3d27f960b98ea7c571662ac86c11fe80c
 audit/party_size_diagnostic_metadata.csv,audit,"Diagnostic definitions, scope and descriptive-benchmark qualification.",9,2,8558e3f849a3a4aa5ceb84d28b1d9f2a641a3a1b8d3d395b355528006d5d08bf
 figure_data/accounting_district_electoral_weight.csv,figure_data,State-year district electoral weights derived from audited valid votes and seats.,81,12,ab1fa8ab3fa0044a461af3ad686e52f3818112c8d22cc5f319253e684c015ff4
 figure_data/accounting_state_weighting_anatomy.csv,figure_data,Seven-case gross positive and negative state-weighting anatomy.,6,25,f955cd6f770f282f1acecbeaff55808d5d5d6e7268a27a23b78e52ed836b110b
 figure_data/inversion_decomposition_components.csv,figure_data,"Long-form A_C, B_C, and d_C values for decomposition visualization.",6,5,09033308d79927acbe2d27b0d2274770cb0fdfe0cff7f958ff9b5061323b15e1
-latex/report/party_size_diagnostics.tex,latex,Central analysis report section; never synchronized into the manuscript.,99,0,7708184fd9620581ee74a2155b7237c5072f8cee8d5dce329ff07b5d7b74125c
+latex/report/party_size_diagnostics.tex,latex,Central analysis report section; never synchronized into the manuscript.,99,0,146139ecf552cc89d939101646755994a868c0baf2b5d870cc7882e94ba50fe6
 latex/table_accounting_focal_cases.tex,latex,Generated compact sign-and-magnitude table for selected focal accounting vectors.,6,68,fc5ca04b864d8ae4a5d235e42a14f6166ac358b48e3a676c721cbdc7f67d5e60
 latex/table_accounting_gross_components.tex,latex,Generated gross-component concentration appendix table.,24,29,cd6548e7456d7b732b145eafd24872ad1af89c9fe509a2eb207f2745e07f4f71
 latex/table_accounting_minimal_ideological.tex,latex,Generated portrait tabular for all endpoint-minimal ideological decompositions.,7,68,d4a61439843ac7d4a507dcc973433c1161b896bba483108449ab721c8b736663
@@ -59,21 +59,21 @@ raw/accounting_focal_state_contributions.csv,raw,Complete 27-state vectors for t
 raw/accounting_gross_component_concentration.csv,raw,"Gross positive, negative, cancellation, and concentration diagnostics.",36,29,aa2af9d7d983556b23bfdbb47821bc20adc4da6ca1b0574dad72bcc0680e19c7
 raw/accounting_minimal_ideological_decomposition.csv,raw,All primary minimal connected ideological inversion decompositions.,7,68,ffca4ebf847f47a4902423a2c30fdbd3b4476dce3effefc4e17b32ef20c33a31
 raw/accounting_selected_party_geography.csv,raw,Selected party differentials and state-level accounting geography.,17,28,c1d40ee863e7cb3dfdbc84e61b242928dd72aac411d4eb431b20e4a43770aa70
-raw/cabinet_party_set_accounting.csv,raw,Party-size diagnostic: cabinet_sets; descriptive accounting only.,34,81,4c15dda3ea4e7238213357b3a8e654e0790b4e175c1d2a70ef68af851ac325a9
-raw/cabinet_party_set_district_contributions.csv,raw,One cabinet-set/member or cabinet-set/district vector; occurrence linkage is separate.,918,19,ec3bbcc04926ec548acaeb1957847f5dfe47eeb118d779f08505af9db05d82eb
-raw/cabinet_party_set_party_contributions.csv,raw,One cabinet-set/member or cabinet-set/district vector; occurrence linkage is separate.,236,24,2248d6bdedd9d85740fa5e249b12c99d54fe757df77cce5bbcccd418bfbf65bf
-raw/cabinet_party_set_period_linkage.csv,raw,Party-size diagnostic: period_linkage; descriptive accounting only.,53,16,34aa2ee88e7da4ced4aca6ad0e15be89f948065354a8993fe117ac7eec6d298c
+raw/cabinet_party_set_accounting.csv,raw,Party-size diagnostic: cabinet_sets; descriptive accounting only.,35,81,3df76c16ff77a6d9e3f43b941d9959402c274fec3483b361d3fb56b89ad0aa52
+raw/cabinet_party_set_district_contributions.csv,raw,One cabinet-set/member or cabinet-set/district vector; occurrence linkage is separate.,945,19,fd3283c5b4bf5d104697f2ce989c0a07640496c37f0c89e2618bcb54b3043c00
+raw/cabinet_party_set_party_contributions.csv,raw,One cabinet-set/member or cabinet-set/district vector; occurrence linkage is separate.,236,24,843120257628b4cee92a4b7fd448ce1cfbca1a4bbc84b831a320c4ea0b74a5be
+raw/cabinet_party_set_period_linkage.csv,raw,Party-size diagnostic: period_linkage; descriptive accounting only.,53,16,d37a670563a7abf2625574f481ff969add6eb6f9ef0aec80053f69277742d81b
 raw/coalition_party_contribution_named_aggregates.csv,raw,Named exact party aggregation used for the PP-PL substantive diagnostic.,1,12,575d9cb360175f1ba7b62c9c32731a3b428c1f1bb90ad4d86ccb1266f1d22a19
 raw/coalition_party_contribution_summary.csv,raw,"Case-level gross, net, concentration, and top-two party contribution diagnostics.",14,53,bb97bb9b664b9c342e3987de8b06632bd1e70f3978a97887fca7a7871622292f
 raw/coalition_party_contributions.csv,raw,Canonical complete case-party contribution vectors for all cabinet and ideological inversions.,162,50,99097834a0479b27c03c636155097b82469a94263fc073a85fcc43c118ca8a4c
-raw/coalition_period_quantities.csv,raw,Release-derived coalition quantities for every observed cabinet period.,53,25,51c87ce05482ca821cd0586b739e959789897f62d7ddffa9d728c39b081eff1f
+raw/coalition_period_quantities.csv,raw,Release-derived coalition quantities for every observed cabinet period.,53,25,9723a30cb55371fe061bf087fff7f0487ec228d5dfd8cd8dc1bf1a1b1d28c5aa
 raw/district_accounting_all_years.csv,raw,Existing district accounting weights and closure.,81,16,0c3e9df74ddd6e2006a8e37cd0fca51b1361dd06e36e0990fcb4f5cb6dc6d2c1
 raw/inversion_decomposition.csv,raw,Exact-audited A_C/B_C decomposition for all observed inversions.,2,24,6cf04ba1a03ef35776ee8bb36c237d98e4a37a45f8523886240a945bd01cb9d4
 raw/inversion_district_contributions.csv,raw,State-level a_Cd and b_Cd contributions for all observed inversions.,54,18,7c183e03000e286e2cc8099b2b36dabfd74376aa6126c161a7e01fe234f51887
 raw/inversion_party_contributions.csv,raw,"Full party-level d_i, A_i, and B_i vectors for all observed inversions.",16,23,88b2f5fd0d0894ae7f706faf791315cdf21f7c4b1c521720ce07a9ccf75dbaa1
-raw/party_accounting_all_years.csv,raw,"Exact national party accounting, normalized components and cabinet participation.",99,33,20d75a6085deb08f2b2662b4745a2b34de6481a62751064dac71599abbfbdc0c
+raw/party_accounting_all_years.csv,raw,"Exact national party accounting, normalized components and cabinet participation.",99,33,0111ae939d5f4efdab909bb3656a0a875c116e654707a3cc49d59336c77389fd
 raw/party_district_accounting_all_years.csv,raw,Complete existing party-district accounting panel.,2673,38,b496b486f58729996f0ec12e3e1b76c10dd1714d81b81a4204e0a47c6d6c73d1
-tables/prose_analysis_summaries.csv,table,Raw aggregates from existing analysis CSVs; summary/metric/aggregation/universe/k/election keys and upstream selections. No TeX or display values.,144,12,9961829a7ac1078e02a2216f5f707fddca4350339eb57b4a6ee312cdefd9908e
+tables/prose_analysis_summaries.csv,table,Raw aggregates from existing analysis CSVs; summary/metric/aggregation/universe/k/election keys and upstream selections. No TeX or display values.,144,12,bed65bde106b7ea4b1c3c8196de69e94083be20d25ca0b49074c9d909268b6e6
 tables/report/party_fragmentation_summary.csv,table,Effective electoral and parliamentary party counts from the exact national party panel.,3,5,31fbaa1f8694713df15d92514d9b36d354e85dcde8e1eaf889c5ef88576b38a2
 tables/report/party_size_cabinet_summary.csv,table,Party-size diagnostic: cabinet_size; descriptive accounting only.,8,10,45883f728364aca7d58ca03660b8022b7185f3453c7d285e9b87dfdb240ae325
 tables/report/party_size_correlations.csv,table,Party-size diagnostic: correlations; descriptive accounting only.,4,7,abf6bf466beee43fac59c4552e380d06fe4efd77a40c8a839250bb6688ca5332

@@ -4,7 +4,7 @@
 
 The current sample contains 2 inverted cabinet party sets, 6 minimal connected (k=0) ideological inversions and 84 at-most-one-gap (k=1) minimal inversions. This standalone diagnostic retains its original **all-party ideological sensitivity**, including zero-seat parties. The manuscript's primary seat-winning ideological baseline is generated separately and is unchanged.
 
-Cabinet history comes from the pinned contemporaneous-affiliation release. There are 34 distinct election-year cabinet party sets, observed on 4,096 dates (3,996 established and 100 provisional). The inverted sets occupy 260 days. UNKNOWN historical affiliations remain UNKNOWN; provisional primary assumptions add no party. Set counts are unweighted. Actual intervals, evidence status and date-level sensitivities remain linked separately.
+Cabinet history comes from the pinned contemporaneous-affiliation release. There are 35 distinct election-year cabinet party sets, observed on 4,096 dates (3,996 established and 100 provisional). The inverted sets occupy 260 days. UNKNOWN historical affiliations remain UNKNOWN; provisional primary assumptions add no party. Set counts are unweighted. Actual intervals, evidence status and date-level sensitivities remain linked separately.
 
 For each party, $q_i=S v_i/V$, $d_i=s_i-q_i$, $R_i=s_i/q_i$, $A_i=\sum_d(s_{id}-S_dv_{id}/V_d)$ and $B_i=\sum_d S_dv_{id}/V_d-Sv_i/V$. All components are in seats. The exact checks require $d_i=A_i+B_i$, $A_C=\sum_{i\in C}A_i$, $B_C=\sum_{i\in C}B_i$ and $d_C=A_C+B_C$. The denominator includes every valid party vote, and the national seat total remains 513.
 
@@ -12,9 +12,9 @@ These are descriptive accounting contributions. The 2014/2018 joint-list allocat
 
 ## Validation and provenance
 
-The maintained Julia decomposition supplies the complete district-party panel. This diagnostic independently sums integer district votes/seats with rational arithmetic, checks every selected member vector and deletion, and verifies domain-relative minimality against all winning proper subsets. All 19,837 all-party k=0/k=1 registry rows and 34 cabinet party sets passed. The maximum saved-accounting discrepancy is 1.14e-13; the maximum serialized closure discrepancy is 3.55e-15, against an absolute tolerance of 1e-10 and zero relative tolerance.
+The maintained Julia decomposition supplies the complete district-party panel. This diagnostic independently sums integer district votes/seats with rational arithmetic, checks every selected member vector and deletion, and verifies domain-relative minimality against all winning proper subsets. All 19,837 all-party k=0/k=1 registry rows and 35 cabinet party sets passed. The maximum saved-accounting discrepancy is 1.14e-13; the maximum serialized closure discrepancy is 3.55e-15, against an absolute tolerance of 1e-10 and zero relative tolerance.
 
-Input/code provenance SHA-256: `8ba29fff9b7e26159696ddb245f1d36094bda14b532e7c35e9ec93856aa0ad58`. The manuscript source is preserved at SHA-256 `0a9d81e35801f8d6e6a7ddb30de8e61eb364e37f115d9b518618c8dbc1667cb1`.
+Input/code provenance SHA-256: `c3bd02ed0721bd0173dd8fdd8a569a10d2faaa564120366ab76d65dc47d7012a`. The manuscript source is preserved at SHA-256 `f7ae224c700895c2a90ca46472d424daa1789af5f5c26fe660af4efd87362cc8`.
 
 ## Party component sign profiles
 

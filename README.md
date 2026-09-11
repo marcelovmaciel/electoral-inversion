@@ -27,7 +27,7 @@ JULIA_BIN=processing/julia_paper_runtime.sh processing/rebuild_manuscript.sh
 The normal build validates the revised literal prose and its numerical provenance,
 compiles both PDFs, and creates the submission and cabinet party-set handoffs.
 `--freeze-prose` is a diagnostic compatibility option, not a completed submission build.
-The cabinet stage verifies the immutable V5 release pin, translates daily memberships,
+The cabinet stage verifies the immutable V6 release pin, translates daily memberships,
 retains consecutive periods for chronology, and groups distinct translated memberships
 across the full election window. It never invokes the historical builder. Set `PYTHON_BIN`
 or `JULIA_BIN` to select a runtime. For the exact existing numerical baseline,
@@ -111,7 +111,7 @@ The replication workflow uses these input locations:
 
 ```text
 data/raw/electionsBR/
-cabinet_dataset/releases/2026-03-19-history-v5-candidate/
+cabinet_dataset/releases/2026-03-19-history-v6-onyx-candidate/
 scrape_classification/output/classificacao_2023/
 scrape_classification/output/classificacao_2025/
 processing/Processing/data/
@@ -120,7 +120,7 @@ processing/Processing/data/
 `data/raw/electionsBR/` contains the raw TSE election files used for votes and
 seats.
 
-`cabinet_dataset/releases/2026-03-19-history-v5-candidate/` contains normalized historical
+`cabinet_dataset/releases/2026-03-19-history-v6-onyx-candidate/` contains normalized historical
 daily primary sets, periods, memberships, witnesses, evidence, and explicit provisional assumptions.
 The 4,096-day primary chronology retains 3,996 evidence-established and 100 historically unresolved days.
 `processing/Processing/data/cabinet_release_pin.json` pins version and hashes;
@@ -154,13 +154,13 @@ Manuscript compilation requires a LaTeX installation with `latexmk`.
 
 After running the main analysis, the high-level replication results should be:
 
-The current V5 chronology contains 55 historical periods and 53 translated
-analytical periods. These supply **34 distinct election-year cabinet party sets**:
-12 for 2014, 17 for 2018, and 5 for 2022. **Two sets invert**, occupying **260 of
+The current V6 chronology contains 55 historical periods and 53 translated
+analytical periods. These supply **35 distinct election-year cabinet party sets**:
+12 for 2014, 18 for 2018, and 5 for 2022. **Two sets invert**, occupying **260 of
 4,096 covered days** (5 for Dilma's 2014-election set and 255 for Lula's
 2022-election set). Deduplication changes observation counts, never the
 membership-determined electoral vector or inversion days. These invariants are
-independently checked against the saved pre-migration working tree.
+independently checked against the saved pre-migration working tree, with the documented Onyx-only correction on March 27–30, 2022. The preserved V5 release and all electoral inputs remain unchanged. See [historical audit](ONYX_MARCH_2022_AUDIT.md) and [propagation report](ONYX_PARTY_SET_PROPAGATION_REPORT.md).
 
 The [current migration report](CABINET_PARTY_SET_MIGRATION_REPORT.md),
 [canonical registry and linkage](generated/cabinet_party_sets/README.md), and

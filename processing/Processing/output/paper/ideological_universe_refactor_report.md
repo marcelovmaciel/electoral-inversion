@@ -28,7 +28,7 @@ The primary universe is `seat_winning`; robustness is `all_parties`. Both use al
 
 The parliamentary specification introduces the 2018 PT–PSDB exact-connected inversion. Restoring zero-seat parties removes it. The strongest 2014 PTB–PR and 2022 PP–PL endpoint regions survive; their primary k=0 member sets already coincide with the strongest primary k=1 cases. The 2022 MDB–UNIÃO within-district component changes sign between universes. These differences are retained in the manuscript sensitivity appendix.
 
-Primary cabinet gaps range from 4 to 16; all 34 closures and nearest-interval overlaps were recomputed using represented cabinet members. Observed cabinet membership and electoral accounting use their existing definitions.
+Primary cabinet gaps range from 4 to 16; all 35 closures and nearest-interval overlaps were recomputed using represented cabinet members. Observed cabinet membership and electoral accounting use their existing definitions.
 
 ## Verification and outputs
 
