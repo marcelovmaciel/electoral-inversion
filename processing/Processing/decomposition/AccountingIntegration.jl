@@ -10,38 +10,11 @@ import ..CoalitionDecomposition
 const CD = CoalitionDecomposition
 const Rat = Rational{BigInt}
 
-export FOCAL_CASE_SPECS,
+export focal_case_specs,
        FEDERATION_SETS_2022,
        build_district_electoral_weight,
        build_accounting_integration,
        write_accounting_integration_outputs
-
-const FOCAL_CASE_SPECS = [
-    (
-        case_order = 1,
-        case_id = "cabinet/2014/2016.2",
-        source_case_ids = ["cabinet/2014/2016.2"],
-        case_display = "Cabinet 2014/2016.2",
-    ),
-    (
-        case_order = 2,
-        case_id = "cabinet/2014/2017.1",
-        source_case_ids = ["cabinet/2014/2017.1"],
-        case_display = "Cabinet 2014/2017.1",
-    ),
-    (
-        case_order = 3,
-        case_id = "cabinet/2018/2021.3/2022.1",
-        source_case_ids = ["cabinet/2018/2021.3/2022.1"],
-        case_display = "Cabinet 2018/2021.3/2022.1",
-    ),
-    (
-        case_order = 4,
-        case_id = "cabinet/2022/2023.1",
-        source_case_ids = ["cabinet/2022/2023.1"],
-        case_display = "Cabinet 2022/2023.1",
-    ),
-]
 
 const FEDERATION_SETS_2022 = [
     (federation = "FE BRASIL", parties = ["PT", "PCdoB", "PV"]),
@@ -106,13 +79,6 @@ function baseline_case_display(row)
     return "Ideological $(row.election_year)/$(row.start_party)-$(row.end_party)"
 end
 
-function focal_order_for(case_id::AbstractString)
-    for spec in FOCAL_CASE_SPECS
-        case_id in spec.source_case_ids && return spec.case_order
-    end
-    return missing
-end
-
 function baseline_metadata(row, registry_order::Int)
     case_id = String(row.case_id)
     return (
@@ -127,7 +93,7 @@ function baseline_metadata(row, registry_order::Int)
         gap_count = row.gap_count,
         case_order = Int(row.case_order),
         registry_order = registry_order,
-        focal_order = focal_order_for(case_id),
+        focal_order = String(row.case_domain) == "cabinet" ? Int(row.case_order) : missing,
         election_year = Int(row.election_year),
         case_label = String(row.case_label),
         case_display = baseline_case_display(row),
@@ -144,7 +110,7 @@ function baseline_metadata(row, registry_order::Int)
         minimal_status = String(row.minimal_status),
         observed_coalition = Bool(row.observed_coalition),
         synthetic_ideological_interval = Bool(row.synthetic_ideological_interval),
-        main_text_focal = !ismissing(focal_order_for(case_id)),
+        main_text_focal = String(row.case_domain) == "cabinet",
         appendix_minimal = coalesce(row.minimal_inversion, false),
         shared_numerical_vector = Bool(row.compositionally_repeated),
         numerical_vector_group = String(row.composition_equivalence_group),
@@ -815,7 +781,10 @@ function focal_metadata(row, registry_order::Int, spec)
 end
 
 function focal_case_specs(registry::DataFrame, by_id)
-    specs = NamedTuple[spec for spec in FOCAL_CASE_SPECS]
+    cabinets = registry[registry.case_domain .== "cabinet", :]
+    specs = NamedTuple[(case_order = i, case_id = String(row.case_id),
+        source_case_ids = [String(row.case_id)], case_display = baseline_case_display(row))
+        for (i, row) in enumerate(eachrow(cabinets))]
     minimal = registry[coalesce.(registry.minimal_inversion, false), :]
     chosen = Set{String}()
     for year in sort(unique(Int.(minimal.election_year)))
@@ -1273,7 +1242,8 @@ function build_district_electoral_weight(accounting_by_year::AbstractDict)
     )
     return data
 end
-function integration_checks(integration)
+function integration_checks(integration; accounting_years = (2014, 2018, 2022))
+    Set(Int.(integration.district_electoral_weight.election_year)) == Set(Int.(collect(accounting_years))) || error("District electoral-weight election coverage differs from the fixed accounting panels")
     baseline_n = nrow(integration.baseline.total)
     focal_n = nrow(integration.focal.total)
     minimal_n = sum(coalesce.(integration.baseline.total.minimal_inversion, false))
@@ -1282,7 +1252,7 @@ function integration_checks(integration)
         ("gross_component_rows", nrow(integration.gross_components), focal_n * 6),
         ("state_weighting_rows", nrow(integration.state_weighting_anatomy), focal_n),
         ("selected_party_rows", nrow(integration.selected_party_geography), sum(length, values(SELECTED_PARTIES_BY_YEAR))),
-        ("district_electoral_weight_rows", nrow(integration.district_electoral_weight), 27 * length(unique(integration.baseline.total.election_year))),
+        ("district_electoral_weight_rows", nrow(integration.district_electoral_weight), 27 * length(accounting_years)),
         ("minimal_ideological_cases", nrow(integration.minimal_ideological), minimal_n),
         ("coalition_party_contribution_rows", nrow(integration.party_contributions.contributions), nrow(integration.baseline.party)),
         ("coalition_party_contribution_cases", nrow(integration.party_contributions.summary), baseline_n),
@@ -1357,7 +1327,7 @@ function build_accounting_integration(
         minimal_ideological = minimal_ideological,
         party_contributions = party_contributions,
     )
-    return merge(integration, (checks = integration_checks(integration),))
+    return merge(integration, (checks = integration_checks(integration; accounting_years = keys(accounting_by_year)),))
 end
 latex_escape(value) = replace(
     string(value),
@@ -1437,7 +1407,7 @@ function focal_case_latex(data::DataFrame)
         "\\bottomrule",
         "\\end{tabularx}",
         "\\begin{minipage}{0.96\\linewidth}",
-        "\\footnotesize Notes: The two 2018 cabinet periods share one election-space numerical vector and therefore appear once. The ideological rows are focal endpoint-minimal cases; all minimal connected ideological inversions are reported in Table~\\ref{tab:minimal-intervals}. The identities are descriptive, not causal.",
+        "\\footnotesize Notes: Cabinet rows include every identified period satisfying the inversion criterion; recurring vectors retain their period identities. The ideological rows are focal endpoint-minimal cases; all minimal connected ideological inversions are reported in Table~\\ref{tab:minimal-intervals}. The identities are descriptive, not causal.",
         "\\end{minipage}",
         "\\end{table}",
     ])
@@ -1707,7 +1677,7 @@ function write_accounting_integration_outputs(
         path = joinpath(output_root, relative_path)
         mkpath(dirname(path))
         CSV.write(path, data)
-        roundtrip = CSV.read(path, DataFrame)
+        roundtrip = CSV.read(path, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
         nrow(roundtrip) == nrow(data) || error(
             "CSV roundtrip row mismatch: $(relative_path).",
         )
@@ -1920,7 +1890,20 @@ function write_accounting_integration_outputs(
             length(names(contribution_table)),
         ),
     )
+    unidentified_days = CD.cabinet_unidentified_days(output_root)
+    date_note = CD.cabinet_date_convention_note(output_root)
+    cabinet_tables = Set(["latex/table_coalition_party_component_extremes.tex",
+        "latex/table_cabinet_district_concentration.tex", "latex/table_accounting_focal_cases.tex",
+        "latex/table_accounting_gross_components.tex", "latex/table_coalition_party_contributions.tex"])
     for (relative_path, contents, description, rows, columns) in latex_assets
+        if relative_path in cabinet_tables && (unidentified_days > 0 || !isempty(date_note))
+            note = CD.cabinet_identification_note(unidentified_days) * "\n" * date_note
+            # Keep the generated qualification inside a generator-owned table
+            # when it already supplies a minipage note; bare tabulars append it.
+            contents = occursin("\\end{minipage}", contents) ?
+                replace(contents, "\\end{minipage}" => note * "\n\\end{minipage}"; count = 1) :
+                contents * "\n" * note
+        end
         path = write_text(joinpath(output_root, relative_path), contents)
         push!(artifacts, (
             path = relative_path,

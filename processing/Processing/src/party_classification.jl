@@ -340,28 +340,8 @@ function _main_source_parties(; strict::Bool=false)::Set{String}
         end
     end
 
-    coalition_path = joinpath(repo_root, "scraping", "output", "partidos_por_periodo.csv")
-    if isfile(coalition_path)
-        coalition = CSV.read(coalition_path, DataFrame)
-        if hasproperty(coalition, :periodo) && hasproperty(coalition, :partido)
-            raw_by_year = Dict{Int,Set{String}}()
-            for row in eachrow(coalition)
-                y = _period_year(string(row.periodo))
-                y === nothing && continue
-                raw = strip(string(row.partido))
-                isempty(raw) && continue
-                raw_set = get!(raw_by_year, Int(y), Set{String}())
-                push!(raw_set, raw)
-            end
-            for (y, raw_set) in raw_by_year
-                for raw in raw_set
-                    canon = _canonical(raw, y)
-                    canon == UNKNOWN_PARTY && continue
-                    push!(parties, canon)
-                end
-            end
-        end
-    end
+    # Ideological coverage is assessed against frozen election-party inputs.
+    # Cabinet identities are independently checked by the pinned release adapter.
 
     return parties
 end

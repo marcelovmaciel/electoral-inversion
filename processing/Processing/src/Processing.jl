@@ -21,6 +21,7 @@ export normalize_party,
 include("PartyNames.jl")
 include("party_classification_2023.jl")
 include("party_classification.jl")
+include("CabinetRelease.jl")
 include("code.jl")
 include("ideological_membership_summary.jl")
 include("analysis_runner_core.jl")

@@ -217,12 +217,13 @@ def _resolve_tex_target(source: Path, kind: str, raw_target: str) -> Path | None
         )
 
     expected_suffix = ".tex" if kind == "input" else ".pdf"
+    allowed_suffixes = {".tex"} if kind == "input" else {".pdf", ".png", ".jpg", ".jpeg"}
     target_path = Path(target)
     if not target_path.suffix:
         target_path = Path(str(target_path) + expected_suffix)
-    elif target_path.suffix.lower() != expected_suffix:
+    elif target_path.suffix.lower() not in allowed_suffixes:
         raise AuditError(
-            f"Expected a local {expected_suffix} target for \\{kind} in "
+            f"Expected a local {sorted(allowed_suffixes)} target for \\{kind} in "
             f"{source}, found {target!r}."
         )
 
@@ -362,6 +363,7 @@ def run_audit(
     audit_directory: Path,
     repository_root: Path | None = None,
     generated_manuscript_directory: Path | None = None,
+    freeze_prose: bool = False,
 ) -> AuditResult:
     """Validate both inventories, then write their reproducible hash manifests."""
 
@@ -377,7 +379,9 @@ def run_audit(
             try:
                 records, warnings = validate_provenance(source, repository_root or REPOSITORY_ROOT)
             except ProvenanceError as exc:
-                raise AuditError(f"Prose provenance validation failed: {exc}") from exc
+                if not freeze_prose:
+                    raise AuditError(f"Prose provenance validation failed: {exc}") from exc
+                records, warnings = [], [f"Frozen prose remains stale: {exc}; see STALE_PROSE_REPORT.md"]
             provenance_records.extend(records)
             provenance_warnings.extend(warnings)
     unreferenced: list[Path] = []
@@ -451,6 +455,7 @@ def _argument_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Report unreferenced PDF/TeX files without failing the audit.",
     )
+    parser.add_argument("--freeze-prose", action="store_true", help="Audit assets but report stale frozen narrative separately; never edit prose.")
     return parser
 
 
@@ -482,6 +487,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             audit_directory=audit_directory,
             repository_root=repo_root,
             generated_manuscript_directory=generated_directory,
+            freeze_prose=args.freeze_prose,
         )
     except (AuditError, OSError, UnicodeError, csv.Error) as exc:
         print(f"Empirical asset audit FAILED: {exc}", file=sys.stderr)

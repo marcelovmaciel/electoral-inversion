@@ -21,7 +21,12 @@ class IdeologicalAccountingTests(unittest.TestCase):
         }
         for universe in expected:
             frame = build_cross_domain_components(PAPER, domains=('cabinet', 'k=0', 'k=1'), universe=universe)
-            self.assertEqual((len(frame[frame.domain == 'cabinet']), int(frame.loc[frame.domain == 'cabinet', 'inversion'].sum())), (23, 4))
+            with (PAPER / 'raw/cabinet_coalition_metrics.csv').open(newline='', encoding='utf-8') as handle:
+                cabinet = list(csv.DictReader(handle))
+            expected_cabinet = (len(cabinet), sum(2 * int(r['votes']) < int(r['national_vote_total']) and
+                                                int(r['seats']) >= 257 for r in cabinet))
+            self.assertEqual((len(frame[frame.domain == 'cabinet']),
+                              int(frame.loc[frame.domain == 'cabinet', 'inversion'].sum())), expected_cabinet)
             for domain, counts in expected[universe].items():
                 subset = frame[frame.domain == domain]
                 self.assertEqual((len(subset), int(subset.inversion.sum())), counts)

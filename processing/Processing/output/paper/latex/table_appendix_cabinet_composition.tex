@@ -1,73 +1,133 @@
 \begin{landscape}
 \scriptsize
-\setlength{\tabcolsep}{0.7pt}
-\renewcommand{\arraystretch}{1.00}
-
-\begin{longtable}{|l|l|l|r|r|r|r|l|L{0.28\linewidth}|L{0.105\linewidth}|L{0.105\linewidth}|}
-\caption{Cabinet-period composition and transitions after cabinet-label harmonization and election-year label translation}\label{tab:full-cabinet-composition}\\
-\hline
-Election & Period & Dates & Days & Vote \% & Seats & Seat diff. & Status & Composition & Entered & Left \\
-\hline
+\setlength{\tabcolsep}{2.5pt}
+\renewcommand{\arraystretch}{1.06}
+\begin{longtable}{@{}llp{3.4cm}rrrrlrp{8.2cm}@{}}
+\caption{V5 cabinet chronology after daily election-year translation and analytical recompression}\label{tab:full-cabinet-composition}\\
+\toprule
+Election & Period & Dates (inclusive) & Days & Vote \% & Seats & \(d_C\) & Evidence status & Prov. days & Election-year parties \\
+\midrule
 \endfirsthead
-
-\hline
-Election & Period & Dates & Days & Vote \% & Seats & Seat diff. & Status & Composition & Entered & Left \\
-\hline
+\toprule
+Election & Period & Dates (inclusive) & Days & Vote \% & Seats & \(d_C\) & Evidence status & Prov. days & Election-year parties \\
+\midrule
 \endhead
-
-2014 & 2015.1 & 2015-01-01--2016-03-23 & 448 & 57.69 & 318 & 22.07 & votes+seats & PCdoB, PDT, PMDB, PP, PR, PRB, PSD, PT, PTB &  &  \\
-\hline
-2014 & 2016.1 & 2016-03-24--2016-04-13 & 21 & 53.14 & 297 & 24.39 & votes+seats & PCdoB, PDT, PMDB, PP, PR, PSD, PT, PTB &  & PRB \\
-\hline
-2014 & 2016.2 & 2016-04-14--2016-04-15 & 2 & 46.54 & 259 & 20.27 & seats only & PCdoB, PDT, PMDB, PR, PSD, PT, PTB &  & PP \\
-\hline
-2014 & 2016.3 & 2016-04-16--2016-05-11 & 26 & 40.41 & 223 & 15.72 & neither & PCdoB, PDT, PMDB, PR, PT, PTB &  & PSD \\
-\hline
-2014 & 2016.4 & 2016-05-12--2017-12-27 & 595 & 53.93 & 291 & 14.33 & votes+seats & DEM, PMDB, PP, PPS, PSB, PSD, PSDB, PTB, PV & DEM, PP, PPS, PSB, PSD, PSDB, PV & PCdoB, PDT, PR, PT \\
-\hline
-2014 & 2017.1 & 2017-12-28--2018-04-06 & 100 & 49.91 & 266 & 9.95 & seats only & DEM, PMDB, PP, PPS, PSB, PSD, PSDB, PV &  & PTB \\
-\hline
-2014 & 2018.1 & 2018-04-07--2018-05-27 & 51 & 37.22 & 203 & 12.07 & neither & PMDB, PP, PPS, PSD, PSDB &  & DEM, PSB, PV \\
-\hline
-2014 & 2018.2 & 2018-05-28--2018-12-31 & 218 & 37.96 & 207 & 12.26 & neither & PMDB, PP, PPS, PSD, PSDB, PTN & PTN &  \\
-\hline
-
-2018 & 2019.1 & 2019-01-01--2020-02-10 & 406 & 36.48 & 190 & 2.86 & neither & DEM, MDB, NOVO, PATRIOTA, PR, PRB, PSL &  &  \\
-\hline
-2018 & 2020.1 & 2020-02-11--2020-02-14 & 4 & 42.47 & 220 & 2.11 & neither & DEM, MDB, NOVO, PATRIOTA, PR, PRB, PSDB, PSL & PSDB &  \\
-\hline
-2018 & 2020.2 & 2020-02-15--2020-06-16 & 123 & 36.94 & 186 & -3.50 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSDB, PSL &  & MDB \\
-\hline
-2018 & 2020.3 & 2020-06-17--2020-12-08 & 175 & 42.79 & 221 & 1.49 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSD, PSDB, PSL & PSD &  \\
-\hline
-2018 & 2020.4 & 2020-12-09--2020-12-09 & 1 & 44.54 & 228 & -0.49 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSC, PSD, PSDB, PSL & PSC &  \\
-\hline
-2018 & 2020.5 & 2020-12-10--2021-03-28 & 109 & 32.90 & 176 & 7.21 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSC, PSD, PSDB &  & PSL \\
-\hline
-2018 & 2021.1 & 2021-03-29--2021-06-23 & 87 & 44.54 & 228 & -0.49 & neither & DEM, NOVO, PATRIOTA, PR, PRB, PSC, PSD, PSDB, PSL & PSL &  \\
-\hline
-2018 & 2021.2 & 2021-06-24--2021-08-03 & 41 & 41.74 & 220 & 5.86 & neither & DEM, PATRIOTA, PR, PRB, PSC, PSD, PSDB, PSL &  & NOVO \\
-\hline
-2018 & 2021.3/2022.1 & 2021-08-04--2022-03-29 & 238 & 47.25 & 257 & 14.62 & seats only & DEM, PATRIOTA, PP, PR, PRB, PSC, PSD, PSDB, PSL & PP &  \\
-\hline
-2018 & 2022.2 & 2022-03-30--2022-03-31 & 2 & 45.50 & 250 & 16.60 & neither & DEM, PATRIOTA, PP, PR, PRB, PSD, PSDB, PSL &  & PSC \\
-\hline
-2018 & 2022.3 & 2022-04-01--2022-04-01 & 1 & 39.50 & 220 & 17.36 & neither & DEM, PATRIOTA, PP, PR, PRB, PSD, PSL &  & PSDB \\
-\hline
-2018 & 2022.4 & 2022-04-02--2022-12-31 & 274 & 34.18 & 187 & 11.64 & neither & DEM, PATRIOTA, PP, PRB, PSD, PSL &  & PR \\
-\hline
-
-2022 & 2023.1 & 2023-01-01--2023-09-12 & 255 & 48.89 & 263 & 12.20 & seats only & MDB, PCdoB, PDT, PSB, PSD, PSOL, PT, REDE, UNIÃO &  &  \\
-\hline
-2022 & 2023.2 & 2023-09-13--2025-12-23 & 833 & 63.79 & 350 & 22.76 & votes+seats & MDB, PCdoB, PDT, PP, PSB, PSD, PSOL, PT, REDE, REPUBLICANOS, UNIÃO & PP, REPUBLICANOS &  \\
-\hline
-2022 & 2025.1 & 2025-12-24--2026-03-19 & 86 & 54.45 & 291 & 11.66 & votes+seats & MDB, PCdoB, PDT, PP, PSB, PSD, PSOL, PT, REDE, REPUBLICANOS &  & UNIÃO \\
-\hline
-
+2014 & 2015.1 & 2015-01-01--2015-03-18 & 77 & 59.72 & 329 & 22.66 & established & 0 & PCdoB, PDT, PMDB, PP, PR, PRB, PROS, PSD, PT, PTB \\
+2014 & 2015.2 & 2015-03-19--2016-03-17 & 365 & 57.69 & 318 & 22.07 & established & 0 & PCdoB, PDT, PMDB, PP, PR, PRB, PSD, PT, PTB \\
+2014 & 2016.1 & 2016-03-18--2016-03-30 & 13 & 55.17 & 308 & 24.97 & established & 0 & PCdoB, PDT, PMDB, PP, PR, PROS, PSD, PT, PTB \\
+2014 & 2016.2 & 2016-03-31--2016-04-13 & 14 & 53.14 & 297 & 24.39 & established & 0 & PCdoB, PDT, PMDB, PP, PR, PSD, PT, PTB \\
+2014 & 2016.3 & 2016-04-14--2016-04-18 & 5 & 46.54 & 259 & 20.27 & established & 0 & PCdoB, PDT, PMDB, PR, PSD, PT, PTB \\
+2014 & 2016.4 & 2016-04-19--2016-05-11 & 23 & 40.41 & 223 & 15.72 & established & 0 & PCdoB, PDT, PMDB, PR, PT, PTB \\
+2014 & 2016.5 & 2016-05-12--2016-10-09 & 151 & 64.27 & 346 & 16.32 & established & 0 & DEM, PMDB, PP, PPS, PR, PRB, PSB, PSD, PSDB, PTB, PV \\
+2014 & 2016.6 & 2016-10-10--2016-10-10 & 1 & 57.83 & 312 & 15.34 & established & 0 & DEM, PMDB, PP, PPS, PR, PRB, PSD, PSDB, PTB, PV \\
+2014 & 2016.7 & 2016-10-11--2016-10-24 & 14 & 64.27 & 346 & 16.32 & established & 0 & DEM, PMDB, PP, PPS, PR, PRB, PSB, PSD, PSDB, PTB, PV \\
+2014 & 2016.8 & 2016-10-25--2016-10-25 & 1 & 57.83 & 312 & 15.34 & established & 0 & DEM, PMDB, PP, PPS, PR, PRB, PSD, PSDB, PTB, PV \\
+2014 & 2016.9 & 2016-10-26--2017-04-25 & 182 & 64.27 & 346 & 16.32 & mixed & 70 & DEM, PMDB, PP, PPS, PR, PRB, PSB, PSD, PSDB, PTB, PV \\
+2014 & 2017.1 & 2017-04-26--2017-04-26 & 1 & 57.83 & 312 & 15.34 & established & 0 & DEM, PMDB, PP, PPS, PR, PRB, PSD, PSDB, PTB, PV \\
+2014 & 2017.2 & 2017-04-27--2017-08-01 & 97 & 64.27 & 346 & 16.32 & established & 0 & DEM, PMDB, PP, PPS, PR, PRB, PSB, PSD, PSDB, PTB, PV \\
+2014 & 2017.3 & 2017-08-02--2017-08-02 & 1 & 57.83 & 312 & 15.34 & provisional & 1 & DEM, PMDB, PP, PPS, PR, PRB, PSD, PSDB, PTB, PV \\
+2014 & 2017.4 & 2017-08-03--2017-10-17 & 76 & 64.27 & 346 & 16.32 & established & 0 & DEM, PMDB, PP, PPS, PR, PRB, PSB, PSD, PSDB, PTB, PV \\
+2014 & 2017.5 & 2017-10-18--2018-03-20 & 154 & 57.83 & 312 & 15.34 & mixed & 6 & DEM, PMDB, PP, PPS, PR, PRB, PSD, PSDB, PTB, PV \\
+2014 & 2018.1 & 2018-03-21--2018-04-01 & 12 & 55.82 & 302 & 15.65 & established & 0 & DEM, PMDB, PP, PR, PRB, PSD, PSDB, PTB, PV \\
+2014 & 2018.2 & 2018-04-02--2018-04-05 & 4 & 50.03 & 268 & 11.34 & established & 0 & DEM, PMDB, PP, PRB, PSD, PSDB, PTB, PV \\
+2014 & 2018.3 & 2018-04-06--2018-07-04 & 90 & 45.83 & 247 & 11.87 & established & 0 & PMDB, PP, PRB, PSD, PSDB, PTB, PV \\
+2014 & 2018.4 & 2018-07-05--2018-12-31 & 180 & 41.81 & 222 & 7.50 & mixed & 1 & PMDB, PP, PRB, PSD, PSDB, PV \\
+2018 & 2019.1 & 2019-01-01--2020-02-10 & 406 & 30.14 & 160 & 5.40 & established & 0 & DEM, MDB, NOVO, PP, PSL \\
+2018 & 2020.1 & 2020-02-11--2020-02-17 & 7 & 36.13 & 190 & 4.64 & mixed & 4 & DEM, MDB, NOVO, PP, PSDB, PSL \\
+2018 & 2020.2 & 2020-02-18--2020-04-15 & 58 & 30.60 & 156 & -0.96 & established & 0 & DEM, NOVO, PP, PSDB, PSL \\
+2018 & 2020.3 & 2020-04-16--2020-04-16 & 1 & 36.13 & 190 & 4.64 & established & 0 & DEM, MDB, NOVO, PP, PSDB, PSL \\
+2018 & 2020.4 & 2020-04-17--2020-05-06 & 20 & 30.60 & 156 & -0.96 & mixed & 5 & DEM, NOVO, PP, PSDB, PSL \\
+2018 & 2020.5 & 2020-05-07--2020-06-16 & 41 & 27.80 & 148 & 5.39 & established & 0 & DEM, PP, PSDB, PSL \\
+2018 & 2020.6 & 2020-06-17--2020-06-17 & 1 & 33.65 & 183 & 10.38 & established & 0 & DEM, PP, PSD, PSDB, PSL \\
+2018 & 2020.7 & 2020-06-18--2020-09-18 & 93 & 27.65 & 153 & 11.14 & established & 0 & DEM, PP, PSD, PSL \\
+2018 & 2020.8 & 2020-09-19--2020-12-08 & 81 & 22.15 & 116 & 2.37 & established & 0 & DEM, PSD, PSL \\
+2018 & 2020.9 & 2020-12-09--2021-02-11 & 65 & 23.90 & 123 & 0.39 & established & 0 & DEM, PSC, PSD, PSL \\
+2018 & 2021.1 & 2021-02-12--2021-03-30 & 47 & 28.97 & 152 & 3.37 & mixed & 1 & DEM, PRB, PSC, PSD, PSL \\
+2018 & 2021.2 & 2021-03-31--2021-07-27 & 119 & 34.29 & 185 & 9.10 & mixed & 1 & DEM, PR, PRB, PSC, PSD, PSL \\
+2018 & 2021.3 & 2021-07-28--2022-03-23 & 239 & 39.79 & 222 & 17.86 & established & 0 & DEM, PP, PR, PRB, PSC, PSD, PSL \\
+2018 & 2022.1 & 2022-03-24--2022-03-26 & 3 & 33.94 & 187 & 12.87 & established & 0 & DEM, PP, PR, PRB, PSC, PSL \\
+2018 & 2022.2 & 2022-03-27--2022-03-27 & 1 & 28.87 & 158 & 9.90 & established & 0 & DEM, PP, PR, PSC, PSL \\
+2018 & 2022.3 & 2022-03-28--2022-03-29 & 2 & 33.94 & 187 & 12.87 & established & 0 & DEM, PP, PR, PRB, PSC, PSL \\
+2018 & 2022.4 & 2022-03-30--2022-03-30 & 1 & 32.19 & 180 & 14.85 & established & 0 & DEM, PP, PR, PRB, PSL \\
+2018 & 2022.5 & 2022-03-31--2022-05-10 & 41 & 16.43 & 101 & 16.73 & established & 0 & PP, PRB, PSD \\
+2018 & 2022.6 & 2022-05-11--2022-12-29 & 233 & 32.73 & 182 & 14.11 & mixed & 9 & DEM, PP, PRB, PSD, PSL \\
+2018 & 2022.7 & 2022-12-30--2022-12-31 & 2 & 30.02 & 153 & -1.00 & provisional & 2 & DEM, NOVO, PRB, PSD, PSL \\
+2022 & 2023.1 & 2023-01-01--2023-09-12 & 255 & 48.89 & 263 & 12.20 & established & 0 & MDB, PCdoB, PDT, PSB, PSD, PSOL, PT, REDE, UNIÃO \\
+2022 & 2023.2 & 2023-09-13--2023-12-03 & 82 & 63.79 & 350 & 22.76 & established & 0 & MDB, PCdoB, PDT, PP, PSB, PSD, PSOL, PT, REDE, REPUBLICANOS, UNIÃO \\
+2022 & 2023.3 & 2023-12-04--2023-12-05 & 2 & 66.81 & 363 & 20.25 & established & 0 & MDB, PCdoB, PDT, PP, PSB, PSD, PSDB, PSOL, PT, REDE, REPUBLICANOS, UNIÃO \\
+2022 & 2023.4 & 2023-12-06--2024-12-02 & 363 & 63.79 & 350 & 22.76 & established & 0 & MDB, PCdoB, PDT, PP, PSB, PSD, PSOL, PT, REDE, REPUBLICANOS, UNIÃO \\
+2022 & 2024.1 & 2024-12-03--2024-12-05 & 3 & 66.81 & 363 & 20.25 & established & 0 & MDB, PCdoB, PDT, PP, PSB, PSD, PSDB, PSOL, PT, REDE, REPUBLICANOS, UNIÃO \\
+2022 & 2024.2 & 2024-12-06--2025-10-07 & 306 & 63.79 & 350 & 22.76 & established & 0 & MDB, PCdoB, PDT, PP, PSB, PSD, PSOL, PT, REDE, REPUBLICANOS, UNIÃO \\
+2022 & 2025.1 & 2025-10-08--2025-10-08 & 1 & 57.48 & 304 & 9.14 & established & 0 & MDB, PCdoB, PDT, PP, PSB, PSD, PSDB, PSOL, PT, REDE, REPUBLICANOS \\
+2022 & 2025.2 & 2025-10-09--2025-11-12 & 35 & 63.79 & 350 & 22.76 & established & 0 & MDB, PCdoB, PDT, PP, PSB, PSD, PSOL, PT, REDE, REPUBLICANOS, UNIÃO \\
+2022 & 2025.3 & 2025-11-13--2025-11-16 & 4 & 57.48 & 304 & 9.14 & established & 0 & MDB, PCdoB, PDT, PP, PSB, PSD, PSDB, PSOL, PT, REDE, REPUBLICANOS \\
+2022 & 2025.4 & 2025-11-17--2025-12-07 & 21 & 63.79 & 350 & 22.76 & established & 0 & MDB, PCdoB, PDT, PP, PSB, PSD, PSOL, PT, REDE, REPUBLICANOS, UNIÃO \\
+2022 & 2025.5 & 2025-12-08--2025-12-18 & 11 & 54.45 & 291 & 11.66 & established & 0 & MDB, PCdoB, PDT, PP, PSB, PSD, PSOL, PT, REDE, REPUBLICANOS \\
+2022 & 2025.6 & 2025-12-19--2025-12-22 & 4 & 57.48 & 304 & 9.14 & established & 0 & MDB, PCdoB, PDT, PP, PSB, PSD, PSDB, PSOL, PT, REDE, REPUBLICANOS \\
+2022 & 2025.7 & 2025-12-23--2026-03-19 & 87 & 54.45 & 291 & 11.66 & established & 0 & MDB, PCdoB, PDT, PP, PSB, PSD, PSOL, PT, REDE, REPUBLICANOS \\
+\bottomrule
 \end{longtable}
-\begin{flushleft}
-\scriptsize Notes: Composition, Entered, and Left are reported using the election-year party
-labels used for vote-seat accounting. Period windows are constructed from the
-party labels observed in the cabinet data. When a party fusion occurs, the successor party is used to determine whether the cabinet party set changes; it is then expanded into antecedent election parties if the relevant election occurred before the fusion.
-\end{flushleft}
+\noindent\footnotesize Notes: One row per maximal consecutive election-year party set. Dates above are inclusive; CSV end dates are exclusive. The 4,096 days include 3,996 evidence-established days and 100 provisional days. Mixed periods combine both; provisional assumptions add no party and do not establish historical non-affiliation. The link table below identifies the underlying historical periods.
+\begin{longtable}{@{}llp{15cm}@{}}
+\caption*{Analytical-to-historical period linkage}\\
+\toprule
+Period & Analytical ID & V5 source period IDs (each ID embeds its historical start date) \\
+\midrule
+\endhead
+2015.1 & CV5-001 & dilma\_2-2015-01-01 \\
+2015.2 & CV5-002 & dilma\_2-2015-03-19 \\
+2016.1 & CV5-003 & dilma\_2-2016-03-18 \\
+2016.2 & CV5-004 & dilma\_2-2016-03-31 \\
+2016.3 & CV5-005 & dilma\_2-2016-04-14 \\
+2016.4 & CV5-006 & dilma\_2-2016-04-19 \\
+2016.5 & CV5-007 & temer-2016-05-12 \\
+2016.6 & CV5-008 & temer-2016-10-10 \\
+2016.7 & CV5-009 & temer-2016-10-11 \\
+2016.8 & CV5-010 & temer-2016-10-25 \\
+2016.9 & CV5-011 & temer-2016-10-26 \\
+2017.1 & CV5-012 & temer-2017-04-26 \\
+2017.2 & CV5-013 & temer-2017-04-27 \\
+2017.3 & CV5-014 & temer-2017-08-02 \\
+2017.4 & CV5-015 & temer-2017-08-03 \\
+2017.5 & CV5-016 & temer-2017-10-18 \\
+2018.1 & CV5-017 & temer-2018-03-21 \\
+2018.2 & CV5-018 & temer-2018-04-02 \\
+2018.3 & CV5-019 & temer-2018-04-06; temer-2018-05-15 \\
+2018.4 & CV5-020 & temer-2018-07-05 \\
+2019.1 & CV5-021 & bolsonaro-2019-01-01 \\
+2020.1 & CV5-022 & bolsonaro-2020-02-11 \\
+2020.2 & CV5-023 & bolsonaro-2020-02-18 \\
+2020.3 & CV5-024 & bolsonaro-2020-04-16 \\
+2020.4 & CV5-025 & bolsonaro-2020-04-17 \\
+2020.5 & CV5-026 & bolsonaro-2020-05-07 \\
+2020.6 & CV5-027 & bolsonaro-2020-06-17 \\
+2020.7 & CV5-028 & bolsonaro-2020-06-18 \\
+2020.8 & CV5-029 & bolsonaro-2020-09-19 \\
+2020.9 & CV5-030 & bolsonaro-2020-12-09 \\
+2021.1 & CV5-031 & bolsonaro-2021-02-12 \\
+2021.2 & CV5-032 & bolsonaro-2021-03-31 \\
+2021.3 & CV5-033 & bolsonaro-2021-07-28; bolsonaro-2022-02-08 \\
+2022.1 & CV5-034 & bolsonaro-2022-03-24 \\
+2022.2 & CV5-035 & bolsonaro-2022-03-27 \\
+2022.3 & CV5-036 & bolsonaro-2022-03-28 \\
+2022.4 & CV5-037 & bolsonaro-2022-03-30 \\
+2022.5 & CV5-038 & bolsonaro-2022-03-31 \\
+2022.6 & CV5-039 & bolsonaro-2022-05-11 \\
+2022.7 & CV5-040 & bolsonaro-2022-12-30 \\
+2023.1 & CV5-041 & lula\_3-2023-01-01 \\
+2023.2 & CV5-042 & lula\_3-2023-09-13 \\
+2023.3 & CV5-043 & lula\_3-2023-12-04 \\
+2023.4 & CV5-044 & lula\_3-2023-12-06 \\
+2024.1 & CV5-045 & lula\_3-2024-12-03 \\
+2024.2 & CV5-046 & lula\_3-2024-12-06 \\
+2025.1 & CV5-047 & lula\_3-2025-10-08 \\
+2025.2 & CV5-048 & lula\_3-2025-10-09 \\
+2025.3 & CV5-049 & lula\_3-2025-11-13 \\
+2025.4 & CV5-050 & lula\_3-2025-11-17 \\
+2025.5 & CV5-051 & lula\_3-2025-12-08 \\
+2025.6 & CV5-052 & lula\_3-2025-12-19 \\
+2025.7 & CV5-053 & lula\_3-2025-12-23 \\
+\bottomrule
+\end{longtable}
+\noindent\footnotesize Exact source starts, exclusive ends, and overlap dates are in \texttt{generated/cabinet\_v5/historical\_analytical\_linkage.csv}.
 \end{landscape}

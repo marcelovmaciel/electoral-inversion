@@ -8,19 +8,23 @@ function cabinet_district_concentration(states::DataFrame)
         contributions = parse_exact.(rows.a_Cd_exact)
         positive = sort(filter(>(0), contributions); rev = true)
         negative = filter(<(0), contributions)
-        positive_sum = sum(positive)
-        top_three_share = sum(first(positive, min(3, length(positive)))) / positive_sum
-        ninety_count = findfirst(>=(9//10 * positive_sum), cumsum(positive))
+        positive_sum = sum(positive; init = 0//1)
+        top_three_share = iszero(positive_sum) ? missing : sum(first(positive, min(3, length(positive)))) / positive_sum
+        ninety_count = iszero(positive_sum) ? missing : findfirst(>=(9//10 * positive_sum), cumsum(positive))
         push!(records, (case_id = first_row.case_id, election_year = first_row.election_year,
             cabinet_period = first_row.cabinet_period, case_domain = "cabinet",
             ideological_universe = "not_applicable", positive_count = length(positive),
             negative_count = length(negative), positive_sum = Float64(positive_sum),
-            negative_sum = Float64(sum(negative)), top_three_positive_share = Float64(top_three_share),
+            negative_sum = Float64(sum(negative)), top_three_positive_share = ismissing(top_three_share) ? missing : Float64(top_three_share),
             districts_for_ninety_pct = ninety_count,
             positive_sum_exact = exact_text(positive_sum), negative_sum_exact = exact_text(sum(negative)),
-            top_three_positive_share_exact = exact_text(top_three_share)))
+            top_three_positive_share_exact = ismissing(top_three_share) ? missing : exact_text(top_three_share)))
     end
-    DataFrame(records)
+    isempty(records) ? DataFrame([name => Any[] for name in
+        ["case_id", "election_year", "cabinet_period", "case_domain", "ideological_universe",
+         "positive_count", "negative_count", "positive_sum", "negative_sum",
+         "top_three_positive_share", "districts_for_ninety_pct", "positive_sum_exact",
+         "negative_sum_exact", "top_three_positive_share_exact"]]) : DataFrame(records)
 end
 
 function cabinet_district_concentration_latex(data)
@@ -33,11 +37,12 @@ function cabinet_district_concentration_latex(data)
         raw"\shortstack{Top three\\share (\%)} &",
         raw"\shortstack{Districts\\for 90\%} \\ ", raw"\midrule",
     ]
+    isempty(data) && push!(lines, raw"\multicolumn{7}{l}{No identified cabinet inversions satisfy the criterion.} \\")
     for row in eachrow(data)
         push!(lines, "$(row.election_year) & $(row.cabinet_period) & " *
             "$(row.positive_count)/$(row.negative_count) & $(fmt2(row.positive_sum)) & " *
-            "$(fmt2(row.negative_sum)) & $(@sprintf("%.1f", 100 * row.top_three_positive_share)) & " *
-            "$(row.districts_for_ninety_pct) \\\\")
+            "$(fmt2(row.negative_sum)) & $(ismissing(row.top_three_positive_share) ? "---" : @sprintf("%.1f", 100 * row.top_three_positive_share)) & " *
+            "$(ismissing(row.districts_for_ninety_pct) ? "---" : string(row.districts_for_ninety_pct)) \\\\")
     end
     append!(lines, [raw"\bottomrule", raw"\end{tabular}"])
     join(lines, "\n")

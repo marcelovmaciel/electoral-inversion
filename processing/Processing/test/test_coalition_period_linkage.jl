@@ -1,63 +1,70 @@
 using Test
 using Dates
+using JSON3
+using SHA
 
-const _PROCESSING_MODULE_FILE_LINKAGE = joinpath(@__DIR__, "..", "src", "Processing.jl")
-const _ROOT_DIR_LINKAGE = abspath(@__DIR__, "..", "..", "..")
-const _COALITION_JSON_LINKAGE = joinpath(_ROOT_DIR_LINKAGE, "scraping", "output", "partidos_por_periodo.json")
+const _PIN_LINKAGE = Processing.CabinetRelease.default_pin_path()
 
-const _PROCESSING_LOADED_LINKAGE = let
-    try
-        if !isdefined(Main, :Processing)
-            include(_PROCESSING_MODULE_FILE_LINKAGE)
-        end
-        @eval using .Processing
-        true
-    catch err
-        @test_skip "Não foi possível carregar módulo Processing: $(sprint(showerror, err))"
-        false
+@testset "Pinned coalition period linkage" begin
+    @test isfile(_PIN_LINKAGE)
+    calendar = Processing.CabinetRelease.calendar_table(_PIN_LINKAGE)
+    periods = Processing.coalitions_by_period_raw(; path = _PIN_LINKAGE)
+    windows = Processing.coalition_period_windows(; path = _PIN_LINKAGE)
+    @test Set(keys(windows)) == Set(calendar.period)
+    @test Set(keys(periods)) == Set(calendar.period[calendar.identified])
+    @test Set(calendar.period[.!calendar.identified]) ∩ Set(keys(periods)) == Set{String}()
+    for row in eachrow(calendar)
+        @test windows[row.period] == (row.start_inclusive, row.end_exclusive - Day(1))
+        @test row.days == Dates.value(row.period_end - row.period_start) + 1
     end
+    for (start_date, end_date) in [(Date(2025,1,1), Date(2025,12,31)),
+                                  (Date(2023,1,1), Date(2026,3,19)),
+                                  (Date(2015,1,1), Date(2018,12,31))]
+        actual = Processing.coalition_periods_overlapping_window(periods, start_date, end_date; path = _PIN_LINKAGE)
+        expected = Set(String(row.period) for row in eachrow(calendar)
+                       if row.identified && row.start_inclusive <= end_date && row.end_exclusive > start_date)
+        @test Set(keys(actual)) == expected
+    end
+    @test Processing.coalition_periods_overlapping_year(periods, 2025; path = _PIN_LINKAGE) ==
+          Processing.coalition_periods_overlapping_window(periods, Date(2025,1,1), Date(2025,12,31); path = _PIN_LINKAGE)
+    @test Set(keys(Processing.coalition_periods_by_label_year(periods, 2025))) ==
+          Set(String(row.period) for row in eachrow(calendar) if row.identified && year(row.start_inclusive) == 2025)
+    @test isempty(calendar[.!calendar.identified, :])
+    @test sum(calendar.provisional_days) == 100
+    @test sum(calendar.established_days) == 3996
+    @test isempty(Processing.coalition_periods_overlapping_window(Dict{String,Vector{String}}(),
+                   Date(2025,1,1), Date(2025,1,2); path = _PIN_LINKAGE))
+    @test_throws ErrorException Processing.coalition_periods_overlapping_window(periods, Date(2025,1,2), Date(2025,1,1))
+    @test_throws ErrorException Processing.coalition_periods_overlapping_window(Dict("missing" => ["PT"]), Date(2025,1,1), Date(2025,1,2))
+    row = first(eachrow(calendar[calendar.identified, :]))
+    single = Dict(String(row.period) => periods[row.period])
+    @test haskey(Processing.coalition_periods_overlapping_window(single, row.period_end, row.period_end), row.period)
+    @test isempty(Processing.coalition_periods_overlapping_window(single, row.end_exclusive, row.end_exclusive))
 end
 
-function _period_keys_sorted_by_window(periods::Dict{String,Vector{String}}, windows)
-    ks = collect(keys(periods))
-    sort!(ks, by = k -> begin
-        start_date, _ = windows[k]
-        (start_date, Processing.period_sort_key(k))
-    end)
-    return ks
-end
-
-@testset "Coalition Period Linkage" begin
-    if !_PROCESSING_LOADED_LINKAGE
-        @test_skip "Módulo Processing não carregado; testes de linkage ignorados."
-    else
-        @test isfile(_COALITION_JSON_LINKAGE)
-
-        periods = Processing.coalitions_by_period_raw(; path = _COALITION_JSON_LINKAGE)
-        windows = Processing.coalition_period_windows(; path = _COALITION_JSON_LINKAGE)
-
-        overlap_2025 = Processing.coalition_periods_overlapping_year(
-            periods,
-            2025;
-            path = _COALITION_JSON_LINKAGE,
-        )
-        label_2025 = Processing.coalition_periods_by_label_year(periods, 2025)
-        mandate_2022 = Processing.coalition_periods_overlapping_window(
-            periods,
-            Date(2023, 1, 1),
-            Date(2026, 3, 19);
-            path = _COALITION_JSON_LINKAGE,
-        )
-
-        @test _period_keys_sorted_by_window(overlap_2025, windows) == ["2023.2", "2025.1"]
-        @test sort(collect(keys(label_2025)); by = Processing.period_sort_key) == ["2025.1"]
-        @test _period_keys_sorted_by_window(mandate_2022, windows) == ["2023.1", "2023.2", "2025.1"]
-        @test length(keys(mandate_2022)) == length(unique(collect(keys(mandate_2022))))
-        @test windows["2025.1"] == (Date(2025, 12, 24), Date(2026, 3, 19))
-        @test _period_keys_sorted_by_window(mandate_2022, windows) ==
-              sort(collect(keys(mandate_2022)); by = k -> begin
-                  start_date, _ = windows[k]
-                  (start_date, Processing.period_sort_key(k))
-              end)
+@testset "Cabinet pin fails closed" begin
+    original = JSON3.read(read(_PIN_LINKAGE, String), Dict{String,Any})
+    mktempdir() do tempdir
+        # Each override is a distinct path so no previously validated cache entry is reused.
+        cases = [
+            ("metadata", pin -> (pin["metadata_sha256"] = repeat("0", 64))),
+            ("schema", pin -> (pin["schema_version"] = 2)),
+            ("cutoff", pin -> (pin["cutoff_exclusive"] = "2026-03-21")),
+            ("version", pin -> (pin["data_version"] = "unreviewed")),
+            ("missing_atomic", pin -> delete!(pin["file_hashes"], "atomic_events.csv")),
+            ("missing_evidence", pin -> delete!(pin["file_hashes"], "evidence.csv")),
+            ("bad_file", pin -> (pin["file_hashes"]["membership.csv"] = repeat("0", 64))),
+            ("missing_primary_assumptions", pin -> delete!(pin["file_hashes"], "primary_assumptions.csv")),
+        ]
+        for (name, mutate!) in cases
+            pin = deepcopy(original); mutate!(pin)
+            path = joinpath(tempdir, name * ".json")
+            write(path, JSON3.write(pin))
+            @test_throws ErrorException Processing.CabinetRelease.load_release(path)
+        end
+        @test_throws ErrorException Processing.CabinetRelease.load_release(joinpath(tempdir, "missing.json"))
+        good = joinpath(tempdir, "valid.json")
+        write(good, JSON3.write(original))
+        @test Processing.CabinetRelease.load_release(good).metadata.data_version == original["data_version"]
     end
 end

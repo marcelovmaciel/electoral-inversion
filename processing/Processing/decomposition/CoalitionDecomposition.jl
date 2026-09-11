@@ -11,8 +11,6 @@ import ..Processing.AnalysisRunnerCore as ARC
 
 export ACCOUNTING_ATOL,
        ACCOUNTING_RTOL,
-       EXPECTED_INVERSION_KEYS,
-       EXPECTED_INVERSION_COALITIONS,
        build_year_accounting,
        recompute_coalition_periods,
        decompose_inversions,
@@ -22,19 +20,6 @@ export ACCOUNTING_ATOL,
 const ACCOUNTING_ATOL = 1.0e-9
 const ACCOUNTING_RTOL = 1.0e-12
 const EXPECTED_TOTAL_SEATS = 513
-const EXPECTED_INVERSION_KEYS = [
-    (2014, "2016.2"),
-    (2014, "2017.1"),
-    (2018, "2021.3/2022.1"),
-    (2022, "2023.1"),
-]
-const EXPECTED_INVERSION_COALITIONS = Dict(
-    (2014, "2016.2") => sort(["PCdoB", "PDT", "PMDB", "PR", "PSD", "PT", "PTB"]),
-    (2014, "2017.1") => sort(["DEM", "PMDB", "PP", "PPS", "PSB", "PSD", "PSDB", "PV"]),
-    (2018, "2021.3/2022.1") => sort(["DEM", "PATRIOTA", "PP", "PR", "PRB", "PSC", "PSD", "PSDB", "PSL"]),
-    (2022, "2023.1") => sort(["MDB", "PCdoB", "PDT", "PSB", "PSD", "PSOL", "PT", "REDE", "UNIÃO"]),
-)
-
 const Rat = Rational{BigInt}
 
 bigint(value::Integer) = BigInt(value)
@@ -60,6 +45,7 @@ function require_approx(left, right, label::AbstractString)
 end
 
 function split_parties(value)
+    ismissing(value) && return String[] # CSV empty cell for an identified empty composition.
     parties = sort(String.(filter(!isempty, strip.(split(String(value), ",")))))
     length(parties) == length(unique(parties)) || error(
         "Coalition contains duplicate party labels: $(value)",
@@ -413,7 +399,7 @@ end
     recompute_coalition_periods(observed, accounting_by_year; party_baseline)
 
 Recompute every observed cabinet-period quantity from district-reconstructed
-party totals, then compare it with the frozen PSC-correct paper output.
+party totals, then compare it with the pinned contemporaneous-affiliation adapter output.
 """
 function recompute_coalition_periods(
     observed::DataFrame,
@@ -443,7 +429,7 @@ function recompute_coalition_periods(
         required_exact = exact_fraction(accounting.seat_majority_threshold, 1) - quota_exact
         vote_share = coalition_votes / accounting.national_votes
         seat_share = coalition_seats / accounting.national_seats
-        ratio = coalition_seats / Float64(quota_exact)
+        ratio = iszero(quota_exact) ? missing : coalition_seats / Float64(quota_exact)
         vote_majority = vote_share >= 0.5
         seat_majority = coalition_seats >= accounting.seat_majority_threshold
         inversion = vote_share < 0.5 && seat_majority
@@ -452,18 +438,22 @@ function recompute_coalition_periods(
         canonical_parties == join(split_parties(source.parties), ", ") || error(
             "$(year)/$(source.period): coalition composition normalization changed.",
         )
-        coalition_votes == Int(source.votes) || error("$(year)/$(source.period): v_C differs from PSC baseline.")
-        coalition_seats == Int(source.seats) || error("$(year)/$(source.period): s_C differs from PSC baseline.")
+        coalition_votes == Int(source.votes) || error("$(year)/$(source.period): v_C differs from pinned cabinet baseline.")
+        coalition_seats == Int(source.seats) || error("$(year)/$(source.period): s_C differs from pinned cabinet baseline.")
         accounting.national_votes == Int(source.national_vote_total) || error(
-            "$(year)/$(source.period): national vote denominator differs from PSC baseline.",
+            "$(year)/$(source.period): national vote denominator differs from pinned cabinet baseline.",
         )
         require_approx(vote_share, source.vote_share, "$(year)/$(source.period) vote share baseline")
         require_approx(quota_exact, source.quota, "$(year)/$(source.period) q_C baseline")
         require_approx(differential_exact, source.seat_diff, "$(year)/$(source.period) d_C baseline")
         require_approx(required_exact, source.required_diff, "$(year)/$(source.period) r_C baseline")
-        require_approx(ratio, source.representation_ratio, "$(year)/$(source.period) R_C baseline")
+        if ismissing(ratio)
+            ismissing(source.representation_ratio) || error("Zero-quota coalition must have undefined representation ratio")
+        else
+            require_approx(ratio, source.representation_ratio, "$(year)/$(source.period) R_C baseline")
+        end
         inversion == Bool(source.coalition_inversion) || error(
-            "$(year)/$(source.period): inversion classification differs from PSC baseline.",
+            "$(year)/$(source.period): inversion classification differs from pinned cabinet baseline.",
         )
 
         push!(rows, (
@@ -487,32 +477,17 @@ function recompute_coalition_periods(
             q_C = Float64(quota_exact),
             d_C = Float64(differential_exact),
             r_C = Float64(required_exact),
-            R_C = Float64(ratio),
+            R_C = ismissing(ratio) ? missing : Float64(ratio),
             vote_majority = Bool(vote_majority),
             seat_majority = Bool(seat_majority),
             majority_status = majority_status(vote_majority, seat_majority),
             coalition_inversion = Bool(inversion),
         ))
     end
-    result = DataFrame(rows)
+    result = isempty(rows) ? DataFrame([name => Any[] for name in ["coalition_id", "election_year", "coalition_year", "cabinet_period", "source_periods", "period_start", "period_end", "period_days", "days_overlapping_mandate", "share_of_mandate", "coalition_parties", "coalition_party_count", "v_C", "V", "vote_share", "s_C", "S", "seat_share", "q_C", "d_C", "r_C", "R_C", "vote_majority", "seat_majority", "majority_status", "coalition_inversion"]]) : DataFrame(rows)
     sort!(result, [:election_year, :period_start, :cabinet_period])
 
-    inversion_keys = [
-        (Int(row.election_year), String(row.cabinet_period)) for
-        row in eachrow(result[result.coalition_inversion .== true, :])
-    ]
-    inversion_keys == EXPECTED_INVERSION_KEYS || error(
-        "Observed inversion registry changed: expected $(EXPECTED_INVERSION_KEYS), found $(inversion_keys).",
-    )
-    for key in EXPECTED_INVERSION_KEYS
-        row = only(eachrow(result[
-            (result.election_year .== key[1]) .& (result.cabinet_period .== key[2]),
-            :,
-        ]))
-        split_parties(row.coalition_parties) == EXPECTED_INVERSION_COALITIONS[key] || error(
-            "$(key[1])/$(key[2]): coalition composition differs from corrected cabinet reconstruction.",
-        )
-    end
+    length(unique(result.coalition_id)) == nrow(observed) || error("Cabinet registry lost or duplicated a period")
     return result
 end
 
@@ -556,18 +531,13 @@ end
 """
     decompose_inversions(coalition_periods, accounting_by_year)
 
-Calculate A_C and B_C for exactly the four observed inversions, plus
+Calculate A_C and B_C for all observed inversions, plus
 the full member-party d_i vector and state-level contributions. All internal
 identities are checked with exact rational arithmetic; decimal residuals are
 also checked under ACCOUNTING_ATOL/ACCOUNTING_RTOL for output regressions.
 """
 function decompose_inversions(coalition_periods::DataFrame, accounting_by_year::AbstractDict)
     inversion_rows = coalition_periods[coalition_periods.coalition_inversion .== true, :]
-    keys = [(Int(row.election_year), String(row.cabinet_period)) for row in eachrow(inversion_rows)]
-    keys == EXPECTED_INVERSION_KEYS || error(
-        "Decomposition case registry must be exactly $(EXPECTED_INVERSION_KEYS); found $(keys).",
-    )
-
     decomposition_rows = NamedTuple[]
     party_rows = NamedTuple[]
     district_rows = NamedTuple[]
@@ -579,9 +549,6 @@ function decompose_inversions(coalition_periods::DataFrame, accounting_by_year::
         key = (year, period)
         accounting = accounting_by_year[year]
         parties = split_parties(coalition.coalition_parties)
-        parties == EXPECTED_INVERSION_COALITIONS[key] || error(
-            "$(year)/$(period): decomposition coalition differs from corrected reconstruction.",
-        )
         coalition.vote_share < 0.5 || error("$(year)/$(period): decomposed coalition is not below 50% of votes.")
         coalition.s_C >= accounting.seat_majority_threshold || error(
             "$(year)/$(period): decomposed coalition lacks a Chamber seat majority.",
@@ -705,10 +672,10 @@ function decompose_inversions(coalition_periods::DataFrame, accounting_by_year::
         end
     end
 
-    decomposition = DataFrame(decomposition_rows)
-    party_contributions = DataFrame(party_rows)
-    district_contributions = DataFrame(district_rows)
-    validations = DataFrame(validation_rows)
+    decomposition = isempty(decomposition_rows) ? DataFrame([name => Any[] for name in ["coalition_id", "election_year", "coalition_year", "cabinet_period", "source_periods", "period_start", "period_end", "period_days", "coalition_parties", "coalition_party_count", "vote_share", "vote_share_pct", "s_C", "q_C", "d_C", "r_C", "R_C", "A_C", "B_C", "A_plus_B_residual", "party_d_residual", "accounting_tolerance_atol", "accounting_tolerance_rtol", "interpretation"]]) : DataFrame(decomposition_rows)
+    party_contributions = isempty(party_rows) ? DataFrame([name => Any[] for name in ["coalition_id", "election_year", "cabinet_period", "source_periods", "coalition_parties", "party", "v_i", "V", "vote_share", "s_i", "S", "seat_share", "q_i", "R_i", "d_i", "A_i", "B_i", "q_times_R_minus_1", "accounting_qualification"]]) : DataFrame(party_rows)
+    district_contributions = isempty(district_rows) ? DataFrame([name => Any[] for name in ["coalition_id", "election_year", "cabinet_period", "source_periods", "coalition_parties", "electoral_unit", "v_Cd", "V_d", "s_Cd", "S_d", "within_district_quota", "national_quota_contribution", "a_Cd", "b_Cd", "b_Cd_factored", "b_crosscheck_residual"]]) : DataFrame(district_rows)
+    validations = isempty(validation_rows) ? DataFrame([name => Any[] for name in ["coalition_id", "election_year", "cabinet_period", "source_periods", "check_name", "exact_pass", "floating_residual", "atol", "rtol", "status"]]) : DataFrame(validation_rows)
     sort!(decomposition, [:election_year, :period_start, :cabinet_period])
     sort!(party_contributions, [:election_year, :cabinet_period, :d_i], rev = [false, false, true])
     sort!(district_contributions, [:election_year, :cabinet_period, :electoral_unit])
@@ -718,19 +685,19 @@ function decompose_inversions(coalition_periods::DataFrame, accounting_by_year::
         positive = group[argmax(group.d_i), :]
         negative = group[argmin(group.d_i), :]
         positive.d_i > 0 || error("$(positive.coalition_id): no positive party d_i contribution.")
-        negative.d_i < 0 || error("$(negative.coalition_id): no negative party d_i contribution.")
+        # An inversion can contain no negative member contribution.
         push!(extreme_rows, (
             coalition_id = String(positive.coalition_id),
             election_year = Int(positive.election_year),
             cabinet_period = String(positive.cabinet_period),
             largest_positive_party = String(positive.party),
             largest_positive_d_i = Float64(positive.d_i),
-            largest_negative_party = String(negative.party),
-            largest_negative_d_i = Float64(negative.d_i),
+            largest_negative_party = negative.d_i < 0 ? String(negative.party) : missing,
+            largest_negative_d_i = negative.d_i < 0 ? Float64(negative.d_i) : missing,
             accounting_qualification = qualification_for_year(Int(positive.election_year)),
         ))
     end
-    party_extremes = DataFrame(extreme_rows)
+    party_extremes = isempty(extreme_rows) ? DataFrame([name => Any[] for name in ["coalition_id", "election_year", "cabinet_period", "largest_positive_party", "largest_positive_d_i", "largest_negative_party", "largest_negative_d_i", "accounting_qualification"]]) : DataFrame(extreme_rows)
     sort!(party_extremes, [:election_year, :cabinet_period])
 
     component_rows = NamedTuple[]
@@ -745,7 +712,7 @@ function decompose_inversions(coalition_periods::DataFrame, accounting_by_year::
             ))
         end
     end
-    component_figure_data = DataFrame(component_rows)
+    component_figure_data = isempty(component_rows) ? DataFrame([name => Any[] for name in ["coalition_id", "election_year", "cabinet_period", "component", "seats"]]) : DataFrame(component_rows)
 
     return (
         decomposition = decomposition,
@@ -777,7 +744,7 @@ function latex_escape(value)
     return String(take!(io))
 end
 
-fmt2(value) = @sprintf("%.2f", Float64(value))
+fmt2(value) = ismissing(value) ? "---" : @sprintf("%.2f", Float64(value))
 
 function closure_preserving_display(d_C, A_C)
     d_milli = round(Int, 1000 * Float64(d_C))
@@ -791,21 +758,13 @@ function closure_preserving_display(d_C, A_C)
 end
 
 function decomposition_latex(data::DataFrame)
-    nrow(data) == length(EXPECTED_INVERSION_KEYS) || error(
-        "Observed-inversion presentation requires exactly four rows.",
-    )
-    presented_keys = [
-        (Int(row.election_year), string(row.cabinet_period)) for row in eachrow(data)
-    ]
-    presented_keys == EXPECTED_INVERSION_KEYS || error(
-        "Observed-inversion presentation registry changed: $(presented_keys).",
-    )
-
+    length(unique(data.coalition_id)) == nrow(data) || error("Duplicate cabinet decomposition rows")
     io = IOBuffer()
     println(io, "\\begin{tabularx}{\\textwidth}{@{}llrrrrrr>{\\raggedright\\arraybackslash}X@{}}")
     println(io, "\\toprule")
     println(io, "Election & Period & Days & Vote \\% & Seats & \\(d_C\\) & \\(A_C\\) & \\(B_C\\) & Parties \\\\")
     println(io, "\\midrule")
+    isempty(data) && println(io, raw"\multicolumn{9}{l}{No identified cabinet inversions satisfy the criterion.} \\")
     for row in eachrow(data)
         displayed = closure_preserving_display(row.d_C, row.A_C)
         println(io,
@@ -850,6 +809,32 @@ function write_csv(path::AbstractString, data::DataFrame)
     return path
 end
 
+"""Unidentified days retain the full calendar denominator in generated notes."""
+function cabinet_unidentified_days(output_root)
+    accounting_root = basename(output_root) == "all_parties" ? dirname(output_root) : output_root
+    path = joinpath(dirname(accounting_root), "paper", "raw", "cabinet_unidentified_intervals.csv")
+    isfile(path) || return 0
+    data = CSV.read(path, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
+    return sum(Int.(data.days); init=0)
+end
+function cabinet_identification_note(days)
+    days == 0 && return ""
+    return "\\par\\smallskip{\\footnotesize Identified full compositions only. " *
+           "$(days) of 4096 observation days have an unidentified cabinet party set and unavailable inversion status.}"
+end
+
+function cabinet_date_convention_note(output_root)
+    accounting_root = basename(output_root) == "all_parties" ? dirname(output_root) : output_root
+    path = joinpath(dirname(accounting_root), "paper", "raw", "cabinet_calendar_status.csv")
+    isfile(path) || return ""
+    data = CSV.read(path, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
+    bounded = any(column in propertynames(data) && any(v -> !(string(coalesce(v, "")) in ("", "[]", "false", "0")), data[!, column])
+                  for column in (:bounded_affiliation_ids, :bounded_service_ids))
+    provisional = :provisional_days in propertynames(data) ? sum(data.provisional_days) : 0
+    provenance = provisional > 0 ? "\\par{\\footnotesize V5 primary sets include $(provisional) flagged provisional days; the underlying UNKNOWN affiliations remain unresolved.}" : ""
+    return provenance * (bounded ? "\\par{\\footnotesize Recorded concrete date and affiliation sensitivities are reported separately.}" : "")
+end
+
 """
     write_decomposition_outputs(output_root, coalition_periods, outputs)
 
@@ -884,25 +869,25 @@ function write_decomposition_outputs(output_root::AbstractString, coalition_peri
         "raw/coalition_period_quantities.csv",
         coalition_periods,
         "raw",
-        "PSC-correct coalition quantities for every observed cabinet period.",
+        "Release-derived coalition quantities for every observed cabinet period.",
     )
     record_csv(
         "raw/inversion_decomposition.csv",
         outputs.decomposition,
         "raw",
-        "Exact-audited A_C/B_C decomposition for the four observed inversions.",
+        "Exact-audited A_C/B_C decomposition for all observed inversions.",
     )
     record_csv(
         "raw/inversion_party_contributions.csv",
         outputs.party_contributions,
         "raw",
-        "Full party-level d_i, A_i, and B_i vectors for the four observed inversions.",
+        "Full party-level d_i, A_i, and B_i vectors for all observed inversions.",
     )
     record_csv(
         "raw/inversion_district_contributions.csv",
         outputs.district_contributions,
         "raw",
-        "State-level a_Cd and b_Cd contributions for the four observed inversions.",
+        "State-level a_Cd and b_Cd contributions for all observed inversions.",
     )
     decomposition_table_path = record_csv(
         "tables/table_observed_inversion_decomposition.csv",
@@ -929,13 +914,13 @@ function write_decomposition_outputs(output_root::AbstractString, coalition_peri
         "Exact and floating-point decomposition identity results.",
     )
 
-    decomposition_from_csv = CSV.read(decomposition_table_path, DataFrame)
-    extremes_from_csv = CSV.read(extremes_table_path, DataFrame)
+    decomposition_from_csv = CSV.read(decomposition_table_path, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
+    extremes_from_csv = CSV.read(extremes_table_path, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
     latex_assets = (
         (
             "latex/table_observed_inversion_decomposition.tex",
-            decomposition_latex(decomposition_from_csv),
-            "Portrait manuscript tabularx for the four observed cabinet inversions and their accounting components.",
+            decomposition_latex(decomposition_from_csv) * "\n" * cabinet_identification_note(cabinet_unidentified_days(output_root)) * "\n" * cabinet_date_convention_note(output_root),
+            "Portrait manuscript tabularx for all observed cabinet inversions and their accounting components.",
             nrow(decomposition_from_csv),
             9,
         ),

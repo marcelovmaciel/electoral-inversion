@@ -3,7 +3,7 @@
 # =============================================================================
 
 const RAW_ROOT = Ref("../data/raw/electionsBR")
-const COALITION_PATH = Ref("../scraping/output/partidos_por_periodo.json")
+const COALITION_PATH = Ref(CabinetRelease.default_pin_path())
 
 _cabinet_to_election_crosswalk_path() = abspath(
     joinpath(@__DIR__, "..", "data", "cabinet_to_election_party_crosswalk.csv"),
@@ -761,20 +761,7 @@ Carrega `partidos_por_periodo.json` e retorna um Dict de periodo => partidos,
 com siglas normalizadas por `canonical_party`.
 """
 function coalitions_by_period(; path::AbstractString = get_coalition_path())
-    isfile(path) || error("coalitions_by_period: arquivo não encontrado em $path")
-    raw = JSON.parsefile(path)
-
-    periods = Dict{String, Vector{String}}()
-    for (period, info) in raw
-        parties_raw = info["partidos"]
-        period_year = tryparse(Int, first(split(period, ".")))
-        parties = [
-            normalize_party_str(p; year = period_year)
-            for p in parties_raw
-        ]
-        periods[period] = unique(parties)
-    end
-    return periods
+    return CabinetRelease.identified_parties(path)
 end
 
 function parse_coalition_date(value, period::AbstractString, field::AbstractString)
@@ -789,27 +776,16 @@ function parse_coalition_date(value, period::AbstractString, field::AbstractStri
 end
 
 function coalition_period_windows(; path::AbstractString = get_coalition_path())
-    isfile(path) || error("coalition_period_windows: arquivo não encontrado em $path")
-    raw = JSON.parsefile(path)
-    windows = Dict{String,Tuple{Union{Date,Nothing},Union{Date,Nothing}}}()
-    for (period, info) in raw
-        start_date = parse_coalition_date(get(info, "data_inicio", nothing), period, "data_inicio")
-        end_date = parse_coalition_date(get(info, "data_fim", nothing), period, "data_fim")
-        windows[period] = (start_date, end_date)
-    end
-    return windows
+    return CabinetRelease.period_windows(path)
 end
 
 """
     coalition_periods_by_label_year(periods, year)
 
 Seleciona períodos cuja chave começa com `YYYY.`. Esta é uma semântica de
-rótulo, útil para diagnósticos sobre a nomenclatura do JSON, mas não significa
-que os períodos selecionados sejam todos os períodos ativos durante o ano civil.
-
-Exemplo importante: `2025.1` começa em 2025-12-24, enquanto `2023.2` vai até
-2025-12-23. Logo, a seleção por rótulo para 2025 retorna `2025.1`, mas não a
-coalizão que cobriu quase todo o ano de 2025.
+rótulo do adaptador, mas não significa que os períodos selecionados sejam
+todos os períodos ativos durante o ano civil. Períodos iniciados em anos
+anteriores também podem sobrepor a janela consultada.
 """
 function coalition_periods_by_label_year(periods::Dict{String,Vector{String}}, year::Integer)
     prefix = string(year) * "."
@@ -832,13 +808,11 @@ end
     coalition_periods_overlapping_window(periods, window_start, window_end; path=get_coalition_path())
 
 Seleciona os períodos de coalizão ativos em qualquer parte da janela fechada
-`window_start` a `window_end`, usando `data_inicio` e `data_fim` do JSON. Esta
-é a semântica correta para análises de mandato ou de ano civil, porque o rótulo
-do período (`YYYY.k`) indica quando o período começou, não todos os anos em que
-ele esteve ativo.
-
-No caso de 2025, esta seleção inclui `2023.2` e `2025.1`: `2023.2` cobre quase
-todo 2025, e `2025.1` começa apenas em 2025-12-24.
+`window_start` a `window_end`, usando as datas da versão histórica fixada.
+O adaptador converte uma única vez o fim exclusivo para a interface inclusiva.
+O rótulo (`YYYY.k`) indica o ano inicial, não todos os anos ativos. Uma janela
+inteiramente não identificada retorna seleção vazia; seu calendário continua
+explicitamente representado pela versão histórica.
 """
 function coalition_periods_overlapping_window(periods::Dict{String,Vector{String}},
                                               window_start::Date,
@@ -873,18 +847,16 @@ function coalition_periods_overlapping_window(periods::Dict{String,Vector{String
         end
     end
 
-    if isempty(bounds) || !isempty(missing_dates)
+    if !isempty(missing_dates)
         sample_vec = sort(unique(missing_dates))
         sample = isempty(sample_vec) ? "nenhum período com datas válidas" :
                  join(sample_vec[1:min(length(sample_vec), 5)], ", ")
         error("coalition_periods_overlapping_window: dados insuficientes para filtrar a janela $window_start a $window_end (faltam datas em: $sample).")
     end
 
-    min_year = Dates.year(minimum(first.(bounds)))
-    max_year = Dates.year(maximum(last.(bounds)))
-    if min_year <= Dates.year(window_end) && Dates.year(window_start) <= max_year && isempty(selected)
-        error("coalition_periods_overlapping_window: nenhum período cobre a janela $window_start a $window_end, mas a série cobre $min_year-$max_year; verifique o parser/dados.")
-    end
+    # An observed window can contain only explicitly unidentified cabinet sets.
+    # Its identified-period selection is empty; the full release calendar still
+    # records the dates and unknown status. Do not reinterpret this as a parser error.
 
     sort!(selected, by = p -> begin
         start_date, _ = windows[p.first]
@@ -1028,17 +1000,7 @@ end
 election_year_for_mandate_id(mandate_id::AbstractString)::Int = parse_mandate_id(mandate_id).election_year
 
 function coalitions_by_period_raw(; path::AbstractString = get_coalition_path())
-    isfile(path) || error("coalitions_by_period_raw: arquivo não encontrado em $path")
-    payload = JSON.parsefile(path)
-
-    out = Dict{String,Vector{String}}()
-    for (period, info_any) in payload
-        info_any isa AbstractDict || error("Período $period com payload inválido.")
-        parties_any = get(info_any, "partidos", nothing)
-        parties_any isa AbstractVector || error("Período $period sem vetor 'partidos'.")
-        out[String(period)] = String[strip(String(p)) for p in parties_any if !isempty(strip(String(p)))]
-    end
-    return out
+    return CabinetRelease.identified_parties(path)
 end
 
 """
@@ -1090,45 +1052,20 @@ Traduz partidos do gabinete para o espaço de identidade do ano eleitoral
 antes do join com votos/cadeiras.
 
 Regra explícita:
-- se houver linha no crosswalk para `cabinet_party × election_year`, usa ela;
-- sem linha explícita, a identidade só é aceita se o mesmo rótulo já existir
-  no DataFrame eleitoral alvo;
-- se nenhuma dessas duas condições valer, o join falha fechado e pede edição
-  explícita do crosswalk.
+- toda identidade deve ter linha explícita para `cabinet_party × election_year`;
+- renomes e ancestralidade aditiva de fusões são documentados no crosswalk;
+- os destinos eleitorais são unidos antes da soma, sem duplicação;
+- identidade ausente ou destino inexistente falha sem fallback por rótulo.
 """
 function cabinet_parties_in_election_space(
     cabinet_parties::AbstractVector{<:AbstractString};
     election_year::Integer,
     valid_election_parties::AbstractVector{<:AbstractString},
-    crosswalk_path::AbstractString = _cabinet_to_election_crosswalk_path(),
+    crosswalk_path::AbstractString = CabinetRelease.default_crosswalk_path(),
 )::Vector{String}
-    crosswalk = load_cabinet_to_election_crosswalk(crosswalk_path)
-    valid_labels = Set(String.(valid_election_parties))
-
-    translated = String[]
-    for cabinet_party in String.(cabinet_parties)
-        cabinet_norm = normalize_party(cabinet_party)
-        mask = [
-            crosswalk.election_year[i] == Int(election_year) &&
-            crosswalk.cabinet_party_norm[i] == cabinet_norm
-            for i in eachindex(crosswalk.election_year)
-        ]
-        mapped = sort(unique(String.(crosswalk.election_party[mask])))
-        if !isempty(mapped)
-            append!(translated, mapped)
-            continue
-        end
-        if cabinet_party in valid_labels
-            push!(translated, String(cabinet_party))
-            continue
-        end
-        error(
-            "Partido do gabinete sem crosswalk compatível com a eleição de $(Int(election_year)): " *
-            "'$(String(cabinet_party))'. Edite: $(crosswalk_path)",
-        )
-    end
-
-    return sort(unique(translated))
+    report = CabinetRelease.translate(cabinet_parties; election_year,
+        valid_election_parties, crosswalk_path = crosswalk_path)
+    return sort(unique(String.(report.election_party)))
 end
 
 function coalition_metrics(
@@ -1245,7 +1182,7 @@ function cabinet_coalition_metrics_for_periods(
         period_year === nothing && error(
             "cabinet_coalition_metrics_for_periods: não foi possível inferir ano do período $period.",
         )
-        cabinet_canonicals = canonicalize_parties(periods[period]; year = period_year, strict = true)
+        cabinet_canonicals = periods[period] # Stable release identities; never apply calendar aliases twice.
         join_parties = cabinet_parties_in_election_space(
             cabinet_canonicals;
             election_year = election_year_resolved,

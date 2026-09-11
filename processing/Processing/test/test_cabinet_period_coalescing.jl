@@ -37,61 +37,80 @@ using JSON3
     @test only(Processing.coalesce_adjacent_cabinet_periods(chain).period) == "a/b/c"
 end
 
-@testset "Current manuscript cabinet coalescing regression" begin
+@testset "Pinned cabinet reporting linkage and independent arithmetic" begin
     root = abspath(@__DIR__, "..", "..", "..")
     paper = joinpath(root, "processing", "Processing", "output", "paper")
-    read_csv(path) = CSV.read(path, DataFrame; stringtype = String,
-        types = (i, name) -> String(name) in ("period", "periodo") ? String : nothing)
-    raw = read_csv(joinpath(root, "scraping", "output", "partidos_por_periodo.csv"))
-    before = read_csv(joinpath(paper, "diagnostics", "cabinet_coalitions_before_coalescing.csv"))
-    after = read_csv(joinpath(paper, "raw", "cabinet_coalition_metrics.csv"))
-    row_for(df, period) = only(eachrow(df[(df.election_year .== 2018) .& (df.period .== period), :]))
-    left, right = row_for(before, "2021.3"), row_for(before, "2022.1")
-    merged = row_for(after, "2021.3/2022.1")
-    # Historical labels retain the actual pre/post-fusion boundary.
-    pre = raw[raw.periodo .== "2021.3", :]
-    post = raw[raw.periodo .== "2022.1", :]
-    @test Set(["DEM", "PSL", "PSC"]) ⊆ Set(pre.partido)
-    @test !("UNIÃO" in pre.partido)
-    @test "UNIÃO" in post.partido
-    @test "PSC" in post.partido
-    @test isempty(intersect(Set(["DEM", "PSL"]), Set(post.partido)))
-    @test only(unique(pre.data_fim)) == Date(2022, 2, 7)
-    @test only(unique(post.data_inicio)) == Date(2022, 2, 8)
-    translation = read_csv(joinpath(paper, "diagnostics", "cabinet_translation_report.csv"))
-    translated_set(period) = Set(translation.election_party[(translation.election_year .== 2018) .& (translation.period .== period)])
-    expected_parties = Set(["DEM", "PATRIOTA", "PP", "PR", "PRB", "PSC", "PSD", "PSDB", "PSL"])
-    @test translated_set("2021.3") == translated_set("2022.1") == expected_parties
-    @test Set(strip.(split(left.parties, ','))) == Set(strip.(split(right.parties, ','))) == expected_parties
-    @test left.period_end + Day(1) == right.period_start
-    @test left.period_days == 188
-    @test right.period_days == 50
-    @test merged.period_start == Date(2021, 8, 4)
-    @test merged.period_end == Date(2022, 3, 29)
-    @test merged.period_days == merged.days_overlapping_mandate == 238
-    @test JSON3.read(merged.source_periods) == ["2021.3", "2022.1"]
-    @test nrow(before) == 24
-    @test nrow(after) == 23
-    @test count(before.coalition_inversion) == 5
-    @test count(after.coalition_inversion) == 4
-    @test Set(zip(after.election_year[after.coalition_inversion], after.period[after.coalition_inversion])) == Set([
-        (2014, "2016.2"), (2014, "2017.1"), (2018, "2021.3/2022.1"), (2022, "2023.1"),
-    ])
-    recomputed = Processing.coalesce_adjacent_cabinet_periods(before;
-        expected_merges = Set([(2018, ("2021.3", "2022.1"))]))
-    @test isequal(recomputed, after)
-    @test count(cell -> length(JSON3.read(cell)) > 1, after.source_periods) == 1
-    for column in (:votes, :national_vote_total, :vote_share, :seats, :seat_share,
-        :quota, :seat_diff, :required_diff, :representation_ratio, :coalition_inversion)
-        @test isequal(merged[column], left[column]) && isequal(left[column], right[column])
+    read_csv(path) = CSV.read(path, DataFrame; stringtype=String,
+        types=(i,name)->String(name)=="period" ? String : nothing)
+    before=read_csv(joinpath(paper,"diagnostics","cabinet_coalitions_before_coalescing.csv"))
+    after=read_csv(joinpath(paper,"raw","cabinet_coalition_metrics.csv"))
+    calendar=Processing.CabinetRelease.calendar_table()
+    @test sum(calendar.days)==4096
+    @test sum(after.period_days)+sum(calendar.days[.!calendar.identified])==4096
+    recomputed=Processing.coalesce_adjacent_cabinet_periods(before)
+    @test names(recomputed)==names(after)
+    for col in names(after)
+        @test all(isequal.(recomputed[!,col],after[!,col]))
     end
-    @test merged.vote_share * 100 ≈ 47.246851574312064
-    @test merged.seats == 257
-    @test merged.quota ≈ 242.3763485762209
-    @test merged.seat_diff ≈ 14.6236514237791
-    @test merged.representation_ratio ≈ 1.0603344819314346
-    for (year, expected_days) in [(2014, 102), (2018, 238), (2022, 255)]
-        inversion_days(df) = sum(df.days_overlapping_mandate[(df.election_year .== year) .& df.coalition_inversion])
-        @test inversion_days(before) == inversion_days(after) == expected_days
+    historical=Processing.CabinetRelease.load_release().periods
+    linked=String[]
+    party=read_csv(joinpath(paper,"raw","party_seat_differentials_all_years.csv"))
+    for row in eachrow(after)
+        sources=String.(JSON3.read(row.source_periods)); append!(linked,sources)
+        hist=historical[in.(historical.period_id,Ref(Set(sources))),:]
+        @test sum(hist.days)==row.period_days
+        @test length(unique(hist.administration_id))==1
+        @test all((year(t) <= 2018 ? 2014 : year(t) <= 2022 ? 2018 : 2022) == row.election_year for t in hist.start_inclusive)
+        @test minimum(hist.start_inclusive)==row.period_start
+        @test maximum(hist.end_exclusive)-Day(1)==row.period_end
+        members=Set(strip.(split(row.parties,',')))
+        selected=party[(party.election_year .== row.election_year) .& in.(party.party,Ref(members)),:]
+        @test nrow(selected)==length(members)
+        @test sum(selected.votes)==row.votes
+        @test sum(selected.seats)==row.seats
+        @test row.quota ≈ 513*row.votes/row.national_vote_total
+        @test row.seat_diff ≈ row.seats-row.quota
+        @test row.coalition_inversion==(2*row.votes < row.national_vote_total && row.seats>=257)
+    end
+    @test length(linked)==length(unique(linked))
+    @test Set(linked)==Set(historical.period_id)
+    for y in [2014,2018,2022]
+        duration(df)=sum(df.period_days[(df.election_year .== y) .& df.coalition_inversion])
+        @test duration(before)==duration(after)
+    end
+end
+
+@testset "Historical identity is not reporting identity" begin
+    sample=DataFrame(election_year=[2018,2018,2018],coalition_year=[2022,2022,2022],
+        period=["a","b","c"],source_periods=["[\"H1\"]","[\"H2\"]","[\"H3\"]"],
+        administration_id=["A","A","B"],composition_status=fill("identified",3),
+        historical_parties=["DEM, PSL","UNIAO","UNIAO"],parties=fill("DEM, PSL",3),
+        period_start=Date.(["2022-02-07","2022-02-08","2022-02-09"]),
+        period_end=Date.(["2022-02-07","2022-02-08","2022-02-09"]),
+        period_days=ones(Int,3),days_overlapping_mandate=ones(Int,3),share_of_mandate=fill(1/1461,3),seats=fill(257,3))
+    result=Processing.coalesce_adjacent_cabinet_periods(sample)
+    @test result.period==["a/b","c"]
+    @test JSON3.read(result.source_periods[1])==["H1","H2"]
+    report=Processing.CabinetRelease.translate(["DEM","UNIAO"];election_year=2018,valid_election_parties=["DEM","PSL"])
+    @test Set(report.election_party)==Set(["DEM","PSL"])
+    @test_throws r"Unmapped" Processing.CabinetRelease.translate(["NEW_UNKNOWN_PARTY"];election_year=2018,valid_election_parties=["NEW_UNKNOWN_PARTY"])
+end
+
+@testset "Cabinet bridge does not infer transitions across unknown gaps" begin
+    paper=joinpath(@__DIR__, "..", "output", "paper")
+    for suffix in ("", "_all_parties")
+        bridge=CSV.read(joinpath(paper,"tables","table_appendix_cabinet_interval_bridge$(suffix).csv"),DataFrame;types=Dict(:cabinet_period=>String))
+        @test issorted(bridge.period_start)
+        for i in 1:nrow(bridge)
+            row=bridge[i,:]
+            adjacent=i>1 && bridge.period_end[i-1]+Day(1)==row.period_start && bridge.administration_id[i-1]==row.administration_id
+            @test (row.transition_status=="identified_adjacent")==adjacent
+            if !adjacent
+                @test ismissing(row.delta_cabinet_mean_ideology_value_unweighted)
+                @test ismissing(row.delta_cabinet_mean_ideology_value_seat_weighted)
+                @test ismissing(row.entered_ideology_summary) || isempty(row.entered_ideology_summary)
+                @test ismissing(row.left_ideology_summary) || isempty(row.left_ideology_summary)
+            end
+        end
     end
 end

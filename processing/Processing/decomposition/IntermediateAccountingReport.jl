@@ -25,7 +25,6 @@ export EXPECTED_PARTY_DISTRICT_ROWS,
 
 const EXPECTED_PARTIES_BY_YEAR = Dict(2014 => 32, 2018 => 35, 2022 => 32)
 const EXPECTED_PARTY_DISTRICT_ROWS = sum(27 * value for value in values(EXPECTED_PARTIES_BY_YEAR))
-const EXPECTED_CABINET_PARTY_DISTRICT_ROWS = 891
 
 require(condition::Bool, message::AbstractString) = condition ? true : error(message)
 fmt2(value) = @sprintf("%.2f", Float64(value))
@@ -239,13 +238,11 @@ function build_inversion_case_registry(
     accounting_by_year::AbstractDict,
 )
     rows = NamedTuple[]
-    cabinets = coalition_periods[Bool.(coalition_periods.coalition_inversion), :]
+    cabinets = coalition_periods[coalesce.(coalition_periods.coalition_inversion, false), :]
     cabinet_keys = [
         (Int(row.election_year), String(row.cabinet_period)) for row in eachrow(cabinets)
     ]
-    cabinet_keys == CD.EXPECTED_INVERSION_KEYS || error(
-        "Cabinet inversion registry changed: $(cabinet_keys).",
-    )
+    length(unique(cabinet_keys)) == nrow(cabinets) || error("Duplicate cabinet inversion registry rows")
     for (case_order, row) in enumerate(eachrow(cabinets))
         year = Int(row.election_year)
         parties = ordered_parties(row.coalition_parties)
@@ -284,7 +281,7 @@ function build_inversion_case_registry(
             d_C = Float64(row.d_C),
             r_C = Float64(row.r_C),
             R_C = Float64(row.R_C),
-            source_registry = "PSC-correct observed cabinet reconstruction",
+            source_registry = "Pinned contemporaneous-affiliation cabinet release (identified compositions)",
         ))
     end
 
@@ -350,13 +347,10 @@ function build_inversion_case_registry(
     sort!(registry, [:case_domain, :election_year, :case_order])
 
     nrow(registry) == nrow(cabinets) + nrow(ideological) || error("Combined registry cardinality mismatch.")
-    sum(registry.case_domain .== "cabinet") == 4 || error("Combined registry lost cabinet cases.")
+    sum(registry.case_domain .== "cabinet") == nrow(cabinets) || error("Combined registry lost cabinet cases.")
     all(registry.vote_share .< 0.5) && all(registry.s_C .>= 257) || error("Registry contains a non-inversion.")
-    repeated = registry[registry.compositionally_repeated, :]
-    require(
-        isempty(repeated),
-        "Composition-equivalence audit changed; cabinet observations are already coalesced.",
-    )
+    # Nonadjacent returns to the same party set remain separate observations.
+    # composition_equivalence_count records repetition without deleting chronology.
     return registry
 end
 
@@ -395,7 +389,7 @@ end
 """
     decompose_case_registry(registry, accounting_by_year)
 
-Apply the same exact party/district accounting to all four cabinet and all
+Apply the same exact party/district accounting to all identified cabinet and all
 registered ideological inversion coalitions. Ideological membership is read
 directly from the validated interval output; no coalition is reconstructed by
 hand.
@@ -618,7 +612,8 @@ function decompose_case_registry(registry::DataFrame, accounting_by_year::Abstra
     nrow(decomposition) == nrow(registry) || error("Case decomposition lost registry rows.")
     nrow(party_contributions) == sum(registry.coalition_party_count) || error("Incomplete party vectors.")
     nrow(party_district_contributions[party_district_contributions.case_domain .== "cabinet", :]) ==
-        EXPECTED_CABINET_PARTY_DISTRICT_ROWS || error("Cabinet member-cell output changed.")
+        27 * sum(registry.coalition_party_count[registry.case_domain .== "cabinet"]) ||
+        error("Cabinet member-cell output differs from current registry membership.")
     nrow(party_district_contributions) == 27 * nrow(party_contributions) || error("Incomplete party-district vectors.")
     nrow(district_contributions) == nrow(registry) * 27 || error("Incomplete coalition-district vectors.")
     return (
@@ -649,8 +644,7 @@ success returns `true`.
 function validate_cabinet_compatibility!(cases, cabinet_reference)
     expanded = cases.decomposition[cases.decomposition.case_domain .== "cabinet", :]
     reference = _reference_frame(cabinet_reference, :decomposition)
-    nrow(expanded) == 4 || error("Expanded cabinet decomposition must contain four cases.")
-    nrow(reference) == 4 || error("Validated cabinet reference must contain four cases.")
+    nrow(expanded) == nrow(reference) || error("Expanded cabinet decomposition differs from current reference cardinality.")
 
     expanded_lookup = Dict(String(row.source_case_id) => row for row in eachrow(expanded))
     reference_lookup = Dict(String(row.coalition_id) => row for row in eachrow(reference))
@@ -860,7 +854,7 @@ function write_csv_file(path::AbstractString, data::DataFrame)
 end
 
 function reload_csv(path::AbstractString)
-    data = CSV.read(path, DataFrame)
+    data = CSV.read(path, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
     for column in (
         :case_id, :source_case_id, :case_domain, :case_label, :cabinet_period,
         :minimal_status, :party, :electoral_unit, :aggregation_level, :component,
@@ -1167,7 +1161,9 @@ function generated_interpretation_latex(
 
     cabinet_positive_A = sum(Float64.(cabinet.A_C) .> 0)
     cabinet_offsets = sum((Float64.(cabinet.A_C) .> 0) .& (Float64.(cabinet.B_C) .< 0))
-    if cabinet_positive_A == nrow(cabinet)
+    if isempty(cabinet)
+        println(io, "No identified cabinet composition satisfies the inversion criterion; unidentified intervals remain unclassified.")
+    elseif cabinet_positive_A == nrow(cabinet)
         println(io,
             "All $(nrow(cabinet)) cabinet cases have positive \\(A_C\\). In " *
             "$(cabinet_offsets) of $(nrow(cabinet)), negative \\(B_C\\) offsets part of " *

@@ -1,13 +1,13 @@
 Focused intermediate party-district accounting report test
-timestamp_utc=2026-09-08T21:50:40.238
-julia_version=1.12.2
+timestamp_utc=2026-09-10T19:38:25.380
+julia_version=1.12.7
 accounting_atol=1.0e-9
 accounting_rtol=1.0e-12
 full_party_district_cells=2673
-case_registry_rows=16
-case_party_rows=179
-case_district_rows=432
-case_party_district_rows=4833
-ranking_rows=16332
-identity_checks=137
+case_registry_rows=14
+case_party_rows=164
+case_district_rows=378
+case_party_district_rows=4428
+ranking_rows=14910
+identity_checks=121
 status=PASS

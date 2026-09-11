@@ -65,9 +65,9 @@ ideological_path = require_file(
     joinpath(PAPER_ROOT, "raw", "ideological_interval_metrics.csv"),
 )
 
-observed = CSV.read(observed_path, DataFrame)
-party_baseline = CSV.read(party_path, DataFrame)
-ideological_intervals = CSV.read(ideological_path, DataFrame)
+observed = CSV.read(observed_path, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
+party_baseline = CSV.read(party_path, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
+ideological_intervals = CSV.read(ideological_path, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
 
 accounting_by_year = Dict{Int,Any}()
 raw_input_paths = String[]

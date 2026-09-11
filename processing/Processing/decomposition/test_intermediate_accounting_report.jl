@@ -18,12 +18,6 @@ const REPORT_ACCOUNTING_ATOL = 1.0e-9
 const REPORT_ACCOUNTING_RTOL = 1.0e-12
 
 const EXPECTED_REPORT_PARTIES = Dict(2014 => 32, 2018 => 35, 2022 => 32)
-const EXPECTED_REPORT_CABINET_KEYS = Set([
-    "2014/2016.2",
-    "2014/2017.1",
-    "2018/2021.3/2022.1",
-    "2022/2023.1",
-])
 const EXPECTED_REPORT_IDEOLOGICAL_KEYS = Set([
     (2014, 5, 16), (2014, 5, 17), (2014, 7, 20), (2014, 8, 20),
     (2014, 9, 23), (2014, 9, 24), (2014, 10, 24), (2018, 3, 16),
@@ -161,7 +155,7 @@ end
 function require_report_csv(relative_path::AbstractString)
     path = joinpath(REPORT_TEST_OUTPUT_ROOT, relative_path)
     isfile(path) || error("Required intermediate-report CSV is missing: " * path)
-    return normalize_report_strings!(CSV.read(path, DataFrame))
+    return normalize_report_strings!(CSV.read(path, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing))
 end
 
 function require_columns(data::DataFrame, columns)
@@ -217,6 +211,15 @@ input_manifest = require_report_csv("audit/intermediate_accounting_input_manifes
 generation_checks = require_report_csv("audit/intermediate_accounting_generation_checks.csv")
 report_manifest = require_report_csv("audit/intermediate_accounting_report_artifact_manifest.csv")
 
+# Cabinet keys come from direct vote/seat criterion, not an inherited chronology.
+report_periods = require_report_csv("raw/coalition_period_quantities.csv")
+report_inversions = report_periods[(2 .* report_periods.v_C .< report_periods.V) .& (report_periods.s_C .>= 257), :]
+const EXPECTED_REPORT_CABINET_KEYS = Set(String.(report_inversions.coalition_id))
+const REPORT_CABINET_N = nrow(report_inversions)
+const REPORT_CABINET_MEMBERS = sum(report_inversions.coalition_party_count)
+const REPORT_CASE_N = REPORT_CABINET_N + 12
+const REPORT_PARTY_N = REPORT_CABINET_MEMBERS + 146
+
 report_test_result = @testset "Intermediate party-district accounting report" begin
     @testset "Required artifact boundary" begin
         @test isempty(missing_report_paths)
@@ -255,7 +258,7 @@ report_test_result = @testset "Intermediate party-district accounting report" be
         @test nrow(generation_checks) > 0
         @test :status in propertynames(generation_checks)
         @test all(generation_checks.status .== "PASS")
-        @test nrow(identity_checks) == 137
+        @test nrow(identity_checks) == 9 + 8 * REPORT_CASE_N
         @test all(report_bool.(identity_checks.exact_pass))
         @test all(identity_checks.status .== "PASS")
         @test all(abs.(Float64.(identity_checks.floating_residual)) .<= REPORT_ACCOUNTING_ATOL)
@@ -386,15 +389,13 @@ report_test_result = @testset "Intermediate party-district accounting report" be
     end
 
     @testset "Cabinet and ideological inversion registry" begin
-        @test nrow(case_registry) == 16
-        @test length(unique(case_registry.case_id)) == 16
+        @test nrow(case_registry) == REPORT_CASE_N
+        @test length(unique(case_registry.case_id)) == REPORT_CASE_N
         cabinets = case_registry[case_registry.case_domain .== "cabinet", :]
         ideological = case_registry[case_registry.case_domain .== "ideological", :]
-        @test nrow(cabinets) == 4
-        @test !any(report_bool.(case_registry.compositionally_repeated))
-        merged = only(eachrow(cabinets[cabinets.election_year .== 2018, :]))
-        @test String(merged.source_periods) == "[\"2021.3\",\"2022.1\"]"
-        @test merged.period_days == 238
+        @test nrow(cabinets) == REPORT_CABINET_N
+        @test all(report_bool(r.compositionally_repeated) == (r.composition_equivalence_count > 1) for r in eachrow(case_registry))
+        @test all(Dates.value(Date(r.period_end) - Date(r.period_start)) + 1 == r.period_days for r in eachrow(cabinets))
         @test nrow(ideological) == 12
         @test Set(cabinets.source_case_id) == EXPECTED_REPORT_CABINET_KEYS
         ideological_keys = Set(
@@ -425,25 +426,25 @@ report_test_result = @testset "Intermediate party-district accounting report" be
                 report_int(row.v_C) / report_int(row.V) < 0.5 &&
                 report_int(row.s_C) >= 257
         end
-        @test sum(report_int.(case_registry.coalition_party_count)) == 179
+        @test sum(report_int.(case_registry.coalition_party_count)) == REPORT_PARTY_N
     end
 
     @testset "All-domain decompositions and linked contribution sums" begin
-        @test nrow(case_decomposition) == 16
-        @test nrow(case_parties) == 179
-        @test nrow(case_districts) == 432
-        @test nrow(case_cells) == 4_833
-        @test nrow(cabinet_decomposition) == 4
+        @test nrow(case_decomposition) == REPORT_CASE_N
+        @test nrow(case_parties) == REPORT_PARTY_N
+        @test nrow(case_districts) == 27 * REPORT_CASE_N
+        @test nrow(case_cells) == 27 * REPORT_PARTY_N
+        @test nrow(cabinet_decomposition) == REPORT_CABINET_N
         @test nrow(ideological_decomposition) == 12
-        @test nrow(cabinet_parties) == 33
+        @test nrow(cabinet_parties) == REPORT_CABINET_MEMBERS
         @test nrow(ideological_parties) == 146
-        @test nrow(cabinet_districts) == 108
+        @test nrow(cabinet_districts) == 27 * REPORT_CABINET_N
         @test nrow(ideological_districts) == 324
-        @test nrow(cabinet_cells) == 891
+        @test nrow(cabinet_cells) == 27 * REPORT_CABINET_MEMBERS
         @test nrow(ideological_cells) == 3_942
-        @test nrow(unique(select(case_parties, :case_id, :party))) == 179
-        @test nrow(unique(select(case_districts, :case_id, :electoral_unit))) == 432
-        @test nrow(unique(select(case_cells, :case_id, :party, :electoral_unit))) == 4_833
+        @test nrow(unique(select(case_parties, :case_id, :party))) == REPORT_PARTY_N
+        @test nrow(unique(select(case_districts, :case_id, :electoral_unit))) == 27 * REPORT_CASE_N
+        @test nrow(unique(select(case_cells, :case_id, :party, :electoral_unit))) == 27 * REPORT_PARTY_N
 
         cabinet_case_ids = Set(case_registry.case_id[case_registry.case_domain .== "cabinet"])
         ideological_case_ids = Set(case_registry.case_id[case_registry.case_domain .== "ideological"])
@@ -588,7 +589,7 @@ report_test_result = @testset "Intermediate party-district accounting report" be
     end
 
     @testset "Complete ranking values, extrema, and deterministic ranks" begin
-        @test nrow(rankings) == 16_332
+        @test nrow(rankings) == 3 * (REPORT_PARTY_N + 27 * REPORT_CASE_N + 27 * REPORT_PARTY_N)
         @test require_columns(rankings, (
             :case_id, :case_domain, :aggregation_level, :component, :party,
             :electoral_unit, :unit_label, :value, :value_sign,
@@ -619,7 +620,7 @@ report_test_result = @testset "Intermediate party-district accounting report" be
                 )] = Float64(row[Symbol(component)])
             end
         end
-        @test length(ranking_source) == 16_332
+        @test length(ranking_source) == 3 * (REPORT_PARTY_N + 27 * REPORT_CASE_N + 27 * REPORT_PARTY_N)
         ranking_keys = [
             (
                 row.case_id,

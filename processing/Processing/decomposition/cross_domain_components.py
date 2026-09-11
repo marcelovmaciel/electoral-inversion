@@ -5,6 +5,7 @@ accounting exports. This module deliberately has no report-local dependencies.
 The extraction and registry audit were promoted from the cabinet A/B diagnostic.
 """
 from __future__ import annotations
+from datetime import date, timedelta
 
 import csv
 import gzip
@@ -52,7 +53,7 @@ class _Audit:
         return str(value).lower() == "true"
 
     def parties(self, value):
-        names = tuple(p.strip() for p in value.split(","))
+        names = tuple(p.strip() for p in value.split(",")) if value.strip() else ()
         self.require(all(names) and len(names) == len(set(names)), "invalid party vector")
         return names
 
@@ -145,20 +146,23 @@ def _coalition_values(election, names, audit):
         seats += s
         a_district += s - Fraction(sd * v, vd)
         b_district += Fraction(sd * v, vd) - Fraction(S * v, V)
-    a = sum(election["parties"][p]["A_i"] for p in names)
-    b = sum(election["parties"][p]["B_i"] for p in names)
-    q = sum(election["parties"][p]["q_i"] for p in names)
-    audit.require(q > 0, "positive coalition quota")
+    a = sum((election["parties"][p]["A_i"] for p in names), Fraction(0))
+    b = sum((election["parties"][p]["B_i"] for p in names), Fraction(0))
+    q = sum((election["parties"][p]["q_i"] for p in names), Fraction(0))
+    audit.require(q >= 0, "nonnegative coalition quota")
     audit.exact(q, Fraction(S * votes, V), "member/direct coalition quota")
     audit.exact(a, a_district, "member/direct district A")
     audit.exact(b, b_district, "member/direct district B")
-    d, R = seats - q, Fraction(seats, 1) / q
+    d, R = seats - q, Fraction(seats, 1) / q if q else float("nan")
     audit.exact(a + b, d, "coalition d=A+B")
-    audit.exact(a / q + b / q, R - 1, "coalition normalized identity")
+    if q:
+        audit.exact(a / q + b / q, R - 1, "coalition normalized identity")
+    normalized_a = a / q if q else float("nan")
+    normalized_b = b / q if q else float("nan")
     threshold = S // 2 + 1
     return dict(votes=votes, vote_share=Fraction(votes, V), seats=seats,
                 q_C=q, d_C=d, A_C=a, B_C=b, R_C=R, r_C=threshold - q,
-                A_over_q=a / q, B_over_q=b / q, A_pct_quota=100 * a / q, B_pct_quota=100 * b / q,
+                A_over_q=normalized_a, B_over_q=normalized_b, A_pct_quota=100 * normalized_a, B_pct_quota=100 * normalized_b,
                 inversion=seats >= threshold and 2 * votes < V,
                 A_member=a, B_member=b, A_district=a_district, B_district=b_district)
 
@@ -263,6 +267,10 @@ def _audit_minimal_registry(data, artifact_root, requested_k, audit, universe="s
 def _validate_float_identities(frame, audit, scope):
     for row in frame.itertuples(index=False):
         audit.close(row.d_C, row.A_C + row.B_C, row.configuration_id + ": d=A+B", scope)
+        if row.q_C == 0:
+            audit.require(all(math.isnan(v) for v in (row.R_C, row.A_pct_quota, row.B_pct_quota)),
+                          "zero-quota ratios must be unavailable")
+            continue
         audit.close(row.R_C - 1, row.A_C / row.q_C + row.B_C / row.q_C,
                     row.configuration_id + ": normalized identity", scope)
         audit.close(row.A_pct_quota, 100 * row.A_C / row.q_C, "plotted x", scope)
@@ -288,12 +296,37 @@ def build_cross_domain_components(artifact_root: Path, domains=("cabinet", "k=0"
                   and set(domains) <= {"cabinet", "k=0", "k=1"}, "valid requested domains")
     data = _load_accounting(decomposition_root, audit)
     rows, chronological_periods, registry_rows = [], 0, 0
+    unidentified_intervals = []
+    bounded_date_periods = 0
     if "cabinet" in domains:
         source = audit.read(artifact_root / "raw/cabinet_coalition_metrics.csv")
+        canonical = Path(__file__).resolve().parents[3] / "generated/cabinet_v5/cabinet_analysis_periods.csv"
+        production = Path(__file__).resolve().parents[3] / "processing/Processing/output/paper"
+        if artifact_root.resolve() == production and canonical.exists():
+            canonical_rows = audit.read(canonical)
+            if canonical_rows and "q_C" in canonical_rows[0]:
+                source = [dict(r, parties=r["election_party_set"].replace(";", ", "),
+                    period_start=r["start_inclusive"],
+                    period_end=(date.fromisoformat(r["end_exclusive"])-timedelta(days=1)).isoformat(),
+                    period_days=r["days"],source_periods=json.dumps(r["source_period_ids"].split(";")),
+                    quota=r["q_C"],seat_diff=r["d_C"],representation_ratio=r["R_C"],
+                    coalition_inversion=r["inversion_status"],composition_status=r["historical_status"])
+                    for r in canonical_rows]
+
+        unavailable_path = artifact_root / "raw/cabinet_unidentified_intervals.csv"
+        if unavailable_path.exists():
+            unidentified_intervals = audit.read(unavailable_path)
+        calendar_path = artifact_root / "raw/cabinet_calendar_status.csv"
+        if calendar_path.exists():
+            calendar = audit.read(calendar_path)
+            bounded_date_periods = sum(any(r.get(c, "").strip() not in ("", "[]", "false", "0")
+                                          for c in ("bounded_affiliation_ids", "bounded_service_ids")) for r in calendar)
+        for row in source:
+            audit.require(row.get("composition_status", "identified") != "unidentified",
+                          "unidentified core cannot be supplied as a full cabinet set")
         audit.exact(len({(r["election_year"], r["period"]) for r in source}), len(source),
                     "unique cabinet observations")
         chronological_periods = len(source)
-        audit.exact(chronological_periods, 23, "23 cabinet observations")
         for row in sorted(source, key=lambda r: (int(r["election_year"]), r["period_start"])):
             year = int(row["election_year"])
             names = tuple(sorted(audit.parties(row["parties"])))
@@ -302,7 +335,10 @@ def build_cross_domain_components(artifact_root: Path, domains=("cabinet", "k=0"
             audit.exact(data[year]["V"], int(row["national_vote_total"]), "cabinet vote denominator")
             for actual, column in (("votes", "votes"), ("seats", "seats"), ("q_C", "quota"),
                                    ("d_C", "seat_diff"), ("R_C", "representation_ratio"), ("vote_share", "vote_share")):
-                audit.close(values[actual], row[column], "cabinet registry " + actual, "cabinet_regression")
+                if actual == "R_C" and values["q_C"] == 0:
+                    audit.require(row[column] in ("", "missing", "NaN", "nan"), "zero-quota registry ratio unavailable")
+                else:
+                    audit.close(values[actual], row[column], "cabinet registry " + actual, "cabinet_regression")
             period = row["period"]
             rows.append(dict(domain="cabinet", ideological_universe="not_applicable", election=year, configuration_id=f"cabinet/{year}/{period}",
                              display_label=period, cabinet_periods_if_applicable=period,
@@ -350,7 +386,7 @@ def build_cross_domain_components(artifact_root: Path, domains=("cabinet", "k=0"
         count = dict(domain=domain, configurations=len(subset), inversions=int(subset.inversion.sum()))
         counts.append(count)
         if domain == "cabinet":
-            expected = (23, 4)
+            expected = (len(source), sum(audit.truth(r["coalition_inversion"]) for r in source))
         else:
             k = int(domain[-1])
             expected = (sum(int(summaries[y, k]["minimal_seat_majority_coalitions"]) for y in YEARS),
@@ -360,14 +396,17 @@ def build_cross_domain_components(artifact_root: Path, domains=("cabinet", "k=0"
         cabinet = frame[frame.domain == "cabinet"]
         audit.exact(int(cabinet.repeated_vector_count.sum()), chronological_periods, "all canonical cabinet observations retained")
         audit.exact(set(cabinet.loc[cabinet.inversion, "display_label"]),
-                    {"2016.2", "2017.1", "2021.3/2022.1", "2023.1"}, "distinct cabinet inversion labels")
+                    {r["period"] for r in source if audit.truth(r["coalition_inversion"])}, "distinct cabinet inversion labels")
     _validate_float_identities(frame, audit, "float_identity")
     serialized = pd.read_csv(io.StringIO(frame.to_csv(index=False, float_format="%.17g")), float_precision="round_trip")
     _validate_float_identities(serialized, audit, "serialized_identity")
     frame.attrs["validation"] = dict(checks=dict(audit.checks), max_absolute_residuals=dict(audit.residuals),
                                       absolute_tolerance=ATOL, relative_tolerance=0,
                                       input_paths=sorted(audit.inputs), chronological_periods=chronological_periods,
-                                      registry_rows=registry_rows, counts=counts)
+                                      registry_rows=registry_rows, counts=counts,
+                                      unidentified_intervals=unidentified_intervals, bounded_date_periods=bounded_date_periods,
+                                      unidentified_periods=len(unidentified_intervals),
+                                      unidentified_days=sum(int(r["days"]) for r in unidentified_intervals))
     return frame
 
 

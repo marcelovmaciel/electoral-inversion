@@ -4,7 +4,7 @@ using DataFrames
 
 const _PROCESSING_MODULE_FILE_DRIFT = joinpath(@__DIR__, "..", "src", "Processing.jl")
 const _ROOT_DIR = abspath(@__DIR__, "..", "..", "..")
-const _COALITION_CSV = joinpath(_ROOT_DIR, "scraping", "output", "partidos_por_periodo.csv")
+const _CABINET_PIN_DRIFT = joinpath(_ROOT_DIR, "processing", "Processing", "data", "cabinet_release_pin.json")
 const _PMZ_DIR = joinpath(_ROOT_DIR, "data", "raw", "electionsBR")
 const _FIXTURES_DIR = joinpath(@__DIR__, "fixtures")
 
@@ -59,46 +59,25 @@ function _actual_election_set(year::Int)::Vector{String}
     return _canonical_election_label_set(df.SG_PARTIDO[federal], year)
 end
 
-function _actual_mandate_set(election_year::Int)::Vector{String}
-    coalition_df = CSV.read(_COALITION_CSV, DataFrame)
-    hasproperty(coalition_df, :periodo) || error("CSV de coalizão sem coluna 'periodo'.")
-    hasproperty(coalition_df, :partido) || error("CSV de coalizão sem coluna 'partido'.")
-
-    years = election_year == 2014 ? Set(2015:2018) :
-            election_year == 2018 ? Set(2019:2022) :
-            election_year == 2022 ? Set(2023:2025) :
-            error("Ano de eleição sem janela de mandato suportada: $election_year")
-
-    vals = Set{String}()
-    for row in eachrow(coalition_df)
-        period = strip(string(row.periodo))
-        party = strip(string(row.partido))
-        isempty(period) && continue
-        isempty(party) && continue
-        y = _parse_period_year(period)
-        y in years || continue
-        canon = Processing.canonical_party(party; year = y)
-        isempty(strip(canon)) || push!(vals, canon)
-    end
-    return sort(collect(vals))
-end
 
 @testset "Party Name Drift" begin
     if !_PROCESSING_LOADED_DRIFT
         @test_skip "Módulo Processing não carregado; testes de drift ignorados."
     else
-        @testset "Cobertura de canonicalização em coalizões" begin
-            @test isfile(_COALITION_CSV)
-            coalition_df = CSV.read(_COALITION_CSV, DataFrame)
-            mapped = String[]
-            for row in eachrow(coalition_df)
-                period = strip(string(row.periodo))
-                party = strip(string(row.partido))
-                y = _parse_period_year(period)
-                canon = Processing.canonical_party(party; year = y)
-                push!(mapped, canon)
+        @testset "Explicit cabinet identity coverage" begin
+            @test isfile(_CABINET_PIN_DRIFT)
+            calendar = Processing.CabinetRelease.calendar_table(_CABINET_PIN_DRIFT)
+            parties = Processing.CabinetRelease.identified_parties(_CABINET_PIN_DRIFT)
+            for row in eachrow(calendar[calendar.identified, :])
+                valid = _expected_fixture("canonical_set_election_$(row.election_year).txt")
+                mapped = Processing.CabinetRelease.translate(parties[row.period];
+                    election_year = row.election_year, valid_election_parties = valid,
+                    period = row.period, historical_period_id = row.period_id)
+                @test Set(mapped.party_id) == Set(parties[row.period])
+                @test all(in.(mapped.election_party, Ref(Set(valid))))
+                @test all(!isempty, mapped.notes)
+                @test all(mapped.historical_period_id .== row.period_id)
             end
-            @test all(!isempty(strip(x)) for x in mapped)
         end
 
         @testset "Aliases históricos exigem year no modo estrito" begin
@@ -149,11 +128,35 @@ end
             end
         end
 
-        @testset "Snapshot mandatos (fixture)" begin
-            for election_year in (2014, 2018, 2022)
-                expected = _expected_fixture("canonical_set_mandate_$(election_year).txt")
-                actual = _actual_mandate_set(election_year)
-                @test actual == expected
+        @testset "Explicit rename, fusion and rejection semantics" begin
+            valid2014 = _expected_fixture("canonical_set_election_2014.txt")
+            valid2018 = _expected_fixture("canonical_set_election_2018.txt")
+            rename = Processing.CabinetRelease.translate(["PL"]; election_year = 2014,
+                valid_election_parties = valid2014)
+            @test rename.election_party == ["PR"]
+            fusion = Processing.CabinetRelease.translate(["UNIAO", "DEM", "PSL", "UNIAO"];
+                election_year = 2018, valid_election_parties = valid2018)
+            @test Set(fusion.election_party) == Set(["DEM", "PSL"])
+            @test Set(fusion.election_party[fusion.party_id .== "UNIAO"]) == Set(["DEM", "PSL"])
+            @test all(fusion.mapping_type[fusion.party_id .== "UNIAO"] .== "crosswalk_fusion_expansion")
+            @test length(unique(fusion.election_party)) == 2
+            @test_throws ErrorException Processing.CabinetRelease.translate(["UNREVIEWED"];
+                election_year = 2018, valid_election_parties = valid2018)
+            @test_throws ErrorException Processing.CabinetRelease.translate(["PT"];
+                election_year = 2018, valid_election_parties = ["PSDB"])
+            @test isempty(Processing.CabinetRelease.translate(String[];
+                election_year = 2018, valid_election_parties = valid2018))
+            mktempdir() do tempdir
+                path = joinpath(tempdir, "crosswalk.csv")
+                write(path, "election_year,party_id,election_party,mapping_type,basis\n2018,PT,PT,explicit_identity,fixture\n")
+                @test Processing.CabinetRelease.translate(["PT"]; election_year = 2018,
+                    valid_election_parties = ["PT"], crosswalk_path = path).election_party == ["PT"]
+                write(path, "election_year,party_id,election_party,mapping_type,basis\n2018,PT,PT,inferred,fixture\n")
+                @test_throws ErrorException Processing.CabinetRelease.translate(["PT"]; election_year = 2018,
+                    valid_election_parties = ["PT"], crosswalk_path = path)
+                write(path, "election_year,party_id,election_party,mapping_type,basis\n2018,PT,PT,explicit_identity,fixture\n2018,PT,PT,explicit_identity,duplicate\n")
+                @test_throws ErrorException Processing.CabinetRelease.translate(["PT"]; election_year = 2018,
+                    valid_election_parties = ["PT"], crosswalk_path = path)
             end
         end
     end

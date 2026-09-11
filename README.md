@@ -12,7 +12,7 @@ seat-winning parties (`seat_winning`). Exact-connected intervals form the
 \(k=0\) domain; \(k=1\) allows one omitted interior seat-winning party. The
 original full ideological order is generated independently as `all_parties`
 robustness. Both universes retain **all valid federal-deputy votes** in the
-national denominator. Observed cabinet construction is unchanged.
+national denominator. Observed cabinet construction uses the pinned contemporaneous-affiliation release described below.
 
 ## Main Workflow
 
@@ -21,13 +21,17 @@ The complete production workflow, including both universes, exact accounting,
 figures, independent audits, and `main_rw_again.pdf`, is:
 
 ```bash
-processing/rebuild_manuscript.sh --clean
+JULIA_BIN=processing/julia_paper_runtime.sh processing/rebuild_manuscript.sh --freeze-prose
 ```
 
-`--clean` removes only the two generated analysis trees before rebuilding from
-the original inputs. Omit it for an overwrite rebuild. Set `PYTHON_BIN` or
-`JULIA_BIN` to select an installed runtime. The equivalent individual stages
-are listed below.
+`--freeze-prose` preserves manuscript source and reports stale narrative separately;
+submission packaging is omitted in that mode. The cabinet stage reads the immutable V5 release; it never invokes the historical builder.
+The reader verifies the release pin, translates every daily set, then recompresses equal election-year sets. Set `PYTHON_BIN`
+or `JULIA_BIN` to select a runtime. For the exact existing numerical baseline,
+use Julia 1.12.7 with `-Cgeneric --compiled-modules=no --pkgimages=no --threads=1
+--gcthreads=1` (the repository wrapper above supplies those flags; set `JULIA_PAPER_EXECUTABLE` if installed elsewhere). An overwrite rebuild
+preserves existing WIP; `--clean` remains available only for generated analysis trees.
+The equivalent individual stages are listed below.
 
 1. Install Julia dependencies.
 
@@ -88,7 +92,7 @@ legacy draft and should not be used to build the submission.
 The decomposition rebuild also produces permanent party-size/cabinet
 accounting diagnostics. The existing party accounting panel gains normalized
 A/B components and cabinet participation counts/days. Descriptive summaries,
-22 distinct-set decompositions, and links to all 23 unchanged cabinet
+distinct-set decompositions, and links to the identified cabinet
 observations are documented in
 [`processing/Processing/decomposition/report/README.md`](processing/Processing/decomposition/report/README.md#permanent-party-size-and-cabinet-diagnostics).
 They enter the central accounting report and are not manuscript tables or
@@ -100,7 +104,7 @@ The replication workflow uses these input locations:
 
 ```text
 data/raw/electionsBR/
-scraping/output/partidos_por_periodo.json
+cabinet_dataset/releases/2026-03-19-history-v5-candidate/
 scrape_classification/output/classificacao_2023/
 scrape_classification/output/classificacao_2025/
 processing/Processing/data/
@@ -109,8 +113,13 @@ processing/Processing/data/
 `data/raw/electionsBR/` contains the raw TSE election files used for votes and
 seats.
 
-`scraping/output/partidos_por_periodo.json` contains the cabinet-period party
-sets used for observed coalition analysis.
+`cabinet_dataset/releases/2026-03-19-history-v5-candidate/` contains normalized historical
+daily primary sets, periods, memberships, witnesses, evidence, and explicit provisional assumptions.
+The 4,096-day primary chronology retains 3,996 evidence-established and 100 historically unresolved days.
+`processing/Processing/data/cabinet_release_pin.json` pins version and hashes;
+`processing/cabinet_v5.py` validates the daily release and applies the unchanged audited election-party crosswalk before recompression;
+`src/CabinetRelease.jl` validates the pin and provides the adapter to the existing Julia pipeline.
+No live reconstruction or scraper runs during paper regeneration.
 
 `scrape_classification/output/classificacao_2023/` and
 `scrape_classification/output/classificacao_2025/` contain the party ideology
@@ -138,12 +147,21 @@ Manuscript compilation requires a LaTeX installation with `latexmk`.
 
 After running the main analysis, the high-level replication results should be:
 
-- observed cabinet observations: 23 (from 24 historical periods)
-- observed cabinet inversion periods: 4
-- 2014 cabinet inversions: `2016.2`, `2017.1`
-- 2018 cabinet inversions: `2021.3/2022.1` (2021-08-04 through 2022-03-29,
-  238 days, 47.2469 percent of the vote, and exactly 257 seats)
-- 2022 cabinet inversion: `2023.1`
+Cabinet period counts, inversions, and durations are empirical outputs, not fixed
+acceptance targets. Current values, provenance, full sensitivities and before/after comparisons appear in
+[`generated/cabinet_v5/`](generated/cabinet_v5/README.md). The authoritative daily and
+analytical-period CSVs feed cabinet assets; 55 historical periods become 53 analytical
+periods after daily election-year translation. See the
+[integration report](CABINET_V5_INTEGRATION_REPORT.md),
+[manuscript modification map](CABINET_V5_MANUSCRIPT_MODIFICATIONS.org), and
+[upload handoff](handoff/cabinet_v5_analysis_handoff.zip).
+The current manuscript prose is deliberately frozen and contains stale claims.
+The normal `--freeze-prose` pipeline compiles it with the new generated assets,
+records all required changes, and packages a self-contained ZIP. The release pin is
+`processing/Processing/data/cabinet_release_pin.json`; no history builder or scraper runs.
+Independent rational party/district closure and protected non-cabinet output/slice
+signatures are checked by `processing/cabinet_v5_validation.py`.
+
 The generated [universe comparison](processing/Processing/output/paper/tables/ideological_universe_comparison.csv)
 contains all twelve election/universe/k headline rows. Primary exact-connected
 inversions occur in all three elections; the all-party robustness retains the
@@ -193,7 +211,7 @@ Appendix A.1 retains the `d_i` contribution table and adds
 calls `party_component_extremes` and `party_component_extremes_latex` in
 `decomposition/PartyComponentTable.jl` through `AccountingIntegration.jl`.
 These rank the existing exact `A_i`/`B_i` fields in
-`raw/coalition_party_contributions.csv` for the same four cabinet and seven
+`raw/coalition_party_contributions.csv` for all dynamically selected cabinet inversions and the seven
 primary minimal exact-connected inversions selected by the `d_i` table.
 The party-year source is `raw/party_accounting_all_years.csv`.
 The generated table CSV retains the unrounded and exact extrema; the associated
@@ -242,13 +260,34 @@ rounding rule. `note:` is available for short clarifications.
 
 Direct claims cite their existing production CSVs. Multi-row counts, extrema,
 and means use `tables/prose_analysis_summaries.csv`, generated by
-`decomposition/ProseSummaries.jl` from the **unchanged pre-existing aggregation
-rules** and current output CSVs. Each summary row has the unique key
-`summary; metric; aggregation`, an unrounded `value`, its upstream source,
-filter, and row count. This CSV contains no macro names, display rules, or TeX.
+`decomposition/ProseSummaries.jl` from current output CSVs. Existing prose
+aggregation rules are preserved. The full summary key is
+`summary; metric; aggregation; ideological_universe; k; election`, with an
+unrounded `value`, upstream source, filter, and row count. Existing prose rows
+remain uniquely selectable by `summary; metric; aggregation`. This CSV contains no macro names, display rules, or TeX.
 It keeps provenance for aggregates compact without re-enumerating coalitions or
 recomputing electoral analysis. The old per-macro registry, TeX output, and
 prose injection writer have been removed.
+
+Component comparisons use `summary=ideology-component-dominance`,
+`ideological_universe=seat_winning/all_parties`, `k=0/1`, and
+`election=all/2014/2018/2022`. Metrics `A_C_gt_B_C`, `A_C_lt_B_C`, and
+`A_C_eq_B_C` each have `aggregation=count` and `aggregation=percentage` rows;
+`metric=minimal_inversions; aggregation=count` records the denominator, also
+stored in `source_row_count`. Selection requires both
+`minimal_seat_majority=true` and `inversion=true` in the authoritative combined
+accounting CSV. Comparisons use unrounded stored values with strict equality;
+the `1e-10` absolute accounting-identity tolerance does not define ties. Empty
+inversion sets have zero counts and `value=missing` percentages. Generation
+checks accounting identities, domain-summary denominators, the comparison
+partition, and the primary k=1 total of 100 (46/42/12).
+
+To refresh only these summaries and their artifact-manifest entries from
+existing outputs, without regenerating analysis or manuscript assets:
+
+```bash
+julia --startup-file=no --project=processing/Processing processing/Processing/decomposition/ProseSummaries.jl --refresh
+```
 
 `processing/rebuild_manuscript.sh` regenerates outputs and summaries, compiles
 both PDFs, then runs `decomposition/audit_empirical_assets.py` before packaging.
@@ -281,8 +320,8 @@ The inventory is an audit record; no production code reads it.
 The manuscript cabinet output combines adjacent periods only when their translated
 election-year party sets match. Original IDs are preserved as JSON in
 `source_periods`; uncombined translated rows and before/after counts are saved
-under `output/paper/diagnostics/`. The current sample guard permits only
-`2021.3 + 2022.1`.
+under `output/paper/diagnostics/`. Historical release IDs are retained across every reporting merge; administration
+and election boundaries, gaps, and accounting quantities are checked.
 
 Run its regression checks after generating the analysis outputs:
 
@@ -301,8 +340,8 @@ Run the focused ideological-domain suite with:
     julia -O0 --startup-file=no --project=processing/Processing processing/Processing/test/test_ideological_interval_coalitions.jl
 
 This focused suite is the empirical gate for the decomposition and checks the
-four-case registry, coalition compositions, district accounting identities, and
-party contribution identities against the corrected PSC baseline. The focused ideological suite includes synthetic adjacency/denominator tests
+current identified-case registry, coalition compositions, district accounting identities, and
+party contribution identities against the pinned contemporaneous release. The focused ideological suite includes synthetic adjacency/denominator tests
 and checks both empirical universes. The full Julia suite is run with the
 repository project environment; the figure and decomposition suites validate
 generated registries and accounting identities.

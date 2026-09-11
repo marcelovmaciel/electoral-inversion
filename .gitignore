@@ -49,3 +49,11 @@ processing/Processing/data/*
 # Superseded local R&R manuscript sources
 /writing/submission_inversions_review/manuscript/main.tex
 /writing/submission_inversions_review/manuscript/refs.bib
+
+# Reproducible cabinet-release consumer configuration and compact comparison inputs
+!processing/Processing/data/cabinet_release_pin.json
+!processing/Processing/data/cabinet_release_election_crosswalk.csv
+!processing/Processing/data/cabinet_v5_comparison_baseline/
+!processing/Processing/data/cabinet_v5_comparison_baseline/**
+# Local preservation snapshot; compact baselines are exposed above.
+/audit/cabinet_v5_before/

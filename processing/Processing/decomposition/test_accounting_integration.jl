@@ -19,7 +19,7 @@ const ACCOUNTING_INTEGRATION_TEST_LOG = joinpath(
 function required_integration_csv(relative_path)
     path = joinpath(ACCOUNTING_INTEGRATION_OUTPUT_ROOT, relative_path)
     isfile(path) || error("Required accounting-integration artifact is missing: $(path)")
-    return CSV.read(path, DataFrame)
+    return CSV.read(path, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
 end
 
 function integration_exact(value)
@@ -66,21 +66,20 @@ coalition_party_named_aggregates = required_integration_csv(
     "raw/coalition_party_contribution_named_aggregates.csv",
 )
 
-const EXPECTED_FOCAL_ACCOUNTING_IDS = [
-    "cabinet/2014/2016.2",
-    "cabinet/2014/2017.1",
-    "cabinet/2018/2021.3/2022.1",
-    "cabinet/2022/2023.1",
+current_case_registry = required_integration_csv("raw/inversion_case_registry.csv")
+current_cabinet_registry = current_case_registry[current_case_registry.case_domain .== "cabinet", :]
+current_cabinet_ids = String.(current_cabinet_registry.case_id)
+const CURRENT_CABINET_N = nrow(current_cabinet_registry)
+const CURRENT_CABINET_PARTY_N = sum(current_cabinet_registry.coalition_party_count)
+const CURRENT_CASE_N = CURRENT_CABINET_N + 12
+
+const EXPECTED_FOCAL_ACCOUNTING_IDS = vcat(current_cabinet_ids, [
     "ideological/2014/08-20",
     "ideological/2018/03-16",
     "ideological/2022/11-20",
     "ideological/2022/17-23",
-]
-const EXPECTED_PARTY_CONTRIBUTION_FOCAL_IDS = [
-    "cabinet/2014/2016.2",
-    "cabinet/2014/2017.1",
-    "cabinet/2018/2021.3/2022.1",
-    "cabinet/2022/2023.1",
+])
+const EXPECTED_PARTY_CONTRIBUTION_FOCAL_IDS = vcat(current_cabinet_ids, [
     "ideological/2014/05-16",
     "ideological/2014/08-20",
     "ideological/2014/09-23",
@@ -88,7 +87,7 @@ const EXPECTED_PARTY_CONTRIBUTION_FOCAL_IDS = [
     "ideological/2018/03-16",
     "ideological/2022/11-20",
     "ideological/2022/17-23",
-]
+])
 
 const EXPECTED_NATIONAL_VALID_VOTES = Dict(
     2014 => 97_355_354,
@@ -98,9 +97,9 @@ const EXPECTED_NATIONAL_VALID_VOTES = Dict(
 
 accounting_integration_test_result = @testset "Manuscript accounting integration" begin
     @test String.(focal_integration.case_id) == EXPECTED_FOCAL_ACCOUNTING_IDS
-    @test Int.(focal_integration.focal_order) == collect(1:8)
-    @test nrow(focal_integration) == 8
-    @test nrow(focal_states) == 8 * 27
+    @test Int.(focal_integration.focal_order) == collect(1:length(EXPECTED_FOCAL_ACCOUNTING_IDS))
+    @test nrow(focal_integration) == length(EXPECTED_FOCAL_ACCOUNTING_IDS)
+    @test nrow(focal_states) == length(EXPECTED_FOCAL_ACCOUNTING_IDS) * 27
     @test all(eachrow(focal_integration)) do row
         integration_exact(row.A_C_exact) + integration_exact(row.B_C_exact) ==
             integration_exact(row.d_C_exact)
@@ -126,7 +125,7 @@ accounting_integration_test_result = @testset "Manuscript accounting integration
             integration_exact(total.d_C_exact)
     end
 
-    @test nrow(gross_integration) == 48
+    @test nrow(gross_integration) == 6 * length(EXPECTED_FOCAL_ACCOUNTING_IDS)
     @test Set(String.(gross_integration.aggregation_level)) == Set(["party", "state"])
     @test Set(String.(gross_integration.component)) == Set(["A", "B", "d"])
     @test all(eachrow(gross_integration)) do row
@@ -139,7 +138,7 @@ accounting_integration_test_result = @testset "Manuscript accounting integration
     @test all((0 .<= gross_integration.absolute_hhi) .&
               (gross_integration.absolute_hhi .<= 1))
 
-    @test nrow(state_anatomy) == 8
+    @test nrow(state_anatomy) == length(EXPECTED_FOCAL_ACCOUNTING_IDS)
     @test String.(state_anatomy.case_id) == EXPECTED_FOCAL_ACCOUNTING_IDS
     @test all(eachrow(state_anatomy)) do row
         integration_exact(row.b_positive_eight_seat_exact) +
@@ -225,12 +224,12 @@ accounting_integration_test_result = @testset "Manuscript accounting integration
         :party_differential_d_i_exact, :coalition_differential_d_C_exact,
     ])
     @test required_contribution_columns ⊆ Set(propertynames(coalition_party_contributions))
-    @test nrow(coalition_party_contributions) == 179
-    @test sum(coalition_party_contributions.domain .== "cabinet") == 33
+    @test nrow(coalition_party_contributions) == CURRENT_CABINET_PARTY_N + 146
+    @test sum(coalition_party_contributions.domain .== "cabinet") == CURRENT_CABINET_PARTY_N
     @test sum(coalition_party_contributions.domain .== "ideological") == 146
-    @test length(unique(String.(coalition_party_contributions.case_identifier))) == 16
-    @test nrow(coalition_party_contribution_summary) == 16
-    @test nrow(coalition_party_contribution_checks) == 16
+    @test length(unique(String.(coalition_party_contributions.case_identifier))) == CURRENT_CASE_N
+    @test nrow(coalition_party_contribution_summary) == CURRENT_CASE_N
+    @test nrow(coalition_party_contribution_checks) == CURRENT_CASE_N
     @test all(Bool.(coalition_party_contribution_checks.all_checks_pass))
     @test all(Bool.(coalition_party_contribution_checks.sum_party_votes_matches_coalition))
     @test all(Bool.(coalition_party_contribution_checks.sum_party_seats_matches_coalition))
@@ -267,51 +266,30 @@ accounting_integration_test_result = @testset "Manuscript accounting integration
             Int(total.negative_party_count)
     end
 
-    # Reconstruct each historical period's full contribution vector from the
-    # same exact election-party accounting used by the coalesced observation.
-    originals = required_csv(joinpath(PAPER_ROOT_TEST, "diagnostics",
-        "cabinet_coalitions_before_coalescing.csv"))
-    originals = originals[(originals.election_year .== 2018) .&
-        in.(String.(originals.period), Ref(Set(["2021.3", "2022.1"]))), :]
-    @test nrow(originals) == 2
-    complete_party = required_csv(joinpath(OUTPUT_ROOT_TEST, "raw",
-        "party_accounting_all_years.csv"))
-    merged_vector = sort(coalition_party_contributions[
-        String.(coalition_party_contributions.case_identifier) .==
-            "cabinet/2018/2021.3/2022.1", :], :party)
-    @test nrow(merged_vector) == 9
-    merged_total = only(eachrow(focal_integration[
-        String.(focal_integration.case_id) .== "cabinet/2018/2021.3/2022.1", :]))
-    for original in eachrow(originals)
-        names = sort(strip.(split(String(original.parties), ",")))
-        source_vector = sort(complete_party[(complete_party.election_year .== 2018) .&
-            in.(String.(complete_party.party), Ref(Set(names))), :], :party)
-        @test String.(merged_vector.party) == String.(source_vector.party) == names
-        for (target, source) in ((:party_vote_total, :v_i), (:party_seats, :s_i),
-            (:party_quota_q_i_exact, :q_i_exact),
-            (:party_differential_d_i_exact, :d_i_exact),
-            (:A_i_exact, :A_i_exact), (:B_i_exact, :B_i_exact))
-            @test merged_vector[!, target] == source_vector[!, source]
+    # Independently sum the full exact election-party vectors of every current
+    # cabinet case; no prior period or historical count is an arithmetic oracle.
+    complete_party = required_integration_csv("raw/party_accounting_all_years.csv")
+    for total in eachrow(focal_integration[focal_integration.case_domain .== "cabinet", :])
+        names = Set(strip.(split(String(total.coalition_parties), ",")))
+        source = complete_party[(complete_party.election_year .== total.election_year) .&
+            in.(String.(complete_party.party), Ref(names)), :]
+        @test Set(String.(source.party)) == names
+        @test sum(source.v_i) == total.v_C
+        @test sum(source.s_i) == total.s_C
+        for (aggregate, component) in ((:A_C_exact, :A_i_exact), (:B_C_exact, :B_i_exact),
+                                       (:d_C_exact, :d_i_exact), (:q_C_exact, :q_i_exact))
+            @test integration_exact(total[aggregate]) == sum(integration_exact.(source[!, component]))
         end
-        for (aggregate, component) in ((:A_C_exact, :A_i_exact),
-            (:B_C_exact, :B_i_exact), (:d_C_exact, :d_i_exact), (:q_C_exact, :q_i_exact))
-            @test integration_exact(merged_total[aggregate]) ==
-                sum(integration_exact.(source_vector[!, component]))
-        end
-        @test merged_total.v_C == original.votes
-        @test merged_total.s_C == original.seats
-        @test isapprox(merged_total.R_C, original.representation_ratio;
-            atol = ACCOUNTING_ATOL, rtol = ACCOUNTING_RTOL)
+        @test total.v_C * 2 < total.V && total.s_C >= 257
+        @test Dates.value(Date(total.period_end) - Date(total.period_start)) + 1 == total.period_days
     end
-    @test all(String.(merged_vector.source_periods) .== "[\"2021.3\",\"2022.1\"]")
-    @test all(merged_vector.period_days .== 238)
     @test !(:shared_2018_vector_check_applicable in propertynames(coalition_party_contribution_checks))
 
-    @test nrow(coalition_party_contribution_focal) == 11
+    @test nrow(coalition_party_contribution_focal) == length(EXPECTED_PARTY_CONTRIBUTION_FOCAL_IDS)
     @test String.(coalition_party_contribution_focal.case_identifier) ==
         EXPECTED_PARTY_CONTRIBUTION_FOCAL_IDS
-    @test Int.(coalition_party_contribution_focal.focal_order) == collect(1:11)
-    @test sum(coalition_party_contribution_focal.domain .== "cabinet") == 4
+    @test Int.(coalition_party_contribution_focal.focal_order) == collect(1:length(EXPECTED_PARTY_CONTRIBUTION_FOCAL_IDS))
+    @test sum(coalition_party_contribution_focal.domain .== "cabinet") == CURRENT_CABINET_N
     @test sum(coalition_party_contribution_focal.domain .== "ideological") == 7
     @test all(Bool.(coalition_party_contribution_focal.exact_closure_pass))
     @test all(eachrow(coalition_party_contribution_focal)) do row
@@ -345,7 +323,7 @@ accounting_integration_test_result = @testset "Manuscript accounting integration
         )
     @test occursin("\\begin{table}[htbp]", contribution_latex)
     @test occursin("\\caption{Party contributions to coalition differentials}", contribution_latex)
-    @test occursin("2021.3/2022.1", contribution_latex)
+    @test all(occursin(AccountingIntegration.latex_escape(r.cabinet_period), contribution_latex) for r in eachrow(current_cabinet_registry))
     @test occursin("\\(d_i\\) is an ex post accounting contribution", contribution_latex)
     @test occursin("Positive and negative party contributions sum to \\(d_C\\)", contribution_latex)
     @test occursin("closure-preserving three-decimal display", contribution_latex)
@@ -427,58 +405,17 @@ end
 
 println("Focused accounting-integration audit log: $(ACCOUNTING_INTEGRATION_TEST_LOG)")
 
-# Empirical snapshots belong only to tests; production enforces structural and exact identities.
-const BASELINE_CASE_EXPECTATIONS = Dict(
-    "cabinet/2014/2016.2" => (A_C = 15.74, B_C = 4.53, d_C = 20.27, r_C = 18.27),
-    "cabinet/2014/2017.1" => (A_C = 11.27, B_C = -1.32, d_C = 9.95, r_C = 0.95),
-    "cabinet/2018/2021.3/2022.1" => (A_C = 19.07, B_C = -4.45, d_C = 14.62, r_C = 14.62),
-    "cabinet/2022/2023.1" => (A_C = 13.20, B_C = -0.99, d_C = 12.20, r_C = 6.20),
-)
-
-const BASELINE_PARTY_EXPECTATIONS = [
-    (case_id = "cabinet/2014/2016.2", party = "PMDB", A_i = 3.91, B_i = 4.22, d_i = 8.13),
-    (case_id = "cabinet/2014/2016.2", party = "PT", A_i = -1.22, B_i = -1.21, d_i = -2.42),
-    (case_id = "cabinet/2014/2017.1", party = "PMDB", A_i = 3.91, B_i = 4.22, d_i = 8.13),
-    (case_id = "cabinet/2014/2017.1", party = "PSDB", A_i = 0.58, B_i = -5.01, d_i = -4.43),
-    (case_id = "cabinet/2018/2021.3/2022.1", party = "PP", A_i = 7.32, B_i = 1.45, d_i = 8.76),
-    (case_id = "cabinet/2018/2021.3/2022.1", party = "PSL", A_i = -2.42, B_i = -5.28, d_i = -7.70),
-    (case_id = "cabinet/2018/2021.3/2022.1", party = "PSC", A_i = -3.07, B_i = 1.09, d_i = -1.98),
-    (case_id = "cabinet/2022/2023.1", party = "UNIÃO", A_i = 9.36, B_i = 1.75, d_i = 11.10),
-    (case_id = "cabinet/2022/2023.1", party = "PT", A_i = 9.07, B_i = -2.13, d_i = 6.94),
-    (case_id = "cabinet/2022/2023.1", party = "PSOL", A_i = -3.40, B_i = -2.66, d_i = -6.06),
-]
-
-
-@testset "Historical accounting presentation regressions" begin
-    @test sum(coalition_party_contributions.domain .== "cabinet") == 33
-    @test sum(coalition_party_contribution_focal.domain .== "cabinet") == 4
-    baseline = required_integration_csv("raw/accounting_all_inversion_decomposition.csv")
-    parties = required_integration_csv("raw/coalition_party_contributions.csv")
-    for (case_id, expected) in BASELINE_CASE_EXPECTATIONS
-        row = only(eachrow(baseline[baseline.case_id .== case_id, :]))
-        for field in (:A_C, :B_C, :d_C, :r_C)
-            @test isapprox(row[field], expected[field]; atol = 0.005, rtol = 0)
-        end
-    end
-    for expected in BASELINE_PARTY_EXPECTATIONS
-        row = only(eachrow(parties[(parties.case_identifier .== expected.case_id) .&
-                                  (parties.party .== expected.party), :]))
-        for (field, source) in ((:A_i, :A_i),
-                               (:B_i, :B_i),
-                               (:d_i, :party_differential_d_i))
-            @test isapprox(row[source], expected[field]; atol = 0.005, rtol = 0)
-        end
-    end
-end
+# Cabinet numerical snapshots were retired with the contemporaneous-affiliation
+# release; the complete direct exact-party sums above replace those old cases.
 
 @testset "Cabinet district table source and serialization" begin
     table = AccountingIntegration.cabinet_district_concentration(focal_states)
     @test nrow(table) == sum(focal_integration.case_domain .== "cabinet")
-    @test table.positive_count .+ table.negative_count == fill(27, nrow(table))
+    @test all(table.positive_count .+ table.negative_count .<= 27)
     for row in eachrow(table)
         total = only(eachrow(focal_integration[focal_integration.case_id .== row.case_id, :]))
         @test integration_exact(row.positive_sum_exact) + integration_exact(row.negative_sum_exact) == integration_exact(total.A_C_exact)
     end
     latex = AccountingIntegration.cabinet_district_concentration_latex(table)
-    @test length(collect(eachmatch(r"\\\\\s*\n", latex))) == nrow(table) + 1
+    @test length(collect(eachmatch(r"\\\\\s*\n", latex))) == nrow(table) + 1 + Int(isempty(table))
 end

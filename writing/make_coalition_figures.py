@@ -4,7 +4,7 @@ Generate the figures used in the coalition-inversions manuscripts.
 
 Figure 2 and the accounting figures consume full-precision inputs computed by
 Julia. Python performs presentation-only date, percentage, and layout
-formatting after validating the frozen empirical case lists. The cross-domain
+formatting after validating the current empirical registries. The cross-domain
 figure uses the shared production decomposition extractor to aggregate audited
 party/district accounting against the cabinet and minimal-winning registries.
 Its accounting inputs live under the sibling output/decomposition directory.
@@ -63,13 +63,6 @@ ELECTION_LABELS = {
     2018: "2018 election",
     2022: "2022 election",
 }
-EXPECTED_PERIOD_COUNTS = {2014: 8, 2018: 12, 2022: 3}
-EXPECTED_INVERSION_KEYS = (
-    (2014, "2016.2"),
-    (2014, "2017.1"),
-    (2018, "2021.3/2022.1"),
-    (2022, "2023.1"),
-)
 DECOMPOSITION_COMPONENTS = ("A_C", "B_C", "d_C")
 
 STATE_WEIGHTING_MAGNITUDE_COLUMNS = (
@@ -97,7 +90,8 @@ INTERVAL_LABELS = [
 def read_csv(path: Path) -> pd.DataFrame:
     if not path.exists():
         raise FileNotFoundError(f"Required input CSV not found: {path}")
-    return pd.read_csv(path)
+    # Period labels are identifiers: 2015.10 must not collapse to 2015.1.
+    return pd.read_csv(path, dtype={"period": str, "cabinet_period": str})
 
 
 def require_columns(data: pd.DataFrame, path: Path, columns: set[str]) -> None:
@@ -169,7 +163,13 @@ def load_party_vote_share_vs_seat_share(artifact_root: Path) -> pd.DataFrame:
 
 def load_observed_coalition_timeline(artifact_root: Path) -> pd.DataFrame:
     input_path = artifact_root / "figure_data" / "observed_coalition_timeline.csv"
-    observed = read_csv(input_path)
+    canonical = Path(__file__).resolve().parents[1] / "generated/cabinet_v5/cabinet_analysis_periods.csv"
+    production = Path(__file__).resolve().parents[1] / "processing/Processing/output/paper"
+    if artifact_root.resolve() == production and canonical.exists():
+        observed = read_csv(canonical).rename(columns={"start_inclusive":"period_start", "R_C":"representation_ratio", "inversion_status":"coalition_inversion"})
+        observed["period_end"] = pd.to_datetime(observed["end_exclusive"]) - pd.Timedelta(days=1)
+    else:
+        observed = read_csv(input_path)
     require_columns(
         observed,
         input_path,
@@ -188,36 +188,26 @@ def load_observed_coalition_timeline(artifact_root: Path) -> pd.DataFrame:
     require_finite_numeric(
         observed,
         input_path,
-        {"election_year", "vote_share", "seat_share", "seats", "representation_ratio"},
+        {"election_year", "vote_share", "seat_share", "seats"},
     )
+    observed["representation_ratio"] = pd.to_numeric(observed["representation_ratio"], errors="raise")
+    positive_quota = observed.vote_share.gt(0)
+    if not np.isfinite(observed.loc[positive_quota, "representation_ratio"]).all():
+        raise ValueError("Positive-quota cabinet ratios must be finite")
+    if observed.loc[~positive_quota, "representation_ratio"].notna().any():
+        raise ValueError("Zero-quota cabinet ratios must be unavailable")
     observed["election_year"] = observed["election_year"].astype(int)
     observed["period"] = observed["period"].astype(str)
     observed["coalition_inversion"] = coerce_bool_column(
         observed, input_path, "coalition_inversion"
     )
 
-    if len(observed) != 23:
-        raise ValueError(f"Expected 23 observed cabinet periods in {input_path}; found {len(observed)}")
     if observed.duplicated(["election_year", "period"]).any():
         raise ValueError(f"Duplicate election/period rows in {input_path}")
-    actual_period_counts = observed.groupby("election_year").size().to_dict()
-    if actual_period_counts != EXPECTED_PERIOD_COUNTS:
-        raise ValueError(
-            f"Observed cabinet period counts changed in {input_path}: "
-            f"expected {EXPECTED_PERIOD_COUNTS}, found {actual_period_counts}"
-        )
-
     inversion_rows = observed.loc[observed["coalition_inversion"]]
-    actual_inversion_keys = set(
-        zip(inversion_rows["election_year"], inversion_rows["period"], strict=True)
-    )
-    expected_inversion_keys = set(EXPECTED_INVERSION_KEYS)
-    if actual_inversion_keys != expected_inversion_keys:
-        raise ValueError(
-            f"Observed inversion keys changed in {input_path}: expected "
-            f"{formatted_keys(expected_inversion_keys)}; found "
-            f"{formatted_keys(actual_inversion_keys)}"
-        )
+    derived = (observed["vote_share"] < .5) & (observed["seats"] >= SEAT_MAJORITY)
+    if not (derived == observed["coalition_inversion"]).all():
+        raise ValueError("Cabinet inversion flags disagree with votes and seats")
     if not (inversion_rows["vote_share"] < 0.5).all():
         raise ValueError(f"An observed inversion has at least 50% of votes in {input_path}")
     if not (inversion_rows["seats"] >= SEAT_MAJORITY).all():
@@ -231,6 +221,32 @@ def load_observed_coalition_timeline(artifact_root: Path) -> pd.DataFrame:
         observed["period_end"] - observed["period_start"]
     ) / 2
     return observed
+
+
+def cabinet_calendar_has_bounded_dates(artifact_root: Path) -> bool:
+    path = artifact_root / "raw" / "cabinet_calendar_status.csv"
+    if not path.exists():
+        return False
+    data = read_csv(path)
+    return any(data[column].fillna("").astype(str).str.strip().isin(["", "[]", "false", "0"]).eq(False).any()
+               for column in ("bounded_affiliation_ids", "bounded_service_ids") if column in data)
+
+
+def load_cabinet_unidentified_intervals(artifact_root: Path) -> pd.DataFrame:
+    """Return explicit composition gaps; the ordinary metrics contain full sets only."""
+    path = artifact_root / "raw" / "cabinet_unidentified_intervals.csv"
+    if not path.exists():
+        # Legacy synthetic plotting fixtures predate the release adapter.
+        return pd.DataFrame(columns=["start_inclusive", "end_exclusive", "days"])
+    data = read_csv(path)
+    require_columns(data, path, {"start_inclusive", "end_exclusive", "days"})
+    for column in ("start_inclusive", "end_exclusive"):
+        data[column] = pd.to_datetime(data[column], errors="raise")
+    require_finite_numeric(data, path, {"days"})
+    expected = (data.end_exclusive - data.start_inclusive).dt.days
+    if not (expected.gt(0) & expected.eq(data.days)).all():
+        raise ValueError(f"Invalid unidentified interval durations in {path}")
+    return data
 
 
 def load_ideological_interval_heatmap(artifact_root: Path) -> pd.DataFrame:
@@ -305,12 +321,16 @@ def load_inversion_decomposition_components(artifact_root: Path) -> pd.DataFrame
     actual_keys = set(
         zip(components["election_year"], components["cabinet_period"], strict=True)
     )
-    expected_keys = set(EXPECTED_INVERSION_KEYS)
+    observed = load_observed_coalition_timeline(artifact_root)
+    inversions = observed.loc[observed.coalition_inversion]
+    expected_keys = set(zip(inversions.election_year, inversions.period))
     if actual_keys != expected_keys:
         raise ValueError(
             f"Decomposition case keys changed in {input_path}: expected "
             f"{formatted_keys(expected_keys)}; found {formatted_keys(actual_keys)}"
         )
+    if components.empty:
+        return pd.DataFrame(columns=["coalition_id", "election_year", "cabinet_period", *DECOMPOSITION_COMPONENTS])
     component_sets = components.groupby(["election_year", "cabinet_period"])["component"].agg(set)
     expected_components = set(DECOMPOSITION_COMPONENTS)
     invalid_component_sets = component_sets[component_sets != expected_components]
@@ -325,10 +345,6 @@ def load_inversion_decomposition_components(artifact_root: Path) -> pd.DataFrame
         values="seats",
     ).reset_index()
     pivoted.columns.name = None
-    if len(pivoted) != len(EXPECTED_INVERSION_KEYS):
-        raise ValueError(
-            f"Expected four unique decomposition coalitions in {input_path}; found {len(pivoted)}"
-        )
     residual = pivoted["A_C"] + pivoted["B_C"] - pivoted["d_C"]
     if not np.allclose(residual, 0.0, atol=ACCOUNTING_ATOL, rtol=ACCOUNTING_RTOL):
         failures = pivoted.loc[
@@ -339,7 +355,7 @@ def load_inversion_decomposition_components(artifact_root: Path) -> pd.DataFrame
             "Decomposition identity A_C + B_C = d_C failed in "
             f"{input_path}: {failures.to_dict(orient='records')}"
         )
-    order = {key: index for index, key in enumerate(EXPECTED_INVERSION_KEYS)}
+    order = {key: index for index, key in enumerate(zip(inversions.election_year, inversions.period))}
     pivoted["_order"] = [
         order[(year, period)]
         for year, period in zip(
@@ -350,7 +366,7 @@ def load_inversion_decomposition_components(artifact_root: Path) -> pd.DataFrame
 
 
 def load_accounting_state_weighting_anatomy(artifact_root: Path) -> pd.DataFrame:
-    """Load and validate the seven unique focal state-weighting vectors.
+    """Load and validate all current focal state-weighting vectors.
 
     Negative component columns are stored by Julia as positive magnitudes. The
     loader verifies that gross positive minus gross negative contributions
@@ -481,11 +497,40 @@ def save_observed_coalition_timeline(artifact_root: Path, figure_dir: Path) -> P
 
     fig, (ax_vote, ax_seat, ax_ratio) = plt.subplots(1, 3, figsize=(10.8, 4.4), sharex=True)
 
-    for year, df in observed.groupby("election_year"):
-        df = df.sort_values("midpoint")
-        ax_vote.plot(df["midpoint"], df["vote_share"] * 100, marker="o", label=ELECTION_LABELS[year])
-        ax_seat.plot(df["midpoint"], df["seat_share"] * 100, marker="s", label=ELECTION_LABELS[year])
-        ax_ratio.plot(df["midpoint"], df["representation_ratio"], marker="^", label=ELECTION_LABELS[year])
+    unavailable = load_cabinet_unidentified_intervals(artifact_root)
+    # Draw each period across its actual duration; never connect lines through
+    # omitted/unidentified intervals or interpolate across a composition change.
+    axes_columns = ((ax_vote, "vote_share", 100), (ax_seat, "seat_share", 100),
+                    (ax_ratio, "representation_ratio", 1))
+    for index, (year, df) in enumerate(observed.groupby("election_year")):
+        color = f"C{index}"
+        for ax, column, scale in axes_columns:
+            for position, row in enumerate(df.sort_values("period_start").itertuples()):
+                value = getattr(row, column) * scale
+                ax.plot([row.period_start, row.period_end + pd.Timedelta(days=1)],
+                        [value, value], color=color, linewidth=1.6,
+                        label=ELECTION_LABELS[year] if position == 0 else None)
+                ax.plot(row.midpoint, value, marker="o", markersize=3, color=color)
+    for position, row in enumerate(unavailable.itertuples()):
+        for ax in (ax_vote, ax_seat, ax_ratio):
+            ax.axvspan(row.start_inclusive, row.end_exclusive, facecolor="#dddddd",
+                       edgecolor="#999999", hatch="////", linewidth=0,
+                       label="Composition unidentified" if position == 0 else None)
+
+    daily_path = Path(__file__).resolve().parents[1] / "generated/cabinet_v5/cabinet_analysis_daily.csv"
+    if daily_path.exists():
+        daily = read_csv(daily_path)
+        provisional = daily[daily["provisional_day"].astype(str).str.lower().eq("true")]
+        spans = []
+        for day in pd.to_datetime(provisional["date"]):
+            if spans and spans[-1][1] == day:
+                spans[-1][1] = day + pd.Timedelta(days=1)
+            else:
+                spans.append([day, day + pd.Timedelta(days=1)])
+        for i, (start, end) in enumerate(spans):
+            for ax in (ax_vote, ax_seat, ax_ratio):
+                ax.axvspan(start, end, facecolor="#888888", alpha=.12, linewidth=0,
+                           label="V5 provisional days (100)" if i == 0 else None)
 
     ax_vote.axhline(50, linestyle="--", linewidth=1)
     ax_seat.axhline(SEAT_MAJORITY / EXPECTED_SEATS * 100, linestyle="--", linewidth=1)
@@ -496,25 +541,29 @@ def save_observed_coalition_timeline(artifact_root: Path, figure_dir: Path) -> P
     ax_ratio.set_title("Representation ratio")
     ax_vote.set_ylabel("Coalition share (%)")
     ax_ratio.set_ylabel(r"$R_C$")
-    ax_vote.set_xlabel("Cabinet period midpoint")
-    ax_seat.set_xlabel("Cabinet period midpoint")
-    ax_ratio.set_xlabel("Cabinet period midpoint")
+    ax_vote.set_xlabel("Cabinet service date")
+    ax_seat.set_xlabel("Cabinet service date")
+    ax_ratio.set_xlabel("Cabinet service date")
 
     for ax in (ax_vote, ax_seat, ax_ratio):
         ax.xaxis.set_major_formatter(DateFormatter("%Y"))
         ax.grid(True, linewidth=0.35, alpha=0.35)
 
     handles, labels = ax_vote.get_legend_handles_labels()
-    fig.legend(handles, labels, loc="upper center", ncol=3, frameon=False)
+    fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(.5, .93),
+               ncol=2 if len(labels) > 3 else 3, frameon=False)
     fig.suptitle(
         "Observed cabinet-period coalition vote shares, seat shares, and representation ratios",
-        y=1.04,
+        y=.995, fontsize=12,
     )
 
     output = figure_dir / "observed_coalition_timeline.pdf"
     fig.autofmt_xdate()
     fig.tight_layout()
-    fig.subplots_adjust(top=0.82, wspace=0.28)
+    if cabinet_calendar_has_bounded_dates(artifact_root):
+        fig.text(.5, .01, "Cabinet dates include bounded conventions; local date sensitivity is reported separately.",
+                 ha="center", fontsize=8)
+    fig.subplots_adjust(top=0.75, bottom=.21, wspace=0.28)
     fig.savefig(output)
     plt.close(fig)
     return output
@@ -716,7 +765,9 @@ def save_inversion_decomposition_components(artifact_root: Path, figure_dir: Pat
     positions = np.arange(len(components))
     offset = 0.18
 
-    fig, ax = plt.subplots(figsize=(7.2, 4.6))
+    fig, ax = plt.subplots(figsize=(7.2, max(3.2, .52 * len(components) + 1.6)))
+    if components.empty:
+        ax.text(.5, .5, "No identified cabinet inversions", ha="center", va="center", transform=ax.transAxes)
     ax.barh(
         positions - offset,
         components["A_C"],

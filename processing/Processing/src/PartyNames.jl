@@ -62,9 +62,9 @@ end
 """
     load_party_lineage_events(path = _party_lineage_events_path()) -> DataFrame
 
-Loads dated party lineage events used for contemporaneous cabinet-period
-construction. These events are calendar-time rules, distinct from the
-cabinet-to-election crosswalk used for vote and seat accounting.
+Loads organizational lineage history for audits and other date-aware consumers.
+These events never mutate a frozen cabinet appointment origin; cabinet electoral
+translation uses the separate cabinet-to-election crosswalk.
 """
 function load_party_lineage_events(path::AbstractString = _party_lineage_events_path())::DataFrame
     isfile(path) || error("Tabela de eventos de linhagem partidária não encontrada: $path")
@@ -299,4 +299,16 @@ function canonicalize_parties(
 
     canonicals = sort(unique(mapped))
     return with_mapping ? (canonicals = canonicals, mapping = DataFrame(map_rows)) : canonicals
+end
+
+"""Canonical spelling of a verified appointment origin, without lineage changes."""
+function canonical_appointment_party(raw; alias_path = _party_alias_path())
+    token = normalize_party(String(raw))
+    aliases = load_party_aliases(alias_path)
+    canonical_labels = unique(String.(aliases.canonical))
+    exact = [p for p in canonical_labels if normalize_party(p) == token]
+    length(exact) == 1 && return only(exact)
+    candidates = unique(String.(aliases.canonical[aliases.alias_norm .== token]))
+    length(candidates) == 1 || error("Ambiguous/unknown appointment-party spelling: $(raw)")
+    return only(candidates)
 end

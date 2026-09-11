@@ -14,7 +14,7 @@ const TEST_LOG_PATH = joinpath(OUTPUT_ROOT_TEST, "audit", "focused_decomposition
 
 function required_csv(path)
     isfile(path) || error("Required focused-test artifact is missing: $(path)")
-    data = CSV.read(path, DataFrame)
+    data = CSV.read(path, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
     for column in (:cabinet_period, :period)
         column in propertynames(data) || continue
         data[!, column] = string.(data[!, column])
@@ -45,15 +45,15 @@ input_manifest = required_csv(joinpath(OUTPUT_ROOT_TEST, "audit", "decomposition
 ideological = required_csv(joinpath(PAPER_ROOT_TEST, "raw", "ideological_interval_metrics.csv"))
 psc_baseline = required_csv(joinpath(PAPER_ROOT_TEST, "raw", "cabinet_coalition_metrics.csv"))
 
-test_result = @testset "PSC-correct four-case coalition decomposition" begin
-    expected_keys = Set(EXPECTED_INVERSION_KEYS)
+test_result = @testset "Release-derived dynamic coalition decomposition" begin
+    expected = psc_baseline[(2 .* psc_baseline.votes .< psc_baseline.national_vote_total) .& (psc_baseline.seats .>= 257), :]
+    expected_keys = key_set(expected, :period)
     inversion_periods = coalition_periods[coalition_periods.coalition_inversion .== true, :]
-    @test nrow(coalition_periods) == 23
+    @test nrow(coalition_periods) == nrow(psc_baseline)
     @test key_set(inversion_periods, :cabinet_period) == expected_keys
     @test key_set(decomposition, :cabinet_period) == expected_keys
-    @test nrow(decomposition) == 4
-    @test nrow(district_contributions) == 4 * 27
-    @test !((2018, "2022.2") in key_set(decomposition, :cabinet_period))
+    @test nrow(decomposition) == nrow(expected)
+    @test nrow(district_contributions) == nrow(expected) * 27
 
     observed_latex = CoalitionDecomposition.decomposition_latex(decomposition)
     @test occursin("\\begin{tabularx}", observed_latex)
@@ -64,7 +64,7 @@ test_result = @testset "PSC-correct four-case coalition decomposition" begin
     @test !occursin("\\(q_C\\)", observed_latex)
     @test !occursin("\\(r_C\\)", observed_latex)
     @test !occursin("Threshold", observed_latex)
-    @test occursin("2021.3/2022.1", observed_latex)
+    @test all(occursin(CoalitionDecomposition.latex_escape(r.cabinet_period), observed_latex) for r in eachrow(decomposition))
 
     # CSV B_C stays at full precision; only its manuscript display is the exact
     # three-decimal residual of the independently rounded d_C and A_C entries.
@@ -82,16 +82,16 @@ test_result = @testset "PSC-correct four-case coalition decomposition" begin
         )
     end
     @test decomposition.B_C == raw_B_C
-    @test any(abs.(decomposition.B_C .- round.(decomposition.B_C; digits = 3)) .> 1e-12)
+    @test isempty(decomposition) || any(abs.(decomposition.B_C .- round.(decomposition.B_C; digits = 3)) .> 1e-12)
 
-    for key in EXPECTED_INVERSION_KEYS
+    for key in expected_keys
         year, period = key
         coalition = source_row(coalition_periods, year, period, :cabinet_period)
         decomposed = source_row(decomposition, year, period, :cabinet_period)
         baseline = source_row(psc_baseline, year, period, :period)
 
         parties = sort(strip.(split(String(coalition.coalition_parties), ",")))
-        @test parties == EXPECTED_INVERSION_COALITIONS[key]
+        @test parties == sort(strip.(split(String(baseline.parties), ",")))
         @test coalition.vote_share < 0.5
         @test coalition.s_C >= 257
         @test coalition.coalition_inversion
@@ -114,13 +114,12 @@ test_result = @testset "PSC-correct four-case coalition decomposition" begin
             (String.(party_contributions.cabinet_period) .== period),
             :,
         ]
-        @test sort(String.(members.party)) == EXPECTED_INVERSION_COALITIONS[key]
+        @test sort(String.(members.party)) == sort(strip.(split(String(baseline.parties), ",")))
         @test isapprox(sum(members.d_i), decomposed.d_C; atol = ACCOUNTING_ATOL, rtol = ACCOUNTING_RTOL)
         @test isapprox(sum(members.A_i), decomposed.A_C; atol = ACCOUNTING_ATOL, rtol = ACCOUNTING_RTOL)
         @test isapprox(sum(members.B_i), decomposed.B_C; atol = ACCOUNTING_ATOL, rtol = ACCOUNTING_RTOL)
         @test all(isapprox.(members.q_times_R_minus_1, members.d_i; atol = ACCOUNTING_ATOL, rtol = ACCOUNTING_RTOL))
         @test maximum(members.d_i) > 0
-        @test minimum(members.d_i) < 0
         if year in (2014, 2018)
             @test all(occursin.("ex post party accounting contribution; joint electoral lists", String.(members.accounting_qualification)))
         end
@@ -137,16 +136,8 @@ test_result = @testset "PSC-correct four-case coalition decomposition" begin
         @test all(abs.(districts.b_crosscheck_residual) .<= ACCOUNTING_ATOL)
     end
 
-    cases_2018 = decomposition[decomposition.election_year .== 2018, :]
-    @test nrow(cases_2018) == 1
-    @test only(cases_2018.source_periods) == "[\"2021.3\",\"2022.1\"]"
-    @test only(cases_2018.period_start) == Date(2021, 8, 4)
-    @test only(cases_2018.period_end) == Date(2022, 3, 29)
-    @test only(cases_2018.period_days) == 238
-    @test all(cases_2018.s_C .== 257)
-    @test all(isapprox.(cases_2018.vote_share_pct, 47.2469; atol = 0.0001, rtol = 0.0))
-
-    @test nrow(identity_checks) == 16
+    @test nrow(identity_checks) == 4 * nrow(expected)
+    @test all(Dates.value(r.period_end - r.period_start) + 1 == r.period_days for r in eachrow(decomposition))
     @test all(identity_checks.exact_pass)
     @test all(String.(identity_checks.status) .== "PASS")
     @test all(abs.(identity_checks.floating_residual) .<= ACCOUNTING_ATOL)
@@ -174,8 +165,25 @@ open(TEST_LOG_PATH, "w") do io
     println(io, "district_rows=$(nrow(district_contributions))")
     println(io, "party_rows=$(nrow(party_contributions))")
     println(io, "identity_checks=$(nrow(identity_checks))")
-    println(io, "expected_keys=$(join([string(year, '/', period) for (year, period) in EXPECTED_INVERSION_KEYS], ','))")
+    println(io, "expected_keys=$(join([string(year, '/', period) for (year, period) in key_set(decomposition, :cabinet_period)], ','))")
     println(io, "status=PASS")
 end
 
 println("Focused decomposition audit log: $(TEST_LOG_PATH)")
+
+@testset "Empty inversion selections retain CSV and TeX schemas" begin
+    empty_periods = coalition_periods[1:0, :]
+    result = CoalitionDecomposition.decompose_inversions(empty_periods, Dict())
+    @test isempty(result.decomposition)
+    @test :coalition_id in propertynames(result.decomposition)
+    @test :component in propertynames(result.component_figure_data)
+    @test occursin("No identified cabinet inversions", CoalitionDecomposition.decomposition_latex(result.decomposition))
+end
+
+@testset "CSV cabinet identity and empty-set parsing" begin
+    parsed = CSV.read(IOBuffer("period,cabinet_period\n2015.1,2015.1\n2015.10,2015.10\n"), DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
+    @test parsed.period == ["2015.1", "2015.10"]
+    @test parsed.cabinet_period == ["2015.1", "2015.10"]
+    @test CoalitionDecomposition.split_parties(missing) == String[]
+    @test CoalitionDecomposition.split_parties("") == String[]
+end

@@ -18,30 +18,27 @@ YEARS = (2014, 2018, 2022)
 # The approved diagnostic election palette.
 COLORS = {2014: '#28678b', 2018: '#ba6620', 2022: '#278275'}
 DOMAINS = ('cabinet', 'k=0')
-CABINET_LABEL_POSITIONS = {
-    '2016.2': (3.9, 3.25),
-    '2017.1': (1.9, .80),
-    '2021.3/2022.1': (8.1, -4.35),
-    '2023.1': (8.5, .55),
-}
 
 
 def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
     """Draw cabinet periods and all exact-connected minimal winners."""
+    validation = data.attrs.get("validation", {})
+    unavailable_count = int(validation.get("unidentified_periods", 0))
+    unavailable_days = int(validation.get("unidentified_days", 0))
     data = data.loc[data.domain.isin(DOMAINS)].copy()
     if data.duplicated(['domain', 'configuration_id']).any():
         raise ValueError('Duplicate cross-domain configuration.')
     counts = {domain: (len(group), int(group.inversion.sum()))
               for domain, group in data.groupby('domain')}
-    if counts.get('cabinet') != (23, 4):
-        raise ValueError(f'Cabinet configuration/inversion counts changed: {counts}')
     if set(data.loc[data.domain == 'k=0', 'ideological_universe']) != {'seat_winning'}:
         raise ValueError('Primary ideological panel requires the seat-winning universe.')
+    if not np.allclose(data.d_C, data.A_C + data.B_C, atol=1e-10, rtol=0):
+        raise ValueError('Cross-domain additive identity failed.')
+    normalized = data.loc[data.q_C.gt(0)]
     for lhs, rhs in (
-        (data.d_C, data.A_C + data.B_C),
-        (data.R_C - 1, data.A_C / data.q_C + data.B_C / data.q_C),
-        (data.A_pct_quota, 100 * data.A_C / data.q_C),
-        (data.B_pct_quota, 100 * data.B_C / data.q_C),
+        (normalized.R_C - 1, normalized.A_C / normalized.q_C + normalized.B_C / normalized.q_C),
+        (normalized.A_pct_quota, 100 * normalized.A_C / normalized.q_C),
+        (normalized.B_pct_quota, 100 * normalized.B_C / normalized.q_C),
     ):
         if not np.allclose(lhs, rhs, atol=1e-10, rtol=0):
             raise ValueError('Cross-domain decomposition or normalized-axis identity failed.')
@@ -60,6 +57,7 @@ def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
                   'B  Minimal connected winning coalitions')
         for ax, domain, title in zip(axes, DOMAINS, titles):
             group = data.loc[data.domain == domain]
+            zero_quota = int(group.q_C.eq(0).sum())
             ax.axhline(0, color='#9a9fa4', lw=.65, zorder=0)
             ax.axvline(0, color='#9a9fa4', lw=.65, zorder=0)
             ax.plot(xlim, [-xlim[0], -xlim[1]], color='#67727a', lw=.85,
@@ -78,11 +76,16 @@ def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
             ax.xaxis.set_major_locator(MultipleLocator(5))
             ax.yaxis.set_major_locator(MultipleLocator(2))
             ax.tick_params(labelsize=9)
-            ax.set_title(title, fontsize=10, loc='left', pad=29)
+            ax.set_title(title, fontsize=10, loc='left', pad=38 if unavailable_count else 29)
             unit = 'periods' if domain == 'cabinet' else 'configurations'
-            ax.text(0, 1.045,
-                    f'{len(group)} {unit}; {int(group.inversion.sum())} inversions',
-                    transform=ax.transAxes, fontsize=9.5, va='bottom')
+            count_label = f'{len(group)} {unit}; {int(group.inversion.sum())} inversions'
+            if zero_quota:
+                count_label += f'\n{zero_quota} zero-quota sets (normalized coordinates unavailable)'
+            if domain == 'cabinet' and unavailable_count:
+                count_label += f'\n{unavailable_count} unidentified intervals ({unavailable_days} days), unplotted'
+            ax.text(0, 1.025,
+                    count_label,
+                    transform=ax.transAxes, fontsize=8.3 if domain == 'cabinet' and unavailable_count else 9.5, va='bottom')
 
         def label(ax, row, text, position):
             ax.annotate(text, (row.A_pct_quota, row.B_pct_quota), xytext=position,
@@ -90,8 +93,14 @@ def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
                         zorder=5, arrowprops=dict(arrowstyle='-', color='#69747c',
                                                   lw=.6, shrinkA=2, shrinkB=5))
 
-        for row in data.loc[(data.domain == 'cabinet') & data.inversion].itertuples():
-            label(axes[0], row, row.display_label, CABINET_LABEL_POSITIONS[row.display_label])
+        cabinet_inversions = data.loc[(data.domain == 'cabinet') & data.inversion]
+        if cabinet_inversions.empty:
+            axes[0].text(.04, .96, 'No identified cabinet inversions', transform=axes[0].transAxes,
+                         ha='left', va='top', fontsize=8.5, color='#555555')
+        for number, row in enumerate(cabinet_inversions.itertuples()):
+            position = (max(xlim[0] + 1.5, min(xlim[1] - 1.5, row.A_pct_quota + (-1.5 if number % 2 else 1.5))),
+                        max(ylim[0] + .5, min(ylim[1] - .5, row.B_pct_quota + (.7 if number % 2 else -.7))))
+            label(axes[0], row, row.display_label, position)
         focal = data.loc[(data.domain == 'k=0') & data.inversion &
                          (data.is_strongest_inversion | (data.B_C > data.A_C))]
         for number, row in enumerate(focal.itertuples()):
@@ -106,7 +115,11 @@ def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
                 position = (min(xlim[1] - 3, row.A_pct_quota + 2.5), row.B_pct_quota - 1.7)
             label(axes[1], row, text, position)
 
-        fig.supxlabel('Within-district contribution (% of coalition quota)', y=.125, fontsize=10)
+        bounded_dates = int(validation.get('bounded_date_periods', 0)) > 0
+        fig.supxlabel('Within-district contribution (% of coalition quota)', y=.16 if bounded_dates else .125, fontsize=10)
+        if bounded_dates:
+            fig.text(.53, .105, 'Cabinet dates include bounded conventions; local date sensitivity is reported separately.',
+                     ha='center', fontsize=7)
         fig.supylabel('Between-district contribution (% of coalition quota)', x=.016, fontsize=10)
         handles = [Line2D([], [], ls='', marker='o', mfc=COLORS[year], mec='none',
                           label=str(year), markersize=6) for year in YEARS]
@@ -118,7 +131,7 @@ def render_cross_domain_components(data: pd.DataFrame, output: Path) -> Path:
         ])
         fig.legend(handles=handles, ncol=5, loc='lower center', bbox_to_anchor=(.53, .015),
                    frameon=False, handlelength=1.5, columnspacing=1.1, fontsize=9.5)
-        fig.subplots_adjust(left=.105, right=.99, bottom=.25, top=.80, wspace=.14)
+        fig.subplots_adjust(left=.105, right=.99, bottom=.29 if bounded_dates else .25, top=.77 if unavailable_count else .80, wspace=.14)
         output.parent.mkdir(parents=True, exist_ok=True)
         fig.savefig(output, facecolor='white', metadata={'CreationDate': None, 'ModDate': None})
         plt.close(fig)

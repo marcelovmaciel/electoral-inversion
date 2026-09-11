@@ -14,12 +14,6 @@ const _CANDIDATE_2018_PSC = joinpath(
     "2018",
     "candidate.csv",
 )
-const _CABINET_PERIOD_CSV_PSC = joinpath(
-    _ROOT_DIR_PSC,
-    "scraping",
-    "output",
-    "partidos_por_periodo.csv",
-)
 
 @testset "PSC baseline repair regressions" begin
     needed = [
@@ -100,28 +94,31 @@ const _CABINET_PERIOD_CSV_PSC = joinpath(
     @test marcio.DS_SIT_TOT_TURNO == "ELEITO POR MÉDIA"
     @test marcio.current_loader_counts
 
-    cabinet = CSV.read(_CABINET_PERIOD_CSV_PSC, DataFrame; types = Dict(:periodo => String))
-    psc_rows = unique(
-        select(cabinet[cabinet.partido .== "PSC", :], :periodo, :data_inicio, :data_fim),
-    )
-    sort!(psc_rows, :data_inicio)
-    @test String.(psc_rows.periodo) == [
-        "2020.4",
-        "2020.5",
-        "2021.1",
-        "2021.2",
-        "2021.3",
-        "2022.1",
-    ]
-    @test first(psc_rows.data_inicio) == Date(2020, 12, 9)
-    @test last(psc_rows.data_fim) == Date(2022, 3, 29)
-    for (previous, current) in zip(eachrow(psc_rows[1:end-1, :]), eachrow(psc_rows[2:end, :]))
-        @test previous.data_fim + Day(1) == current.data_inicio
-    end
-    @test !any(
-        (cabinet.periodo .== "2022.2") .& (cabinet.partido .== "PSC"),
-    )
-    @test any(
-        (cabinet.periodo .== "2022.2") .& (cabinet.partido .== "PL"),
-    )
+    # Documentary service and affiliation regression, independent of whether the
+    # aggregate cabinet is identifiable on the same dates.
+    release = Processing.CabinetRelease.load_release()
+    affiliations = CSV.read(joinpath(release.dir, "affiliations.csv"), DataFrame; stringtype = String)
+    services = CSV.read(joinpath(release.dir, "services.csv"), DataFrame; stringtype = String)
+    witnesses = CSV.read(joinpath(release.dir, "witnesses.csv"), DataFrame; stringtype = String)
+    gilson = services[(services.person_name .== "Gilson Machado Neto") .& services.included, :]
+    @test nrow(gilson) == 1
+    service = only(eachrow(gilson))
+    @test service.start_inclusive == Date(2020,12,9)
+    @test service.end_exclusive == Date(2022,3,31)
+    person_affiliations = affiliations[affiliations.person_id .== service.person_id, :]
+    psc = only(eachrow(person_affiliations[coalesce.(person_affiliations.party_id .== "PSC", false), :]))
+    pl = only(eachrow(person_affiliations[coalesce.(person_affiliations.party_id .== "PL", false), :]))
+    @test psc.start_inclusive == Date(2020,12,9)
+    @test psc.end_exclusive == pl.start_inclusive == Date(2022,3,30)
+    @test pl.end_exclusive >= service.end_exclusive
+    @test !isempty(psc.evidence_ids) && !isempty(pl.evidence_ids)
+    @test occursin("R24", pl.decision_ids)
+    person_witnesses = witnesses[witnesses.person_id .== service.person_id, :]
+    @test all(person_witnesses.end_exclusive .<= service.end_exclusive)
+    @test all(person_witnesses.start_inclusive .>= service.start_inclusive)
+    march30 = person_witnesses[(person_witnesses.start_inclusive .<= Date(2022,3,30)) .&
+                              (person_witnesses.end_exclusive .> Date(2022,3,30)), :]
+    @test Set(march30.party_id) == Set(["PL"])
+    @test all(march30.affiliation_id .== pl.affiliation_id)
+    @test all(march30.end_exclusive .== Date(2022,3,31))
 end

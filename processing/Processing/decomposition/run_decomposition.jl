@@ -100,7 +100,7 @@ end
 
 
 function update_manifest!(manifest_path::AbstractString, additions::DataFrame)
-    manifest = CSV.read(require_file(manifest_path), DataFrame)
+    manifest = CSV.read(require_file(manifest_path), DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
     required = Set([:path, :artifact_type, :description, :rows, :columns])
     required ⊆ Set(propertynames(manifest)) || error(
         "Paper artifact manifest schema changed: $(propertynames(manifest)).",
@@ -147,7 +147,7 @@ function sync_decomposition_to_paper!(manifest::DataFrame)
     validation_destination = joinpath(PAPER_ROOT, validation_relative)
     mkpath(dirname(validation_destination))
     cp(validation_source, validation_destination; force = true)
-    validation = CSV.read(validation_source, DataFrame)
+    validation = CSV.read(validation_source, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
     push!(paper_records, (
         path = validation_relative,
         artifact_type = "diagnostic",
@@ -189,7 +189,7 @@ end
 
 function append_output_manifest_rows!(rows::AbstractVector{<:NamedTuple})
     manifest_path = joinpath(OUTPUT_ROOT, "artifact_manifest.csv")
-    manifest = CSV.read(manifest_path, DataFrame)
+    manifest = CSV.read(manifest_path, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
     paths = Set(String.(getfield.(rows, :path)))
     filter!(row -> !(String(row.path) in paths), manifest)
     for row in rows
@@ -210,9 +210,9 @@ println("ACCOUNTING_RTOL: ", ACCOUNTING_RTOL)
 observed_path = require_file(joinpath(PAPER_ROOT, "raw", "cabinet_coalition_metrics.csv"))
 party_path = require_file(joinpath(PAPER_ROOT, "raw", "party_seat_differentials_all_years.csv"))
 ideology_input_path = require_file(joinpath(PAPER_ROOT, "raw", "ideological_interval_metrics.csv"))
-observed = CSV.read(observed_path, DataFrame)
-party_baseline = CSV.read(party_path, DataFrame)
-ideological_intervals = CSV.read(ideology_input_path, DataFrame)
+observed = CSV.read(observed_path, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
+party_baseline = CSV.read(party_path, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
+ideological_intervals = CSV.read(ideology_input_path, DataFrame; types = (i, name) -> name in (:period, :cabinet_period) ? String : nothing)
 
 accounting_by_year = Dict{Int,Any}()
 for year in sort(collect(keys(EXPECTED_NATIONAL_VOTES)))
