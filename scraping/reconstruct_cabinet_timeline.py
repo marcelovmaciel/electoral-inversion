@@ -27,7 +27,9 @@ ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = ROOT / "scraping" / "output"
 SOURCE_DATA_DIR = ROOT / "scraping" / "data"
 SOURCE_SNAPSHOT_PATH = SOURCE_DATA_DIR / "cabinet_source_snapshot.json"
-AFFILIATION_SPELLS_PATH = SOURCE_DATA_DIR / "cabinet_party_affiliation_spells.csv"
+AFFILIATIONS_PATH = SOURCE_DATA_DIR / "cabinet_appointment_affiliations.csv"
+DATE_CORRECTIONS_PATH = SOURCE_DATA_DIR / "cabinet_appointment_date_corrections.csv"
+PINNED_PAGES_DIR = SOURCE_DATA_DIR / "wikipedia_pinned"
 ORGAOS_PATH = OUTPUT_DIR / "orgaos_ministeriais.json"
 PARTY_PERIODS_PATH = OUTPUT_DIR / "partidos_por_periodo.json"
 PARTY_PERIODS_CSV_PATH = OUTPUT_DIR / "partidos_por_periodo.csv"
@@ -41,10 +43,6 @@ SOURCE_SNAPSHOT = json.loads(SOURCE_SNAPSHOT_PATH.read_text(encoding="utf-8"))
 SOURCE_AS_OF = date.fromisoformat(SOURCE_SNAPSHOT["source_as_of"])
 GENERATED_AT = SOURCE_SNAPSHOT["generated_at"]
 ANALYSIS_START = date(2015, 1, 1)
-FUSION_EFFECTIVE_DATE = date(2022, 2, 8)
-FUSION_PREDECESSORS = {"DEM", "PSL"}
-FUSION_SUCCESSOR = "UNIÃO"
-
 GOVERNMENT_WINDOWS = [
     {
         "government_id": "dilma_1",
@@ -139,97 +137,6 @@ SOURCE_PARTY_ALIASES = {
     "UNIAO BRASIL": "UNIÃO",
 }
 
-# These are the only multi-party appointment rows currently present in the
-# source tables. The dashboard must not treat them as simultaneous coalition
-# memberships, so each row either resolves to one start-date party from
-# repository evidence or fails closed as unresolved.
-AMBIGUOUS_START_PARTY_RESOLUTIONS = {
-    (
-        "jair_bolsonaro",
-        "Ministério da Agricultura, Pecuária e Abastecimento",
-        "Tereza Cristina",
-        "2019-01-01",
-    ): {
-        "status": "resolved",
-        "method": "repository_evidence",
-        "start_party": "DEM",
-        "confidence": "medium",
-        "evidence": "Resolved to DEM from processing/Processing/data/raw/electionsBR/2018/candidate.csv, the latest pre-posse election record in the repo.",
-    },
-    (
-        "jair_bolsonaro",
-        "Ministério da Mulher, da Família e dos Direitos Humanos",
-        "Damares Alves",
-        "2019-01-01",
-    ): {
-        "status": "unresolved",
-        "method": "insufficient_repository_evidence",
-        "start_party": None,
-        "confidence": "low",
-        "evidence": "Unresolved: the repo only supplies the ambiguous source row and a 2022 candidacy for Republicanos, which does not pin the 2019-01-01 start-date party.",
-    },
-    (
-        "jair_bolsonaro",
-        "Ministério do Desenvolvimento Regional",
-        "Rogério Marinho",
-        "2020-02-11",
-    ): {
-        "status": "resolved",
-        "method": "repository_evidence",
-        "start_party": "PSDB",
-        "confidence": "medium",
-        "evidence": "Resolved to PSDB from processing/Processing/data/raw/electionsBR/2018/candidate.csv, the latest pre-posse election record in the repo.",
-    },
-    (
-        "jair_bolsonaro",
-        "Ministério das Comunicações",
-        "Fábio Faria",
-        "2020-06-17",
-    ): {
-        "status": "resolved",
-        "method": "repository_evidence",
-        "start_party": "PSD",
-        "confidence": "medium",
-        "evidence": "Resolved to PSD from processing/Processing/data/raw/electionsBR/2018/candidate.csv, the latest pre-posse election record in the repo.",
-    },
-    (
-        "jair_bolsonaro",
-        "Ministério do Turismo",
-        "Gilson Machado Neto",
-        "2020-12-09",
-    ): {
-        "status": "resolved",
-        "method": "dated_affiliation_spells",
-        "start_party": "PSC",
-        "confidence": "high",
-        "evidence": "Dated external evidence establishes PSC at appointment and a formal switch to PL on 2022-03-30; see scraping/data/cabinet_party_affiliation_spells.csv.",
-    },
-    (
-        "jair_bolsonaro",
-        "Ministério da Cidadania",
-        "João Roma",
-        "2021-02-12",
-    ): {
-        "status": "resolved",
-        "method": "repository_evidence",
-        "start_party": "Republicanos",
-        "confidence": "medium",
-        "evidence": "Resolved to Republicanos from processing/Processing/data/raw/electionsBR/2018/candidate.csv, where João Inácio Ribeiro Roma Neto appears under PRB, the pre-2019 party code that canonicalizes to Republicanos.",
-    },
-    (
-        "jair_bolsonaro",
-        "Ministério da Justiça e Segurança Pública",
-        "Anderson Torres",
-        "2021-03-29",
-    ): {
-        "status": "resolved",
-        "method": "temporal_constraint",
-        "start_party": "PSL",
-        "confidence": "medium",
-        "evidence": "Resolved to PSL because the alternative token UNIÃO is only valid from 2022 onward in processing/Processing/data/party_aliases.csv, so it cannot be the 2021-03-29 start-date party.",
-    },
-}
-
 
 def normalize_space(value):
     return re.sub(r"\s+", " ", value or "").strip()
@@ -291,34 +198,10 @@ def parse_iso_date(value):
     return date(year, month, day)
 
 
-def load_affiliation_spells():
-    spells = defaultdict(list)
-    with AFFILIATION_SPELLS_PATH.open(encoding="utf-8", newline="") as handle:
-        for raw in csv.DictReader(handle):
-            key = (
-                raw["source_page_id"],
-                raw["ministerio_canonical"],
-                raw["person_name_canonical"],
-                raw["appointment_start"],
-            )
-            spells[key].append(
-                {
-                    **raw,
-                    "affiliation_start_date": parse_iso_date(raw["affiliation_start"]),
-                    "affiliation_end_date": parse_iso_date(raw["affiliation_end"]),
-                    "appointment_end_override_date": parse_iso_date(raw["appointment_end_override"]),
-                }
-            )
-    for values in spells.values():
-        values.sort(key=lambda item: item["affiliation_start_date"])
-    return dict(spells)
-
-
-AFFILIATION_SPELLS = load_affiliation_spells()
-
-
-def affiliation_spells_for_record(record):
-    return AFFILIATION_SPELLS.get(party_resolution_key(record), [])
+def load_appointment_affiliations(path=AFFILIATIONS_PATH):
+    """One reviewed row per pinned appointment; never infer from a source label."""
+    from appointment_affiliations import load_affiliations
+    return load_affiliations(path)
 
 
 def classify_status_type(label):
@@ -338,6 +221,13 @@ def classify_status_type(label):
 
 
 def fetch_page_payload(page_info):
+    revision = SOURCE_SNAPSHOT["wikipedia_revisions"][page_info["label"]]
+    cache_path = PINNED_PAGES_DIR / f"{page_info['label']}_{revision}.json"
+    if cache_path.exists():
+        cached = json.loads(cache_path.read_text(encoding="utf-8"))
+        if cached["revid"] != revision:
+            raise ValueError("Pinned Wikipedia revision mismatch")
+        return cached
     params = {"action": "parse", "prop": "text|revid", "format": "json"}
     pinned_revision = SOURCE_SNAPSHOT["wikipedia_revisions"].get(page_info["label"])
     if pinned_revision is not None:
@@ -354,11 +244,12 @@ def fetch_page_payload(page_info):
     )
     response.raise_for_status()
     payload = response.json()["parse"]
-    return {
-        "title": payload["title"],
-        "html": payload["text"]["*"],
-        "revid": payload.get("revid"),
-    }
+    result = {"title": payload["title"], "html": payload["text"]["*"], "revid": payload["revid"]}
+    if result["revid"] != revision:
+        raise ValueError("Wikipedia returned a different revision")
+    PINNED_PAGES_DIR.mkdir(parents=True, exist_ok=True)
+    cache_path.write_text(json.dumps(result, ensure_ascii=False) + "\n", encoding="utf-8")
+    return result
 
 
 def clean_cell_text(value):
@@ -598,98 +489,27 @@ def party_resolution_key(record):
     )
 
 
-def apply_affiliation_record_correction(record):
-    spells = affiliation_spells_for_record(record)
-    if not spells:
-        record["source_end_date"] = record["end_date"]
-        record["source_end_raw"] = record["end_raw"]
-        record["party_affiliation_spells"] = []
-        return
-
-    overrides = {item["appointment_end_override_date"] for item in spells}
-    if len(overrides) != 1:
-        raise ValueError(f"Conflicting appointment-end overrides for {party_resolution_key(record)}")
-    corrected_end = next(iter(overrides))
+def apply_appointment_date_correction(record):
+    # Date adjudications are separate from affiliation and survive the rule change.
     record["source_end_date"] = record["end_date"]
     record["source_end_raw"] = record["end_raw"]
-    record["end_date"] = corrected_end
-    record["party_affiliation_spells"] = [
-        {
-            "party": item["party"],
-            "start": item["affiliation_start"],
-            "end": item["affiliation_end"],
-            "evidence_url": item["evidence_url"],
-            "evidence_publication_date": item["evidence_publication_date"],
-            "evidence_claim": item["evidence_claim"],
-            "date_semantics": item["date_semantics"],
-            "notes": item["notes"],
-        }
-        for item in spells
-    ]
-
-    expected_start = record["start_date"]
-    for item in spells:
-        if item["affiliation_start_date"] != expected_start:
-            raise ValueError(f"Affiliation spells do not cover {party_resolution_key(record)} contiguously")
-        if item["affiliation_end_date"] < item["affiliation_start_date"]:
-            raise ValueError(f"Invalid affiliation spell for {party_resolution_key(record)}")
-        if item["party"] not in record["party_codes"]:
-            raise ValueError(f"Affiliation party absent from raw source candidates for {party_resolution_key(record)}")
-        expected_start = item["affiliation_end_date"] + timedelta(days=1)
-    if expected_start != corrected_end + timedelta(days=1):
-        raise ValueError(f"Affiliation spells do not cover the corrected appointment end for {party_resolution_key(record)}")
-
-    record["notes"].append(
-        "Authoritative dated correction: PSC through 2022-03-29, PL on 2022-03-30; "
-        "official office records place the successor in office from 2022-03-31."
-    )
+    if not DATE_CORRECTIONS_PATH.exists():
+        return
+    with DATE_CORRECTIONS_PATH.open(encoding="utf-8", newline="") as handle:
+        for correction in csv.DictReader(handle):
+            if correction["source_record_id"] != record["record_id"]:
+                continue
+            if correction["appointment_start"] != iso_or_none(record["start_date"]):
+                raise ValueError("Stale appointment date correction: " + record["record_id"])
+            record["end_date"] = parse_iso_date(correction["appointment_end"])
+            record["notes"].append(correction["evidence_note"] + " " + correction["evidence_source"])
 
 
-def resolve_start_party(record):
-    party_codes = dedupe_preserve_order(record.get("party_codes") or [])
-    dated_spells = record.get("party_affiliation_spells") or []
-    if dated_spells:
-        return {
-            "status": "resolved",
-            "method": "dated_affiliation_spells",
-            "start_party": dated_spells[0]["party"],
-            "candidate_parties": party_codes,
-            "confidence": "high",
-            "evidence": "Dated evidence resolves the raw multi-party field as a temporal sequence; see cabinet_party_affiliation_spells.csv.",
-            "affiliation_spells": dated_spells,
-        }
-    if not party_codes:
-        return {
-            "status": "missing",
-            "method": "no_party_code",
-            "start_party": None,
-            "candidate_parties": [],
-            "confidence": record["confidence"],
-            "evidence": "Source row does not expose a usable party code.",
-        }
-    if len(party_codes) == 1:
-        return {
-            "status": "resolved",
-            "method": "single_raw_party",
-            "start_party": party_codes[0],
-            "candidate_parties": party_codes,
-            "confidence": "high",
-            "evidence": "Source row exposes a single party code.",
-        }
-    resolution = AMBIGUOUS_START_PARTY_RESOLUTIONS.get(party_resolution_key(record))
-    if resolution is None:
-        return {
-            "status": "unresolved",
-            "method": "insufficient_repository_evidence",
-            "start_party": None,
-            "candidate_parties": party_codes,
-            "confidence": "low",
-            "evidence": "Unresolved: repository evidence does not pin a single start-date party for this multi-party row.",
-        }
-    return {
-        **resolution,
-        "candidate_parties": party_codes,
-    }
+def resolve_start_party(record, affiliations=None):
+    from appointment_affiliations import resolve_appointment
+    if affiliations is None:
+        affiliations = load_appointment_affiliations()
+    return resolve_appointment(record, affiliations)
 
 
 def infer_source_scope(page_label, table_index, rows):
@@ -1003,6 +823,7 @@ def extract_records():
                     "person_name_raw": person_raw,
                     "person_name_canonical": canonical_person,
                     "party": party_display,
+                    "raw_party_field": party_raw,
                     "party_codes": party_codes,
                     "role_title_raw": person_raw,
                     "role_classification": role_classification,
@@ -1020,17 +841,7 @@ def extract_records():
                     "flags": flags,
                     "source_snippet": snippet,
                 }
-                apply_affiliation_record_correction(record)
-                record["party_resolution"] = resolve_start_party(record)
-                resolution = record["party_resolution"]
-                if resolution["status"] == "unresolved":
-                    record["needs_review"] = True
-                    record["confidence"] = "low"
-                    record["notes"].append(resolution["evidence"])
-                elif resolution["status"] == "resolved" and resolution["confidence"] == "medium" and record["confidence"] == "high":
-                    record["confidence"] = "medium"
-                    if resolution["method"] != "single_raw_party":
-                        record["notes"].append(resolution["evidence"])
+                apply_appointment_date_correction(record)
                 records.append(record)
     return page_outputs, records
 
@@ -1233,49 +1044,23 @@ def join_notes(existing, extra):
 
 
 def party_slices_for_interval(record, interval):
+    """An appointment has exactly one frozen party, including after a switch."""
     resolution = record["party_resolution"]
-    dated_spells = resolution.get("affiliation_spells") or []
-    if not dated_spells:
-        resolved_party = (
-            resolution["start_party"]
-            if resolution["status"] == "resolved" and resolution["start_party"]
-            else None
-        )
-        return [
-            {
-                "start": interval["start"],
-                "end": interval["end"],
-                "party": resolved_party,
-                "spell_index": None,
-                "spell_evidence_url": None,
-                "spell_evidence_publication_date": None,
-            }
-        ]
-
-    slices = []
-    for spell_index, spell in enumerate(dated_spells, start=1):
-        spell_start = parse_iso_date(spell["start"])
-        spell_end = parse_iso_date(spell["end"])
-        if not interval_overlap(interval["start"], interval["end"], spell_start, spell_end):
-            continue
-        slice_start = max(interval["start"], spell_start)
-        end_candidates = [item for item in [interval["end"], spell_end] if item is not None]
-        slice_end = min(end_candidates) if end_candidates else None
-        slices.append(
-            {
-                "start": slice_start,
-                "end": slice_end,
-                "party": spell["party"],
-                "spell_index": spell_index,
-                "spell_evidence_url": spell["evidence_url"],
-                "spell_evidence_publication_date": spell["evidence_publication_date"],
-            }
-        )
-    return slices
+    if resolution["status"] not in {"PARTY", "UNAFFILIATED"}:
+        raise ValueError("Unresolved included appointment: " + record["record_id"])
+    return [{
+        "start": interval["start"], "end": interval["end"],
+        "party": resolution["start_party"], "spell_index": None,
+        "spell_evidence_url": resolution["evidence_source"],
+        "spell_evidence_publication_date": resolution["evidence_date"],
+    }]
 
 
-def build_dashboard_appointments(records, party_periods=()):
+def build_dashboard_appointments(records, party_periods=(), affiliations=None):
+    if affiliations is None:
+        affiliations = load_appointment_affiliations()
     appointments = []
+    included_keys = set()
     for record in records:
         actual_start = record["start_date"]
         actual_end = record["end_date"]
@@ -1305,6 +1090,10 @@ def build_dashboard_appointments(records, party_periods=()):
             intervals = []
 
         for interval in intervals:
+            if interval["start"] > SOURCE_AS_OF or (interval["end"] and interval["end"] < ANALYSIS_START):
+                continue
+            record["party_resolution"] = resolve_start_party(record, affiliations)
+            included_keys.add(record["record_id"])
             resolution = record["party_resolution"]
             for party_slice in party_slices_for_interval(record, interval):
                 resolved_party = party_slice["party"]
@@ -1329,7 +1118,9 @@ def build_dashboard_appointments(records, party_periods=()):
                         "ministry_status_type": record["ministerio_status_type"],
                         "person": record["person_name_canonical"],
                         "person_raw": record["person_name_raw"],
-                        "party": record["party"],
+                        "party": record["raw_party_field"],
+                        "appointment_party": resolved_party,
+                        "resolution_status": resolution["status"],
                         "party_at_date": resolved_party,
                         "party_codes": effective_party_codes,
                         "party_candidates": resolution.get("candidate_parties", record["party_codes"]),
@@ -1351,11 +1142,14 @@ def build_dashboard_appointments(records, party_periods=()):
                             "spell_evidence_publication_date"
                         ],
                         "notes": "; ".join(record["notes"]) if record["notes"] else "",
-                        "confidence": record["confidence"],
+                        "confidence": resolution["confidence"],
                         "needs_review": record["needs_review"],
                         "coalition_matches": matches,
                     }
                 )
+    unused = set(affiliations) - included_keys
+    if unused:
+        raise ValueError("Affiliation input contains appointments outside the pinned included universe: " + ", ".join(sorted(unused)))
     appointments.sort(
         key=lambda item: (
             item["start"] or "9999-12-31",
@@ -1408,22 +1202,24 @@ def coalition_matches(party_codes, start_value, end_value, party_periods):
     return matches
 
 
-def cabinet_party_at_date(party, current_date):
+def cabinet_party_at_date(party, current_date=None):
+    # Spelling normalization only: appointment origin is independent of calendar date.
     canonical = canonicalize_party_code(party)
-    if current_date >= FUSION_EFFECTIVE_DATE and canonical in FUSION_PREDECESSORS:
-        return FUSION_SUCCESSOR
-    if canonical in {"Patriota", "Republicanos"}:
-        return canonical.upper()
-    return canonical
+    return canonical.upper() if canonical in {"Patriota", "Republicanos"} else canonical
 
 
 def build_party_periods(appointments):
     bounded_spells = []
     boundaries = {ANALYSIS_START, SOURCE_AS_OF + timedelta(days=1)}
-    if ANALYSIS_START < FUSION_EFFECTIVE_DATE <= SOURCE_AS_OF:
-        boundaries.add(FUSION_EFFECTIVE_DATE)
 
     for appointment in appointments:
+        status = appointment.get("resolution_status", appointment.get("party_resolution", {}).get("status"))
+        if status not in {"PARTY", "UNAFFILIATED"}:
+            raise ValueError("Unresolved included appointment: " + appointment["appointment_id"])
+        if status == "UNAFFILIATED" and appointment["party_codes"]:
+            raise ValueError("Unaffiliated appointment carries a party")
+        if status == "PARTY" and len(appointment["party_codes"]) != 1:
+            raise ValueError("Party appointment must have exactly one frozen party")
         if not appointment["party_codes"] or appointment["start"] is None:
             continue
         spell_start = max(parse_iso_date(appointment["start"]), ANALYSIS_START)

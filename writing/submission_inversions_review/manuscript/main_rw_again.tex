@@ -70,24 +70,24 @@ ORCID: 0000-0001-7666-8494 }
 
 \begin{abstract}
   Proportional representation is usually evaluated party by party, by comparing
-  each party's share of seats with its share of votes. Yet fragmented
-  legislatures are governed through combinations of parties, so small
-  party-level deviations can become consequential when parties are combined.
-  Brazil provides a useful setting because the Chamber of Deputies is assembled
-  from twenty-seven separate district elections. Several institutional steps
-  separate national votes from final party seat totals, and no national
-  compensatory allocation reconciles them. I ask whether politically meaningful
-  sets of parties can hold a legislative majority despite receiving less than
-  half of all valid federal-deputy votes nationwide, a condition known as
-  coalition inversion. Using the 2014, 2018, and 2022 elections, I follow the
-  party sets represented in presidential cabinets and examine potential
-  coalitions restricted by ideological proximity. Cabinet inversions appear
-  following all three elections, as do inversions among minimal connected
-  winning coalitions. In 2022, a seven-party bloc of ideologically adjacent
-  parties combined 45.26 percent of
-  the vote with 258 of 513 seats. Party-level deviations from proportionality can therefore
-  have a distinct coalition-level consequence: they can determine which
-  combinations of parties command a legislative majority.
+each party's share of seats with its share of votes. Yet fragmented
+legislatures are governed through combinations of parties, so small
+party-level deviations can become consequential when parties are combined.
+Brazil provides a useful setting because the Chamber of Deputies is assembled
+from twenty-seven separate district elections. Several institutional steps
+separate national votes from final party seat totals, and no national
+compensatory allocation reconciles them. I ask whether politically meaningful
+sets of parties can hold a legislative majority despite receiving less than
+half of all valid federal-deputy votes nationwide, a condition known as
+coalition inversion. Using the 2014, 2018, and 2022 elections, I follow the
+party sets represented in presidential cabinets and examine potential
+coalitions restricted by ideological proximity. Cabinet inversions appear
+following the 2014 and 2022 elections, but not the 2018 election; inversions
+among minimal connected winning coalitions appear in all three. In 2022, a seven-party bloc of ideologically adjacent
+parties combined 45.26 percent of
+the vote with 258 of 513 seats. Party-level deviations from proportionality can therefore
+have a distinct coalition-level consequence: they can determine which
+combinations of parties command a legislative majority.
 
 % PROVENANCE-BEGIN abstract-compact-inversion
 % source: processing/Processing/output/paper/raw/ideology_k_gap_accounting_both_universes.csv
@@ -103,6 +103,31 @@ ORCID: 0000-0001-7666-8494 }
 %     vote_share: 45.26
 %     seats: 258
 % PROVENANCE-END abstract-compact-inversion
+
+% PROVENANCE-BEGIN abstract-cabinet-coverage
+% source: processing/Processing/output/paper/raw/observed_cabinet_duration_summary.csv
+% row:
+%   key: election_year=2014
+%   row_at_generation: 1
+%   fields:
+%     n_inversion_periods: 1
+%   display:
+%     n_inversion_periods: 1
+% row:
+%   key: election_year=2018
+%   row_at_generation: 2
+%   fields:
+%     n_inversion_periods: 0
+%   display:
+%     n_inversion_periods: 0
+% row:
+%   key: election_year=2022
+%   row_at_generation: 3
+%   fields:
+%     n_inversion_periods: 1
+%   display:
+%     n_inversion_periods: 1
+% PROVENANCE-END abstract-cabinet-coverage
 \end{abstract}
 
 \section{Introduction}
@@ -192,26 +217,17 @@ within-district term and a between-district term. The terms make cases
 comparable by showing whether the two components reinforce or offset one
 another.
 
-The empirical pattern spans both coalition domains and all three election
-cycles. Realized cabinet inversions and inversions among minimal connected
-winning coalitions appear following the 2014, 2018, and 2022 elections. The
-2022 cases include a compact right-side bloc with
-45.26 percent of the vote and
+Inversions appear in both coalition domains, but their distribution differs
+across elections. Two of the fifty-three cabinet periods invert: a five-day
+period under Dilma Rousseff following the 2014 election and the first 255
+days of Lula III following the 2022 election. No cabinet period linked to
+the 2018 election inverts in the primary chronology. Minimal connected
+winning inversions, by contrast, appear in all three elections. The 2022
+cases include a compact right-side bloc with 45.26 percent of the vote and
 258 seats. Within-district and between-district components reinforce one
 another in some inversions and offset one another in others.
 
-% PROVENANCE-BEGIN introduction-compact-inversion
-% source: processing/Processing/output/paper/raw/ideology_k_gap_accounting_both_universes.csv
-% row:
-%   key: election=2022; ideological_universe=seat_winning; k=0; coalition_id=PP|REPUBLICANOS|PSC|UNIÃO|PATRIOTA|NOVO|PL
-%   row_at_generation: 9333
-%   fields:
-%     vote_share: 0.4526056142903306
-%     seats: 258
-%   display:
-%     vote_share: 45.26
-%     seats: 258
-% PROVENANCE-END introduction-compact-inversion
+
 
 The remainder of the article follows the order of these transformations.
 Section~\ref{sec:brazil-system} explains how Brazil's multidistrict open-list system
@@ -985,10 +1001,12 @@ distance to 257 seats.
 \subsection{Cabinet coalitional inversions}
 \label{sec:cabinets}
 
-Four of the twenty-three cabinet periods combine a Chamber majority
-with less than half of the national federal-deputy vote. They occur
-under all four administrations, but differ in their distance from a
-vote majority, the size of their seat advantage, and their duration.
+Two of the fifty-three cabinet periods combine a Chamber majority with
+less than half of the national federal-deputy vote. They occur under Dilma
+Rousseff and Lula III, following the 2014 and 2022 elections, respectively.
+No period under Michel Temer or Jair Bolsonaro inverts in the primary
+chronology. The two inversions differ in their distance from a vote
+majority, the size of their seat advantage, and their duration.
 Table~\ref{tab:cabinet-inversions} reports these periods and the
 within-district and between-district components of their differentials.
 
@@ -998,17 +1016,62 @@ within-district and between-district components of their differentials.
 %   key: summary=cabinet-inversions; metric=count; aggregation=sum
 %   row_at_generation: 16
 %   fields:
-%     value: 4
+%     value: 2
 %   display:
-%     value: Four
+%     value: Two
 % row:
 %   key: summary=cabinet-periods; metric=count; aggregation=sum
 %   row_at_generation: 13
 %   fields:
-%     value: 23
+%     value: 53
 %   display:
-%     value: twenty-three
+%     value: fifty-three
+% source: generated/cabinet_v5/cabinet_analysis_periods.csv
+% row:
+%   key: analytical_period_id=CV5-005
+%   row_at_generation: 5
+%   fields:
+%     period: 2016.3
+%     election_year: 2014
+%     start_inclusive: 2016-04-14
+%     end_exclusive: 2016-04-19
+%     administration: dilma_2
+%     inversion_status: True
+%   display:
+%     period: 2016.3
+%     election_year: 2014
+%     start_inclusive: 2016-04-14
+%     end_exclusive: 2016-04-19
+%     administration: dilma_2
+%     inversion_status: True
+% row:
+%   key: analytical_period_id=CV5-041
+%   row_at_generation: 41
+%   fields:
+%     period: 2023.1
+%     election_year: 2022
+%     start_inclusive: 2023-01-01
+%     end_exclusive: 2023-09-13
+%     administration: lula_3
+%     inversion_status: True
+%   display:
+%     period: 2023.1
+%     election_year: 2022
+%     start_inclusive: 2023-01-01
+%     end_exclusive: 2023-09-13
+%     administration: lula_3
+%     inversion_status: True
+% source: processing/Processing/output/paper/raw/observed_cabinet_duration_summary.csv
+% row:
+%   key: election_year=2018
+%   row_at_generation: 2
+%   fields:
+%     n_inversion_periods: 0
+%   display:
+%     n_inversion_periods: 0
 % PROVENANCE-END cabinet-inversion-overview
+% Administration check: filter cabinet_analysis_periods.csv on administration=temer
+% or administration=bolsonaro; neither subset has inversion_status=True.
 
 \begin{table}[htbp]
 \centering
@@ -1027,192 +1090,302 @@ and between-district components.
 
 
 The first inversion emerges during the contraction of Dilma Rousseff's
-cabinet in April 2016. After PRB and PP leave, the remaining parties
-retain 259 seats with 46.54 percent of the 2014 vote. Exact national
-proportionality would assign them 238.73 seats, leaving them 18.27 seats
-short of a Chamber majority. Their 20.27-seat differential, corresponding
-to \(R_C=1.085\), is therefore sufficient to preserve the majority. This
-configuration, period 2016.2, lasts two days and ends with PSD's
-departure.
+cabinet in April 2016. PRB ceases to be represented on March 18, and PP's
+departure on April 14 leaves a party set with 259 seats and 46.54 percent
+of the 2014 vote. Exact national proportionality would assign those
+parties 238.73 seats, leaving them 18.27 seats short of a Chamber majority.
+Their 20.27-seat differential, corresponding to \(R_C=1.085\), is
+therefore sufficient to preserve the majority. This configuration, period
+2016.3, lasts five days, from April 14 through April 18. PSD's departure
+on April 19 reduces the party set to 223 seats and ends the inversion.
 
 % PROVENANCE-BEGIN cabinet-dilma-2016
-% source: processing/Processing/output/decomposition/raw/accounting_all_inversion_decomposition.csv
+% source: generated/cabinet_v5/cabinet_analysis_periods.csv
 % row:
-%   key: case_id=cabinet/2014/2016.2
-%   row_at_generation: 1
+%   key: analytical_period_id=CV5-005
+%   row_at_generation: 5
 %   fields:
-%     s_C: 259
+%     period: 2016.3
+%     election_year: 2014
+%     start_inclusive: 2016-04-14
+%     end_exclusive: 2016-04-19
+%     days: 5
+%     election_party_set: PCdoB;PDT;PMDB;PR;PSD;PT;PTB
+%     seats: 259
 %     vote_share: 0.4653584948188879
 %     q_C: 238.7289078420895
-%     r_C: 18.271092157910495
 %     d_C: 20.271092157910495
 %     R_C: 1.0849125995722273
-%     period_days: 2
 %   display:
-%     s_C: 259
+%     period: 2016.3
+%     election_year: 2014
+%     start_inclusive: 2016-04-14
+%     end_exclusive: 2016-04-19
+%     days: five
+%     election_party_set: PCdoB;PDT;PMDB;PR;PSD;PT;PTB
+%     seats: 259
 %     vote_share: 46.54
 %     q_C: 238.73
-%     r_C: 18.27
 %     d_C: 20.27
 %     R_C: 1.085
-%     period_days: two
+% row:
+%   key: analytical_period_id=CV5-006
+%   row_at_generation: 6
+%   fields:
+%     period: 2016.4
+%     election_year: 2014
+%     start_inclusive: 2016-04-19
+%     end_exclusive: 2016-05-12
+%     election_party_set: PCdoB;PDT;PMDB;PR;PT;PTB
+%     seats: 223
+%   display:
+%     period: 2016.4
+%     election_year: 2014
+%     start_inclusive: 2016-04-19
+%     end_exclusive: 2016-05-12
+%     election_party_set: PCdoB;PDT;PMDB;PR;PT;PTB
+%     seats: 223
 % PROVENANCE-END cabinet-dilma-2016
+% Threshold calculation from CV5-005: 257 - q_C = 18.271092157910495;
+% display as 18.27 seats, without introducing a separate threshold symbol.
+% Historical event source: cabinet_dataset/releases/2026-03-19-history-v5-candidate/transitions.csv.
+% Stable REPUBLICANOS ceases representation on 2016-03-18;
+% PP leaves on 2016-04-14; PSD leaves on 2016-04-19.
+% Use PRB in the manuscript for the corresponding 2014 party label.
 
-The later Temer inversion begins after PTB leaves the cabinet in
-December 2017. The remaining parties retain 266 seats with 49.91 percent
-of the vote. Their proportional quota is 256.05 seats, only 0.95 seats
-below the majority threshold. A differential of 9.95 seats and
-\(R_C=1.039\) therefore produce a larger seat majority than in the Dilma
-episode despite a substantially smaller representational advantage. The
-comparison shows that the political consequence of a coalition's
-differential depends on its proportional distance from 257 seats: a party
-set already close to a vote majority requires much less overrepresentation
-to cross the legislative threshold. This configuration persists for 100
-days.
-
-% PROVENANCE-BEGIN cabinet-temer-2017
-% source: processing/Processing/output/decomposition/raw/accounting_all_inversion_decomposition.csv
+The Temer sequence does not produce an inversion. The cabinet party set
+observed from April 2 through April 5, 2018 comes close, with 268 seats
+and 50.03 percent of the 2014 vote, but it still has a vote majority.
+From April 6, the remaining parties have 247 seats and 45.83 percent of
+the vote. The contraction thus moves from a majority in both measures
+to a minority in both, rather than leaving a vote-minority seat majority.
+A positive seat differential is not, by itself, evidence of an inversion.
+% PROVENANCE-BEGIN cabinet-temer-no-inversion
+% source: generated/cabinet_v5/cabinet_analysis_periods.csv
 % row:
-%   key: case_id=cabinet/2014/2017.1
-%   row_at_generation: 2
-%   fields:
-%     s_C: 266
-%     vote_share: 0.49911919584823244
-%     q_C: 256.04814747014325
-%     r_C: 0.9518525298567555
-%     d_C: 9.951852529856755
-%     R_C: 1.0388671139712784
-%     period_days: 100
-%   display:
-%     s_C: 266
-%     vote_share: 49.91
-%     q_C: 256.05
-%     r_C: 0.95
-%     d_C: 9.95
-%     R_C: 1.039
-%     period_days: 100
-% PROVENANCE-END cabinet-temer-2017
-
-The cabinet sequence linked to the 2018 election reveals a different
-relationship. Following NOVO's departure, PP's entry in August 2021
-brings the cabinet party set to exactly 257 seats with 47.25 percent of the
-vote. Its proportional quota of 242.38 seats leaves a 14.62-seat gap,
-exactly matched by its differential, with \(R_C=1.060\). This configuration
-continues for 238 days, from August 4, 2021 through March 29, 2022.
-PSC's departure then reduces the coalition from 257 to 250 seats and
-ends the inversion. Yet PSC itself was underrepresented. Removing it
-therefore lowers the coalition's proportional quota by more than it lowers
-its actual seat total, increasing the remaining coalition's differential
-from 14.62 to 16.60 seats. The coalition is thus more overrepresented
-relative to its vote share, but no longer holds a Chamber majority. This
-distinguishes overrepresentation from inversion: the former compares a
-coalition's seats with its proportional quota, whereas the latter requires a
-coalition with less than half of the vote to cross the 257-seat majority
-threshold.
-
-% PROVENANCE-BEGIN cabinet-bolsonaro-transition
-% source: processing/Processing/output/decomposition/raw/accounting_all_inversion_decomposition.csv
-% row:
-%   key: case_id=cabinet/2018/2021.3/2022.1
-%   row_at_generation: 3
-%   fields:
-%     s_C: 257
-%     vote_share: 0.47246851574312065
-%     q_C: 242.3763485762209
-%     d_C: 14.6236514237791
-%     R_C: 1.0603344819314346
-%     period_days: 238
-%   display:
-%     s_C: 257
-%     vote_share: 47.25
-%     q_C: 242.38
-%     d_C: 14.62
-%     R_C: 1.060
-%     period_days: 238
-% source: processing/Processing/output/decomposition/raw/coalition_period_quantities.csv
-% row:
-%   key: election_year=2018; cabinet_period=2022.2
+%   key: analytical_period_id=CV5-018
 %   row_at_generation: 18
 %   fields:
-%     s_C: 250
-%     d_C: 16.601833628303453
+%     period: 2018.2
+%     election_year: 2014
+%     start_inclusive: 2018-04-02
+%     end_exclusive: 2018-04-06
+%     seats: 268
+%     vote_share: 0.5003050576961592
+%     d_C: 11.343505401870349
+%     inversion_status: False
 %   display:
-%     s_C: 250
-%     d_C: 16.60
-% PROVENANCE-END cabinet-bolsonaro-transition
+%     period: 2018.2
+%     election_year: 2014
+%     start_inclusive: 2018-04-02
+%     end_exclusive: 2018-04-06
+%     seats: 268
+%     vote_share: 50.03
+%     d_C: 11.34
+%     inversion_status: False
+% row:
+%   key: analytical_period_id=CV5-019
+%   row_at_generation: 19
+%   fields:
+%     period: 2018.3
+%     election_year: 2014
+%     start_inclusive: 2018-04-06
+%     end_exclusive: 2018-07-05
+%     seats: 247
+%     vote_share: 0.4583403702686963
+%     d_C: 11.871390052158816
+%     inversion_status: False
+%   display:
+%     period: 2018.3
+%     election_year: 2014
+%     start_inclusive: 2018-04-06
+%     end_exclusive: 2018-07-05
+%     seats: 247
+%     vote_share: 45.83
+%     d_C: 11.87
+%     inversion_status: False
+% PROVENANCE-END cabinet-temer-no-inversion
+% Retire cabinet-temer-2017: its old inversion case_id no longer exists.
+% The new non-inversion examples are selected by dates and membership,
+% not by treating the reused 2017.1 label as the same observation.
 
-The initial Lula III cabinet provides the converse transition. Its
-members hold 263 seats with 48.89 percent of the 2022 vote. Their
-proportional quota is 250.80 seats, so a 12.20-seat differential,
-corresponding to \(R_C=1.049\), more than covers the 6.20 seats separating
-the coalition from a majority. After 255 days, the entry of PP and
-Republicanos expands the coalition to 350 seats and 63.79 percent of the
-vote. Whereas PSC's departure ends the Bolsonaro-period inversion by
-removing the seat majority, this expansion ends the Lula-period inversion
-by supplying a vote majority as well. Across these cases, the underlying
-election-year vote--seat distribution remains fixed. Inversion status
-changes because cabinet entry and exit alter both the coalition's
-proportional distance from 257 seats and the party differentials
-accumulated within it.
+The cabinet sequence linked to the 2018 election also contains no
+inversion. In period 2021.3, from July 28, 2021 through March 23, 2022,
+the represented parties receive 39.79 percent of the vote and hold 222
+seats. Their proportional quota is 204.14 seats, and their 17.86-seat
+differential corresponds to \(R_C=1.087\). They are therefore
+overrepresented but remain well below the Chamber majority threshold.
+The distinction is between receiving more seats than a coalition's vote
+share implies and receiving enough seats to form a majority. Here the
+differential falls far short of the 52.86 seats separating the coalition's
+proportional quota from 257 seats.
+ PROVENANCE-BEGIN cabinet-bolsonaro-no-inversion
+% source: generated/cabinet_v5/cabinet_analysis_periods.csv
+% row:
+%   key: analytical_period_id=CV5-033
+%   row_at_generation: 33
+%   fields:
+%     period: 2021.3
+%     election_year: 2018
+%     start_inclusive: 2021-07-28
+%     end_exclusive: 2022-03-24
+%     election_party_set: DEM;PP;PR;PRB;PSC;PSD;PSL
+%     days: 239
+%     seats: 222
+%     vote_share: 0.3979336317736909
+%     q_C: 204.13995309990344
+%     d_C: 17.860046900096567
+%     R_C: 1.0874892279972068
+%     inversion_status: False
+%   display:
+%     period: 2021.3
+%     election_year: 2018
+%     start_inclusive: 2021-07-28
+%     end_exclusive: 2022-03-24
+%     election_party_set: DEM;PP;PR;PRB;PSC;PSD;PSL
+%     days: 239
+%     seats: 222
+%     vote_share: 39.79
+%     q_C: 204.14
+%     d_C: 17.86
+%     R_C: 1.087
+%     inversion_status: False
+% source: processing/Processing/output/paper/raw/observed_cabinet_duration_summary.csv
+% row:
+%   key: election_year=2018
+%   row_at_generation: 2
+%   fields:
+%     n_inversion_periods: 0
+%   display:
+%     n_inversion_periods: 0
+% PROVENANCE-END cabinet-bolsonaro-no-inversion
+% Threshold calculation from CV5-033: 257 - q_C = 52.86004690009656;
+% display as 52.86 seats.
+% Retire the old cabinet/2018/2021.3/2022.1 inversion key and its
+% 250-seat successor. Neither identifies the new observations.
+
+
+The initial Lula III cabinet provides the second inversion. Its members
+hold 263 seats with 48.89 percent of the 2022 vote. Their proportional
+quota is 250.80 seats, so a 12.20-seat differential, corresponding to
+\(R_C=1.049\), more than covers the 6.20 seats separating the coalition
+from a majority. It therefore has a larger seat majority than the Dilma
+coalition despite a smaller differential, because its proportional quota
+lies closer to 257 seats. Period 2023.1 lasts 255 days, from January 1
+through September 12, 2023. The entry of PP and Republicanos on September
+13 expands the party set to 350 seats and 63.79 percent of the vote.
+Whereas PSD's departure ends the Dilma inversion by removing the seat
+majority, this expansion ends the Lula inversion by supplying a vote
+majority as well. Within each election cycle, the underlying vote--seat
+distribution remains fixed; cabinet membership changes the party set
+across which the quotas and differentials are aggregated.
 
 % PROVENANCE-BEGIN cabinet-lula-transition
-% source: processing/Processing/output/decomposition/raw/accounting_all_inversion_decomposition.csv
+% source: generated/cabinet_v5/cabinet_analysis_periods.csv
 % row:
-%   key: case_id=cabinet/2022/2023.1
-%   row_at_generation: 4
+%   key: analytical_period_id=CV5-041
+%   row_at_generation: 41
 %   fields:
-%     s_C: 263
+%     period: 2023.1
+%     election_year: 2022
+%     start_inclusive: 2023-01-01
+%     end_exclusive: 2023-09-13
+%     days: 255
+%     seats: 263
 %     vote_share: 0.48888043147286714
 %     q_C: 250.79566134558084
 %     d_C: 12.20433865441916
 %     R_C: 1.0486624792029489
-%     r_C: 6.20433865441916
-%     period_days: 255
 %   display:
-%     s_C: 263
+%     period: 2023.1
+%     election_year: 2022
+%     start_inclusive: 2023-01-01
+%     end_exclusive: 2023-09-13
+%     days: 255
+%     seats: 263
 %     vote_share: 48.89
 %     q_C: 250.80
 %     d_C: 12.20
 %     R_C: 1.049
-%     r_C: 6.20
-%     period_days: 255
-% source: processing/Processing/output/decomposition/raw/coalition_period_quantities.csv
 % row:
-%   key: election_year=2022; cabinet_period=2023.2
-%   row_at_generation: 22
+%   key: analytical_period_id=CV5-042
+%   row_at_generation: 42
 %   fields:
-%     s_C: 350
+%     period: 2023.2
+%     election_year: 2022
+%     start_inclusive: 2023-09-13
+%     end_exclusive: 2023-12-04
+%     seats: 350
 %     vote_share: 0.6378913927154223
 %   display:
-%     s_C: 350
+%     period: 2023.2
+%     election_year: 2022
+%     start_inclusive: 2023-09-13
+%     end_exclusive: 2023-12-04
+%     seats: 350
 %     vote_share: 63.79
+% row:
+%   key: analytical_period_id=CV5-005
+%   row_at_generation: 5
+%   fields:
+%     period: 2016.3
+%     election_year: 2014
+%     start_inclusive: 2016-04-14
+%     end_exclusive: 2016-04-19
+%     seats: 259
+%     q_C: 238.7289078420895
+%     d_C: 20.271092157910495
+%   display:
+%     period: 2016.3
+%     election_year: 2014
+%     start_inclusive: 2016-04-14
+%     end_exclusive: 2016-04-19
+%     seats: 259
+%     q_C: 238.73
+%     d_C: 20.27
+% row:
+%   key: analytical_period_id=CV5-006
+%   row_at_generation: 6
+%   fields:
+%     period: 2016.4
+%     election_year: 2014
+%     start_inclusive: 2016-04-19
+%     end_exclusive: 2016-05-12
+%     seats: 223
+%   display:
+%     period: 2016.4
+%     election_year: 2014
+%     start_inclusive: 2016-04-19
+%     end_exclusive: 2016-05-12
+%     seats: 223
 % PROVENANCE-END cabinet-lula-transition
+% Threshold calculation from CV5-041: 257 - q_C = 6.20433865441916;
+% display as 6.20 seats. The successor begins on 2023-09-13.
 
 
-
-
-
-
-
-The within-district component is positive in every cabinet inversion, but
-the pattern extends to the entire cabinet sequence: \(A_C>0\) in all
-twenty-three periods, whereas \(B_C>0\) in only six. Cabinet composition
-helps explain the difference. Parties that enter cabinet are larger on average
-than parties that never do, with mean vote shares of 5.63 versus 0.91 percent
-in 2014, 5.05 versus 1.85 percent in 2018, and 5.80 versus 1.72 percent in
-2022. Larger parties are also usually on the positive side of the
-within-district component. Among parties receiving at least 5 percent of the
-national vote, \(A_i>0\) for six of seven in 2014, eight of nine in 2018,
-and all seven in 2022.\footnote{The parties above 5 percent with positive
-\(A_i\) are PSDB, PMDB, PP, PSB, PSD, and PR in 2014; PT, PSDB, PSD, MDB,
-PSB, PP, PR, and PRB in 2018; and PL, PT, UNIÃO, PP, PSD, MDB, and
-Republicanos in 2022. The exceptions are PT in 2014 and PSL in 2018.}
-In every distinct cabinet composition, the positive \(A_i\) contributions of
-members above this 5 percent benchmark exceed the combined negative
-contributions of the remaining members. Cabinet coalitions therefore
-repeatedly accumulate a positive within-district component. No equivalent
-pattern appears for \(B_C\), which may reinforce or offset that advantage
-depending on where coalition support is distributed across districts.
+The within-district component is positive in both cabinet inversions, but the
+pattern extends to the entire primary chronology: \(A_C>0\) in all fifty-three
+periods, whereas \(B_C>0\) in nineteen. Cabinet composition helps explain the
+difference. Parties represented at least once in the primary cabinet chronology
+are larger on average than parties never represented, with mean vote shares of
+5.72 versus 0.83 percent in 2014, 5.41 versus 1.84 percent in 2018, and 5.57
+versus 1.66 percent in 2022. Larger parties are also usually on the positive
+side of the within-district component. Among parties receiving at least 5
+percent of the national vote, \(A_i>0\) for six of seven in 2014, eight of nine
+in 2018, and all seven in 2022.\footnote{The parties receiving at least 5
+  percent with positive \(A_i\) are PSDB, PMDB, PP, PSB, PSD, and PR in 2014;
+  PT, PSDB, PSD, MDB, PSB, PP, PR, and PRB in 2018; and PL, PT, UNIÃO, PP, PSD,
+  MDB, and Republicanos in 2022. The exceptions are PT in 2014 and PSL in 2018.}
+In thirty-three of the thirty-four distinct election-year cabinet party sets,
+the positive \(A_i\) contributions of members meeting this benchmark exceed all
+negative \(A_i\) contributions combined. In the remaining set, DEM, PSC, PSD,
+and PSL, positive contributions from smaller parties are also needed to keep
+\(A_C\) positive.\footnote{This is period 2020.9, from December 9, 2020 through
+  February 11, 2021} Cabinet coalitions therefore repeatedly accumulate a
+positive within-district component, but not exclusively through their largest
+members. No equivalent sign pattern appears for \(B_C\), which may reinforce or
+offset that advantage depending on the distribution of coalition support across
+districts.
 
 % PROVENANCE-BEGIN cabinet-components-and-party-size
 % source: processing/Processing/output/paper/tables/prose_analysis_summaries.csv
@@ -1220,59 +1393,59 @@ depending on where coalition support is distributed across districts.
 %   key: summary=cabinet-component-signs; metric=A_C; aggregation=count_positive
 %   row_at_generation: 19
 %   fields:
-%     value: 23
+%     value: 53
 %   display:
-%     value: twenty-three
+%     value: fifty-three
 % row:
 %   key: summary=cabinet-component-signs; metric=B_C; aggregation=count_positive
 %   row_at_generation: 18
 %   fields:
-%     value: 6
+%     value: 19
 %   display:
-%     value: six
+%     value: nineteen
 % source: processing/Processing/output/decomposition/tables/report/party_size_cabinet_summary.csv
 % row:
 %   key: election=2014; ever_in_cabinet=true
 %   row_at_generation: 1
 %   fields:
-%     mean_vote_share: 0.056346958243987964
+%     mean_vote_share: 0.05720562356882122
 %   display:
-%     mean_vote_share: 5.63
+%     mean_vote_share: 5.72
 % row:
 %   key: election=2014; ever_in_cabinet=false
 %   row_at_generation: 2
 %   fields:
-%     mean_vote_share: 0.00910562507883415
+%     mean_vote_share: 0.008347979203981275
 %   display:
-%     mean_vote_share: 0.91
+%     mean_vote_share: 0.83
 % row:
 %   key: election=2018; ever_in_cabinet=true
 %   row_at_generation: 3
 %   fields:
-%     mean_vote_share: 0.05052679368288137
+%     mean_vote_share: 0.05412186779334364
 %   display:
-%     mean_vote_share: 5.05
+%     mean_vote_share: 5.41
 % row:
 %   key: election=2018; ever_in_cabinet=false
 %   row_at_generation: 4
 %   fields:
-%     mean_vote_share: 0.018508552895346038
+%     mean_vote_share: 0.018351252882662542
 %   display:
-%     mean_vote_share: 1.85
+%     mean_vote_share: 1.84
 % row:
 %   key: election=2022; ever_in_cabinet=true
 %   row_at_generation: 5
 %   fields:
-%     mean_vote_share: 0.05799012661049294
+%     mean_vote_share: 0.05567791806230482
 %   display:
-%     mean_vote_share: 5.80
+%     mean_vote_share: 5.57
 % row:
 %   key: election=2022; ever_in_cabinet=false
 %   row_at_generation: 6
 %   fields:
-%     mean_vote_share: 0.01724326701355132
+%     mean_vote_share: 0.016593249162617108
 %   display:
-%     mean_vote_share: 1.72
+%     mean_vote_share: 1.66
 % source: processing/Processing/output/decomposition/tables/report/party_size_groups.csv
 % row:
 %   key: election=2014; size_group=>=5%
@@ -1301,18 +1474,65 @@ depending on where coalition support is distributed across districts.
 %     positive_A_i_count: seven
 % PROVENANCE-END cabinet-components-and-party-size
 
-The four inverted cabinet periods differ in how this positive \(A_C\)
-interacts with between-district weighting. In 2016.2, \(A_C=15.74\) raises
-the coalition from its proportional quota of 238.73 to 254.47 seats, still
-short of a Chamber majority. The additional \(B_C=4.53\) is therefore
-needed to cross the 257-seat threshold. In 2017.1, the 2018-linked
-configuration, and 2023.1, \(A_C\) alone is already sufficient to cross the
-threshold, while negative \(B_C\) reduces the resulting seat advantage. The
-largest offset occurs in the 2018 inversion, where \(A_C=19.07\) and
-\(B_C=-4.45\), leaving exactly 257 seats. The common feature of the cabinet
-inversions is thus the positive within-district component; between-district
-weighting determines whether that advantage is reinforced or reduced and,
-in 2016.2, whether it is enough to produce an inversion.
+% PROVENANCE-BEGIN cabinet-large-party-exception
+% source: processing/Processing/output/decomposition/raw/cabinet_party_set_accounting.csv
+% row:
+%   key: cabinet_party_set_id=2018:DEM|PSC|PSD|PSL
+%   fields:
+%     A_C: 3.3446540578149824
+%     large_party_positive_A: 4.2634970812796755
+%     gross_negative_A: -5.49437225087713
+%     large_positive_minus_all_negative_A: -1.2308751695974545
+%   display:
+%     A_C: positive
+%     large_party_positive_A: 4.26
+%     gross_negative_A: -5.49
+%     large_positive_minus_all_negative_A: negative
+% source: generated/cabinet_v5/cabinet_analysis_periods.csv
+% row:
+%   key: analytical_period_id=CV5-030
+%   row_at_generation: 30
+%   fields:
+%     period: 2020.9
+%     election_year: 2018
+%     start_inclusive: 2020-12-09
+%     end_exclusive: 2021-02-12
+%     election_party_set: DEM;PSC;PSD;PSL
+%     days: 65
+%     established_days: 65
+%     provisional_days: 0
+%   display:
+%     period: 2020.9
+%     election_year: 2018
+%     start_inclusive: 2020-12-09
+%     end_exclusive: 2021-02-12
+%     election_party_set: DEM;PSC;PSD;PSL
+%     days: 65
+%     established_days: 65
+%     provisional_days: 0
+% PROVENANCE-END cabinet-large-party-exception
+% Distinct-set calculation (not a claim about 53 different memberships):
+% source: processing/Processing/output/decomposition/raw/cabinet_party_set_accounting.csv
+% Count rows by cabinet_party_set_id: 34 distinct election-year party sets.
+% Count rows where large_positive_minus_all_negative_A > 0: 33.
+% The remaining row is 2018:DEM|PSC|PSD|PSL; A_C remains positive.
+% These counts are reported in the uploaded V5 modification checklist;
+% no fictitious aggregate CSV row or row number is introduced here.
+% Ever/never cabinet participation is defined using the primary sets,
+% including their explicitly provisional dates.
+
+The two inverted cabinet periods differ in how the positive \(A_C\)
+interacts with between-district weighting. In 2016.3, \(A_C=15.74\)
+raises the coalition's quota of 238.73 to \(q_C+A_C=254.47\) seats,
+still short of a Chamber majority. Adding \(B_C=4.53\) brings the
+observed total to 259 seats. In 2023.1, by contrast, \(A_C=13.20\)
+already exceeds the 6.20 seats separating the quota from a majority:
+\(q_C+A_C=263.99\). The negative between-district component,
+\(B_C=-0.99\), reduces the total to 263 seats without removing the
+majority. Thus, within-district gains characterize both inversions, while
+between-district weighting reinforces the Dilma coalition and offsets the
+Lula coalition. Only in the former is the positive between-district
+component also needed to bridge the proportional distance to 257 seats.
 
 % PROVENANCE-BEGIN cabinet-decomposition-thresholds
 % source: processing/Processing/output/paper/tables/prose_analysis_summaries.csv
@@ -1320,50 +1540,73 @@ in 2016.2, whether it is enough to produce an inversion.
 %   key: summary=cabinet-inversions; metric=count; aggregation=sum
 %   row_at_generation: 16
 %   fields:
-%     value: 4
+%     value: 2
 %   display:
-%     value: four
+%     value: two
+% source: generated/cabinet_v5/cabinet_analysis_periods.csv
 % row:
-%   key: summary=dilma-2016-within-adjusted-quota; metric=within_adjusted_quota; aggregation=identity
-%   row_at_generation: 1
+%   key: analytical_period_id=CV5-005
+%   row_at_generation: 5
 %   fields:
-%     value: 254.47093010683733
-%   display:
-%     value: 254.47
-% source: processing/Processing/output/decomposition/raw/accounting_all_inversion_decomposition.csv
-% row:
-%   key: case_id=cabinet/2014/2016.2
-%   row_at_generation: 1
-%   fields:
-%     A_C: 15.742022264747815
+%     period: 2016.3
+%     election_year: 2014
+%     start_inclusive: 2016-04-14
+%     end_exclusive: 2016-04-19
 %     q_C: 238.7289078420895
+%     A_C: 15.742022264747815
 %     B_C: 4.529069893162678
+%     seats: 259
 %   display:
-%     A_C: 15.74
+%     period: 2016.3
+%     election_year: 2014
+%     start_inclusive: 2016-04-14
+%     end_exclusive: 2016-04-19
 %     q_C: 238.73
+%     A_C: 15.74
 %     B_C: 4.53
+%     seats: 259
 % row:
-%   key: case_id=cabinet/2018/2021.3/2022.1
-%   row_at_generation: 3
+%   key: analytical_period_id=CV5-041
+%   row_at_generation: 41
 %   fields:
-%     A_C: 19.06897840875699
-%     B_C: -4.44532698497789
-%     s_C: 257
+%     period: 2023.1
+%     election_year: 2022
+%     start_inclusive: 2023-01-01
+%     end_exclusive: 2023-09-13
+%     q_C: 250.79566134558084
+%     A_C: 13.196247377886202
+%     B_C: -0.9919087234670415
+%     seats: 263
 %   display:
-%     A_C: 19.07
-%     B_C: -4.45
-%     s_C: 257
+%     period: 2023.1
+%     election_year: 2022
+%     start_inclusive: 2023-01-01
+%     end_exclusive: 2023-09-13
+%     q_C: 250.80
+%     A_C: 13.20
+%     B_C: -0.99
+%     seats: 263
 % PROVENANCE-END cabinet-decomposition-thresholds
+% Derived from CV5-005: q_C + A_C = 254.47093010683733; display 254.47.
+% Derived from CV5-041: q_C + A_C = 263.991908723467; display 263.99.
+% Derived from CV5-041: 257 - q_C = 6.20433865441916; display 6.20.
+% Retire the obsolete Dilma within-adjusted-quota summary and the old
+% Temer/Bolsonaro inversion references; select the surviving rows by
+% analytical_period_id and verify their dates and election-year members.
 
-The full cabinet sequence shows that overrepresentation is much more common
-than inversion. Figure~\ref{fig:timeline} shows that twenty of the
-twenty-three periods have \(R_C>1\); the only three underrepresented
-configurations occur during the Bolsonaro administration. Most
-overrepresented cabinets do not reverse majority status: some remain below
-both 50 percent of the vote and 257 seats, while others exceed both. The four
-inversions are the cases in which these two thresholds diverge, with the
-coalition holding at least 257 seats while remaining below 50 percent of the
-vote.
+
+The full cabinet sequence shows that overrepresentation is much more
+common than inversion. Figure~\ref{fig:timeline} shows that fifty of the
+fifty-three primary periods have \(R_C>1\); the three underrepresented
+periods all occur during the Bolsonaro administration.\footnote{These
+are periods 2020.2, 2020.4, and 2022.7. The first two repeat the same
+party set; period 2022.7 consists entirely of provisional days.}
+Most overrepresented cabinet party sets do not reverse majority status:
+some remain below both 50 percent of the vote and 257 seats, while others
+exceed both. The two inversions are the periods in which these thresholds
+diverge, with at least 257 seats but less than half of the vote. Period
+counts describe successive stretches of the chronology, not independent
+observations or counts of distinct party combinations.
 
 % PROVENANCE-BEGIN cabinet-overrepresentation
 % source: processing/Processing/output/paper/tables/prose_analysis_summaries.csv
@@ -1371,16 +1614,16 @@ vote.
 %   key: summary=cabinet-periods; metric=d_C; aggregation=count_positive
 %   row_at_generation: 14
 %   fields:
-%     value: 20
+%     value: 50
 %   display:
-%     value: twenty
+%     value: fifty
 % row:
 %   key: summary=cabinet-periods; metric=count; aggregation=sum
 %   row_at_generation: 13
 %   fields:
-%     value: 23
+%     value: 53
 %   display:
-%     value: twenty-three
+%     value: fifty-three
 % row:
 %   key: summary=cabinet-periods; metric=d_C; aggregation=count_negative
 %   row_at_generation: 15
@@ -1392,9 +1635,75 @@ vote.
 %   key: summary=cabinet-inversions; metric=count; aggregation=sum
 %   row_at_generation: 16
 %   fields:
-%     value: 4
+%     value: 2
 %   display:
-%     value: four
+%     value: two
+% source: generated/cabinet_v5/cabinet_analysis_periods.csv
+% row:
+%   key: analytical_period_id=CV5-023
+%   row_at_generation: 23
+%   fields:
+%     period: 2020.2
+%     election_year: 2018
+%     start_inclusive: 2020-02-18
+%     end_exclusive: 2020-04-16
+%     administration: bolsonaro
+%     election_party_set: DEM;NOVO;PP;PSDB;PSL
+%     R_C: 0.9939091237109416
+%     provisional_days: 0
+%   display:
+%     period: 2020.2
+%     election_year: 2018
+%     start_inclusive: 2020-02-18
+%     end_exclusive: 2020-04-16
+%     administration: bolsonaro
+%     election_party_set: DEM;NOVO;PP;PSDB;PSL
+%     R_C: 0.9939091237109416
+%     provisional_days: 0
+% row:
+%   key: analytical_period_id=CV5-025
+%   row_at_generation: 25
+%   fields:
+%     period: 2020.4
+%     election_year: 2018
+%     start_inclusive: 2020-04-17
+%     end_exclusive: 2020-05-07
+%     administration: bolsonaro
+%     election_party_set: DEM;NOVO;PP;PSDB;PSL
+%     R_C: 0.9939091237109416
+%     provisional_days: 5
+%   display:
+%     period: 2020.4
+%     election_year: 2018
+%     start_inclusive: 2020-04-17
+%     end_exclusive: 2020-05-07
+%     administration: bolsonaro
+%     election_party_set: DEM;NOVO;PP;PSDB;PSL
+%     R_C: 0.9939091237109416
+%     provisional_days: 5
+% row:
+%   key: analytical_period_id=CV5-040
+%   row_at_generation: 40
+%   fields:
+%     period: 2022.7
+%     election_year: 2018
+%     start_inclusive: 2022-12-30
+%     end_exclusive: 2023-01-01
+%     administration: bolsonaro
+%     election_party_set: DEM;NOVO;PRB;PSD;PSL
+%     R_C: 0.993527706056358
+%     days: 2
+%     provisional_days: 2
+%   display:
+%     period: 2022.7
+%     election_year: 2018
+%     start_inclusive: 2022-12-30
+%     end_exclusive: 2023-01-01
+%     administration: bolsonaro
+%     election_party_set: DEM;NOVO;PRB;PSD;PSL
+%     R_C: 0.993527706056358
+%     days: 2
+%     provisional_days: 2
 % PROVENANCE-END cabinet-overrepresentation
 
 \begin{figure}[htbp]
@@ -1406,15 +1715,16 @@ and representation ratios}
 
 \end{figure}
 
-Measured over time, inversions occupy 102 of the 1461 covered days
-following the 2014 election, 238 of 1461 following the 2018 election,
-and 255 of 1174 in the observed period following the 2022 election.
-The mismatch therefore extends beyond the brief 2016 transition to
-configurations maintained for several months. Its appearance and
-disappearance follow changes in cabinet membership: party entry or exit
-can move a coalition across the seat-majority threshold, the vote-majority
-threshold, or both. The same electoral distribution can therefore sustain
-different majority relations as its parties are recombined in government.
+Measured over time, inversions occupy 5 of the 1,461 covered days following the
+2014 election, none of the 1,461 following the 2018 election, and 255 of the
+1,174 observed days following the 2022 election. They therefore account for 260
+of 4,096 days in the primary chronology. The two episodes range from a brief
+cabinet contraction in 2016 to the first several months of Lula III. Their
+endings illustrate two different transitions: a coalition can lose its seat
+majority or acquire a vote majority. The same fixed electoral distribution can
+therefore sustain different majority relations as parties are recombined in
+cabinet.
+
 
 % PROVENANCE-BEGIN cabinet-inversion-duration
 % source: processing/Processing/output/paper/raw/observed_cabinet_duration_summary.csv
@@ -1422,32 +1732,48 @@ different majority relations as its parties are recombined in government.
 %   key: election_year=2014
 %   row_at_generation: 1
 %   fields:
-%     inversion_days: 102
+%     inversion_days: 5
 %     covered_days: 1461
+%     established_days: 1383
+%     provisional_days: 78
 %   display:
-%     inversion_days: 102
+%     inversion_days: 5
 %     covered_days: 1461
+%     established_days: 1383
+%     provisional_days: 78
 % row:
 %   key: election_year=2018
 %   row_at_generation: 2
 %   fields:
-%     inversion_days: 238
+%     inversion_days: 0
 %     covered_days: 1461
+%     established_days: 1439
+%     provisional_days: 22
 %   display:
-%     inversion_days: 238
+%     inversion_days: 0
 %     covered_days: 1461
+%     established_days: 1439
+%     provisional_days: 22
 % row:
 %   key: election_year=2022
 %   row_at_generation: 3
 %   fields:
 %     inversion_days: 255
 %     covered_days: 1174
+%     established_days: 1174
+%     provisional_days: 0
 %   display:
 %     inversion_days: 255
 %     covered_days: 1174
+%     established_days: 1174
+%     provisional_days: 0
 % PROVENANCE-END cabinet-inversion-duration
-
-
+% Full-calendar totals: inversion_days = 5 + 0 + 255 = 260;
+% covered_days = 1461 + 1461 + 1174 = 4096;
+% established_days = 1383 + 1439 + 1174 = 3996;
+% provisional_days = 78 + 22 + 0 = 100.
+% Both inversion rows in cabinet_analysis_periods.csv have provisional_days=0.
+% Do not replace covered_days with established_days when reporting these shares.
 
 \subsection{Ideologically constrained potential coalitions}
 \label{sec:ideology}
@@ -1573,14 +1899,14 @@ principal party of the left through PSDB rather than excluding PT
 altogether. Its fourteen parties receive 49.95 percent of all valid votes
 and hold 267 seats. Figure~\ref{fig:minimal-connected-inversions} makes an
 important distinction visible: this is a broad interval in terms of the
-number of party positions it spans, but a inversion case, since
-its vote share lies only 0.05 percentage points below one half. The
+number of party positions it spans, but its vote share lies only 0.05
+percentage points below one half. The
 proportional quota is 256.25 seats and the differential is 10.75 seats.
 The other seven minimal connected majorities have vote majorities,
 including both overrepresented and underrepresented combinations. This
-election therefore supplies an inversion very close to the vote-majority
-threshold under exact connectedness, alongside the observed PSC-inclusive
-cabinet inversion.
+election therefore supplies a potential inversion very close to the
+vote-majority threshold under exact connectedness, even though no cabinet
+period linked to the same election inverts in the primary chronology.
 
 % PROVENANCE-BEGIN ideological-k0-2018
 % source: processing/Processing/output/paper/raw/ideology_k_gap_accounting_both_universes.csv
@@ -1610,6 +1936,17 @@ cabinet inversion.
 %   display:
 %     non_inverted_minimal_majorities: seven
 % PROVENANCE-END ideological-k0-2018
+
+% PROVENANCE-BEGIN ideological-2018-cabinet-contrast
+% source: processing/Processing/output/paper/raw/observed_cabinet_duration_summary.csv
+% row:
+%   key: election_year=2018
+%   row_at_generation: 2
+%   fields:
+%     n_inversion_periods: 0
+%   display:
+%     n_inversion_periods: 0
+% PROVENANCE-END ideological-2018-cabinet-contrast
 
 In 2022, the non-inverted minimal majorities PT--PP and PSB--PSC begin
 on the left and center-left and contain fifteen and sixteen parties,
@@ -1878,35 +2215,36 @@ seat-differential decomposition}
 \end{table}
 \FloatBarrier
 
-The \(A_i\) contributions of individual coalition members help explain the
-persistent positive within-district component of cabinet coalitions.\footnote{The
-largest member-party \(A_i\) and \(B_i\) contributions for the focal coalitions
-are reported in Appendix~\ref{app:party-contributions}.}
-Cabinets repeatedly combine large parties carrying substantial positive
-\(A_i\) contributions. In the 2018 cabinet inversion, for example, PP and PR
-contribute \(7.32\) and \(6.37\) seats to \(A_C\). In the initial 2023
-cabinet, UNIÃO and PT contribute \(9.36\) and \(9.07\) seats. Cabinet
-membership therefore repeatedly places substantial positive \(A_i\)
-contributions in the same coalition. This pattern extends beyond the
-inverted configurations: \(A_C\) is positive in all twenty-three observed
-cabinet periods.
+The \(A_i\) contributions of individual coalition members help explain
+the persistent positive within-district component of cabinet
+coalitions.\footnote{The largest member-party \(A_i\) and \(B_i\)
+contributions for the focal coalitions are reported in
+Appendix~\ref{app:party-contributions}.} In the 2016 cabinet inversion,
+PR and PSD contribute \(5.04\) and \(4.65\) seats to \(A_C\). In the
+initial 2023 cabinet, UNIÃO and PT contribute \(9.36\) and \(9.07\)
+seats. Cabinet membership repeatedly brings substantial positive
+\(A_i\) contributions into the same coalition. As the party-size
+comparison in Section~\ref{sec:cabinets} shows, large members usually
+supply enough positive contributions to offset the negative ones, but
+smaller members also matter. The resulting \(A_C\) is positive in all
+fifty-three primary cabinet periods, not only the two inversions.
 
 % PROVENANCE-BEGIN party-within-contributions
 % source: processing/Processing/output/decomposition/raw/party_accounting_all_years.csv
 % row:
-%   key: election_year=2018; party=PP
-%   row_at_generation: 47
+%   key: election_year=2014; party=PR
+%   row_at_generation: 13
 %   fields:
-%     A_i: 7.318776629343754
+%     A_i: 5.0428381901786
 %   display:
-%     A_i: 7.32
+%     A_i: 5.04
 % row:
-%   key: election_year=2018; party=PR
-%   row_at_generation: 50
+%   key: election_year=2014; party=PSD
+%   row_at_generation: 20
 %   fields:
-%     A_i: 6.3683808514567275
+%     A_i: 4.645941310001025
 %   display:
-%     A_i: 6.37
+%     A_i: 4.65
 % row:
 %   key: election_year=2022; party=UNIÃO
 %   row_at_generation: 98
@@ -1926,29 +2264,73 @@ cabinet periods.
 %   key: summary=cabinet-component-signs; metric=A_C; aggregation=count_positive
 %   row_at_generation: 19
 %   fields:
-%     value: 23
+%     value: 53
 %   display:
-%     value: twenty-three
+%     value: fifty-three
+% row:
+%   key: summary=cabinet-inversions; metric=count; aggregation=sum
+%   row_at_generation: 16
+%   fields:
+%     value: 2
+%   display:
+%     value: two
+% source: generated/cabinet_v5/cabinet_analysis_periods.csv
+% row:
+%   key: analytical_period_id=CV5-005
+%   row_at_generation: 5
+%   fields:
+%     period: 2016.3
+%     election_year: 2014
+%     start_inclusive: 2016-04-14
+%     end_exclusive: 2016-04-19
+%     election_party_set: PCdoB;PDT;PMDB;PR;PSD;PT;PTB
+%   display:
+%     period: 2016.3
+%     election_year: 2014
+%     start_inclusive: 2016-04-14
+%     end_exclusive: 2016-04-19
+%     election_party_set: PCdoB;PDT;PMDB;PR;PSD;PT;PTB
+% row:
+%   key: analytical_period_id=CV5-041
+%   row_at_generation: 41
+%   fields:
+%     period: 2023.1
+%     election_year: 2022
+%     start_inclusive: 2023-01-01
+%     end_exclusive: 2023-09-13
+%     election_party_set: MDB;PCdoB;PDT;PSB;PSD;PSOL;PT;REDE;UNIÃO
+%   display:
+%     period: 2023.1
+%     election_year: 2022
+%     start_inclusive: 2023-01-01
+%     end_exclusive: 2023-09-13
+%     election_party_set: MDB;PCdoB;PDT;PSB;PSD;PSOL;PT;REDE;UNIÃO
 % PROVENANCE-END party-within-contributions
 
-Cabinet coalitions show no comparable tendency in the between-district
-component: \(B_C\) is positive in only six of the twenty-three periods.
-The two components can also pull in opposite directions for the same
-party. In the initial 2023 cabinet, for example, PT contributes \(9.07\)
-seats to \(A_C\) but \(-2.13\) seats to \(B_C\). Among the 2014
-inversions, between-district weighting reinforces the within-district
-component in the Dilma cabinet inversion and the PTB--PR interval, but
-offsets it in the Temer cabinet inversion and the other three minimal
-connected inversions. The contrast is especially clear in 2018. The
-observed cabinet inversion has a large positive within-district component
-(\(A_C=19.07\)) that more than offsets its negative between-district
-component (\(B_C=-4.45\)). The PT--PSDB connected inversion instead combines positive contributions
-from both components (\(A_C=6.57\), \(B_C=4.18\)). Its proportional
-quota is only \(0.75\) seats below the majority threshold, so either
-component individually exceeds that shortfall. Between-district weighting therefore enlarges the PT--PSDB coalition's
-seat majority, whereas it reduces the seat advantage of the observed
-2018 cabinet inversion.
 
+
+Cabinet coalitions show no comparable tendency in the between-district
+component: \(B_C\) is positive in nineteen of the fifty-three primary
+periods. The two components can also pull in opposite directions for the
+same party. In the initial 2023 cabinet, for example, PT contributes
+\(9.07\) seats to \(A_C\) but \(-2.13\) seats to \(B_C\). Among the
+2014 inversions, between-district weighting reinforces the within-district
+component in the Dilma cabinet and the PTB--PR interval, but offsets it
+in the other three minimal connected inversions. For the initial Lula
+cabinet, it also offsets the within-district gain.
+
+The 2018 election permits a comparison between an observed cabinet
+minority and a potential connected inversion. Cabinet period 2021.3
+combines \(A_C=21.41\) with \(B_C=-3.55\), but its 222 seats do not
+constitute a majority. The PT--PSDB connected inversion instead combines
+positive contributions from both components, \(A_C=6.57\) and
+\(B_C=4.18\). Its proportional quota lies only \(0.75\) seats below
+the majority threshold, so either component individually exceeds that
+shortfall. The cabinet's larger within-district gain therefore does not
+produce the same majority status: its quota lies much farther below 257
+seats. The same electoral result thus permits a cabinet minority with
+a larger within-district gain and a connected seat majority with a much
+smaller proportional shortfall.
 
 % PROVENANCE-BEGIN party-between-contributions
 % source: processing/Processing/output/decomposition/raw/party_accounting_all_years.csv
@@ -1956,25 +2338,93 @@ seat majority, whereas it reduces the seat advantage of the observed
 %   key: election_year=2022; party=PT
 %   row_at_generation: 92
 %   fields:
+%     A_i: 9.068253408506147
 %     B_i: -2.130298562930772
 %   display:
+%     A_i: 9.07
 %     B_i: -2.13
 % source: processing/Processing/output/paper/tables/prose_analysis_summaries.csv
 % row:
 %   key: summary=cabinet-component-signs; metric=B_C; aggregation=count_positive
 %   row_at_generation: 18
 %   fields:
-%     value: 6
+%     value: 19
 %   display:
-%     value: six
+%     value: nineteen
 % row:
 %   key: summary=cabinet-periods; metric=count; aggregation=sum
 %   row_at_generation: 13
 %   fields:
-%     value: 23
+%     value: 53
 %   display:
-%     value: twenty-three
+%     value: fifty-three
+% source: generated/cabinet_v5/cabinet_analysis_periods.csv
+% row:
+%   key: analytical_period_id=CV5-005
+%   row_at_generation: 5
+%   fields:
+%     period: 2016.3
+%     election_year: 2014
+%     start_inclusive: 2016-04-14
+%     end_exclusive: 2016-04-19
+%     A_C: 15.742022264747815
+%     B_C: 4.529069893162678
+%   display:
+%     period: 2016.3
+%     election_year: 2014
+%     start_inclusive: 2016-04-14
+%     end_exclusive: 2016-04-19
+%     A_C: 15.74
+%     B_C: 4.53
+% row:
+%   key: analytical_period_id=CV5-041
+%   row_at_generation: 41
+%   fields:
+%     period: 2023.1
+%     election_year: 2022
+%     start_inclusive: 2023-01-01
+%     end_exclusive: 2023-09-13
+%     A_C: 13.196247377886202
+%     B_C: -0.9919087234670415
+%   display:
+%     period: 2023.1
+%     election_year: 2022
+%     start_inclusive: 2023-01-01
+%     end_exclusive: 2023-09-13
+%     A_C: 13.20
+%     B_C: -0.99
+% row:
+%   key: analytical_period_id=CV5-033
+%   row_at_generation: 33
+%   fields:
+%     period: 2021.3
+%     election_year: 2018
+%     start_inclusive: 2021-07-28
+%     end_exclusive: 2022-03-24
+%     seats: 222
+%     q_C: 204.13995309990344
+%     A_C: 21.41318435681838
+%     B_C: -3.5531374567218146
+%     inversion_status: False
+%   display:
+%     period: 2021.3
+%     election_year: 2018
+%     start_inclusive: 2021-07-28
+%     end_exclusive: 2022-03-24
+%     seats: 222
+%     q_C: 204.14
+%     A_C: 21.41
+%     B_C: -3.55
+%     inversion_status: False
 % PROVENANCE-END party-between-contributions
+% Unchanged ideological comparison: table_accounting_minimal_ideological.tex,
+% election=2018; start=PT; end=PSDB: A_C displays 6.57 and B_C 4.18.
+% Underlying ideological q_C=256.24885163150481;
+% 257-q_C=0.75114836849519; display 0.75.
+% The primary ideological set is PT|PDT|PSB|REDE|PPS|PV|PTB|AVANTE|
+% SOLIDARIEDADE|PMN|PHS|MDB|PSD|PSDB, k=0, seat_winning.
+% The four 2014 minimal connected inversions have one positive and
+% three negative B_C values; retain their existing ideological outputs.
 
 MDB--UNIÃO therefore provides the exceptional case within the
 minimal connected winning inversions: it is the only case in which
@@ -2047,31 +2497,153 @@ seat differential.
 \FloatBarrier
 
 Figure~\ref{fig:cross-domain-components} extends the comparison beyond the
-inverted coalitions. Panel A includes all observed cabinet periods, whereas
-Panel B includes all minimal connected winning coalitions in the primary
+inverted coalitions. Panel A includes all fifty-three analytical periods
+in the primary cabinet chronology, including periods with the provisional
+affiliation assumptions described in Section~\ref{sec:data}. Panel B
+includes all twenty minimal connected winning coalitions in the primary
 ideological domain. The horizontal and vertical coordinates are
 \(100A_C/q_C\) and \(100B_C/q_C\), respectively. Their sum is
 \(100(R_C-1)\), so coalitions with the same representation ratio lie along
-parallel lines with slope \(-1\). The dashed diagonal identifies the
-particular case \(R_C=1\). The figure therefore shows something that
-\(R_C\) alone cannot: coalitions with similar overall representation can
-reach that result through very different balances of within-district and
-between-district contributions. The diagonal does not identify inversion,
-which also depends on whether the coalition's proportional quota lies below
-257 seats and whether its total differential is sufficient to cross that
-threshold.
+parallel lines with slope \(-1\). The dashed diagonal identifies
+\(R_C=1\). The figure therefore shows something that \(R_C\) alone
+cannot: coalitions with similar overall representation can reach that
+result through different balances of within-district and between-district
+contributions. The diagonal is not an inversion boundary. Inversion
+additionally requires less than half of the national vote and at least
+257 Chamber seats.
 
-Panel A shows that a positive within-district component characterizes the
-observed cabinet domain rather than only the inverted cases. Every cabinet
-period lies to the right of \(A_C=0\), including the three underrepresented
-configurations linked to the 2018 election. In those cases, negative
-between-district contributions more than offset the within-district gain.
-The inverted cabinets are also not those with the largest \(A_C/q_C\):
-several non-inverted periods lie farther to the right. A larger
-within-district contribution therefore increases coalition representation
-without necessarily changing majority status. Whether it does so depends on
-how far the coalition's proportional quota lies from 257 seats and on the
-contribution of \(B_C\).
+% PROVENANCE-BEGIN cross-domain-panel-scope
+% source: processing/Processing/output/paper/tables/prose_analysis_summaries.csv
+% row:
+%   key: summary=cabinet-periods; metric=count; aggregation=sum
+%   row_at_generation: 13
+%   fields:
+%     value: 53
+%   display:
+%     value: fifty-three
+% row:
+%   key: summary=seat-winning-k0-totals; metric=minimal_seat_majority_coalitions; aggregation=sum
+%   row_at_generation: 3
+%   fields:
+%     value: 20
+%   display:
+%     value: twenty
+% PROVENANCE-END cross-domain-panel-scope
+% Primary period status counts from CABINET_V5_INTEGRATION_REPORT.md: 
+% 43 established, 8 mixed, and 2 fully provisional periods.
+% Their lengths and exact provisional-day counts are not encoded by
+% the coordinates; consult cabinet_analysis_periods.csv and Section 3.2.
+
+Panel A shows that a positive within-district component characterizes
+the primary cabinet chronology rather than only the inverted cases.
+Every one of its fifty-three periods lies to the right of \(A_C=0\),
+including the three underrepresented periods linked to the 2018 election.
+In those periods, negative between-district contributions more than offset
+the within-district gain. The two inverted cabinets are not those with
+the largest \(A_C/q_C\): non-inverted periods also lie farther to the
+right. A large within-district contribution relative to the coalition's
+quota is therefore not sufficient for inversion. The majority condition
+also depends on the size of that quota and on \(B_C\).
+
+% PROVENANCE-BEGIN cross-domain-panel-a
+% source: processing/Processing/output/paper/tables/prose_analysis_summaries.csv
+% row:
+%   key: summary=cabinet-component-signs; metric=A_C; aggregation=count_positive
+%   row_at_generation: 19
+%   fields:
+%     value: 53
+%   display:
+%     value: fifty-three
+% row:
+%   key: summary=cabinet-periods; metric=d_C; aggregation=count_negative
+%   row_at_generation: 15
+%   fields:
+%     value: 3
+%   display:
+%     value: three
+% source: generated/cabinet_v5/cabinet_analysis_periods.csv
+% row:
+%   key: analytical_period_id=CV5-005
+%   row_at_generation: 5
+%   fields:
+%     period: 2016.3
+%     election_year: 2014
+%     start_inclusive: 2016-04-14
+%     end_exclusive: 2016-04-19
+%     q_C: 238.7289078420895
+%     A_C: 15.742022264747815
+%     inversion_status: True
+%   display:
+%     period: 2016.3
+%     election_year: 2014
+%     start_inclusive: 2016-04-14
+%     end_exclusive: 2016-04-19
+%     q_C: 238.7289078420895
+%     A_C: 15.742022264747815
+%     inversion_status: True
+% row:
+%   key: analytical_period_id=CV5-041
+%   row_at_generation: 41
+%   fields:
+%     period: 2023.1
+%     election_year: 2022
+%     start_inclusive: 2023-01-01
+%     end_exclusive: 2023-09-13
+%     q_C: 250.79566134558084
+%     A_C: 13.196247377886202
+%     inversion_status: True
+%   display:
+%     period: 2023.1
+%     election_year: 2022
+%     start_inclusive: 2023-01-01
+%     end_exclusive: 2023-09-13
+%     q_C: 250.79566134558084
+%     A_C: 13.196247377886202
+%     inversion_status: True
+% row:
+%   key: analytical_period_id=CV5-033
+%   row_at_generation: 33
+%   fields:
+%     period: 2021.3
+%     election_year: 2018
+%     start_inclusive: 2021-07-28
+%     end_exclusive: 2022-03-24
+%     q_C: 204.13995309990344
+%     A_C: 21.41318435681838
+%     inversion_status: False
+%   display:
+%     period: 2021.3
+%     election_year: 2018
+%     start_inclusive: 2021-07-28
+%     end_exclusive: 2022-03-24
+%     q_C: 204.13995309990344
+%     A_C: 21.41318435681838
+%     inversion_status: False
+% row:
+%   key: analytical_period_id=CV5-038
+%   row_at_generation: 38
+%   fields:
+%     period: 2022.5
+%     election_year: 2018
+%     start_inclusive: 2022-03-31
+%     end_exclusive: 2022-05-11
+%     q_C: 84.27185435508093
+%     A_C: 15.963646528826347
+%     inversion_status: False
+%   display:
+%     period: 2022.5
+%     election_year: 2018
+%     start_inclusive: 2022-03-31
+%     end_exclusive: 2022-05-11
+%     q_C: 84.27185435508093
+%     A_C: 15.963646528826347
+%     inversion_status: False
+% PROVENANCE-END cross-domain-panel-a
+% For the relative-position comparison, compute 100*A_C/q_C from each row.
+% CV5-033 and CV5-038 both lie farther right than CV5-005 and CV5-041;
+% the former pair is not inverted and the latter pair is inverted.
+% Underrepresentation membership and provisional-day status are documented
+% in cabinet-overrepresentation: CV5-023, CV5-025, and CV5-040.
 
 Panel B shows a different pattern. Minimal connected winning coalitions
 appear on both sides of \(A_C=0\), so the uniformly positive

@@ -492,45 +492,38 @@ def save_party_vote_share_vs_seat_share(artifact_root: Path, figure_dir: Path) -
     return output
 
 
+def plot_observed_coalition_starts(axes, observed: pd.DataFrame) -> None:
+    """Connect cabinet start dates within each election and circle inversion cases."""
+    series = (("vote_share", 100, "o"), ("seat_share", 100, "s"),
+              ("representation_ratio", 1, "^"))
+    for year, rows in observed.groupby("election_year"):
+        rows = rows.sort_values("period_start")
+        for ax, (column, scale, marker) in zip(axes, series, strict=True):
+            ax.plot(rows["period_start"], rows[column] * scale,
+                    marker=marker, label=ELECTION_LABELS[year])
+
+    # Circle the same flagged cabinet inversions in every metric panel.
+    inversions = observed.loc[observed["coalition_inversion"]].sort_values("period_start")
+    if not inversions.empty:
+        for ax, (column, scale, _) in zip(axes, series, strict=True):
+            ax.plot(inversions["period_start"], inversions[column] * scale,
+                    linestyle="none", marker="o", markersize=12,
+                    markerfacecolor="none", markeredgecolor="black",
+                    markeredgewidth=1.2, label="Inversion", zorder=5)
+
+
 def save_observed_coalition_timeline(artifact_root: Path, figure_dir: Path) -> Path:
     observed = load_observed_coalition_timeline(artifact_root)
 
     fig, (ax_vote, ax_seat, ax_ratio) = plt.subplots(1, 3, figsize=(10.8, 4.4), sharex=True)
 
     unavailable = load_cabinet_unidentified_intervals(artifact_root)
-    # Draw each period across its actual duration; never connect lines through
-    # omitted/unidentified intervals or interpolate across a composition change.
-    axes_columns = ((ax_vote, "vote_share", 100), (ax_seat, "seat_share", 100),
-                    (ax_ratio, "representation_ratio", 1))
-    for index, (year, df) in enumerate(observed.groupby("election_year")):
-        color = f"C{index}"
-        for ax, column, scale in axes_columns:
-            for position, row in enumerate(df.sort_values("period_start").itertuples()):
-                value = getattr(row, column) * scale
-                ax.plot([row.period_start, row.period_end + pd.Timedelta(days=1)],
-                        [value, value], color=color, linewidth=1.6,
-                        label=ELECTION_LABELS[year] if position == 0 else None)
-                ax.plot(row.midpoint, value, marker="o", markersize=3, color=color)
+    plot_observed_coalition_starts((ax_vote, ax_seat, ax_ratio), observed)
     for position, row in enumerate(unavailable.itertuples()):
         for ax in (ax_vote, ax_seat, ax_ratio):
             ax.axvspan(row.start_inclusive, row.end_exclusive, facecolor="#dddddd",
                        edgecolor="#999999", hatch="////", linewidth=0,
                        label="Composition unidentified" if position == 0 else None)
-
-    daily_path = Path(__file__).resolve().parents[1] / "generated/cabinet_v5/cabinet_analysis_daily.csv"
-    if daily_path.exists():
-        daily = read_csv(daily_path)
-        provisional = daily[daily["provisional_day"].astype(str).str.lower().eq("true")]
-        spans = []
-        for day in pd.to_datetime(provisional["date"]):
-            if spans and spans[-1][1] == day:
-                spans[-1][1] = day + pd.Timedelta(days=1)
-            else:
-                spans.append([day, day + pd.Timedelta(days=1)])
-        for i, (start, end) in enumerate(spans):
-            for ax in (ax_vote, ax_seat, ax_ratio):
-                ax.axvspan(start, end, facecolor="#888888", alpha=.12, linewidth=0,
-                           label="V5 provisional days (100)" if i == 0 else None)
 
     ax_vote.axhline(50, linestyle="--", linewidth=1)
     ax_seat.axhline(SEAT_MAJORITY / EXPECTED_SEATS * 100, linestyle="--", linewidth=1)
@@ -541,9 +534,9 @@ def save_observed_coalition_timeline(artifact_root: Path, figure_dir: Path) -> P
     ax_ratio.set_title("Representation ratio")
     ax_vote.set_ylabel("Coalition share (%)")
     ax_ratio.set_ylabel(r"$R_C$")
-    ax_vote.set_xlabel("Cabinet service date")
-    ax_seat.set_xlabel("Cabinet service date")
-    ax_ratio.set_xlabel("Cabinet service date")
+    ax_vote.set_xlabel("Cabinet period start date")
+    ax_seat.set_xlabel("Cabinet period start date")
+    ax_ratio.set_xlabel("Cabinet period start date")
 
     for ax in (ax_vote, ax_seat, ax_ratio):
         ax.xaxis.set_major_formatter(DateFormatter("%Y"))
@@ -551,7 +544,7 @@ def save_observed_coalition_timeline(artifact_root: Path, figure_dir: Path) -> P
 
     handles, labels = ax_vote.get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(.5, .93),
-               ncol=2 if len(labels) > 3 else 3, frameon=False)
+               ncol=min(4, len(labels)), frameon=False)
     fig.suptitle(
         "Observed cabinet-period coalition vote shares, seat shares, and representation ratios",
         y=.995, fontsize=12,
@@ -560,10 +553,7 @@ def save_observed_coalition_timeline(artifact_root: Path, figure_dir: Path) -> P
     output = figure_dir / "observed_coalition_timeline.pdf"
     fig.autofmt_xdate()
     fig.tight_layout()
-    if cabinet_calendar_has_bounded_dates(artifact_root):
-        fig.text(.5, .01, "Cabinet dates include bounded conventions; local date sensitivity is reported separately.",
-                 ha="center", fontsize=8)
-    fig.subplots_adjust(top=0.75, bottom=.21, wspace=0.28)
+    fig.subplots_adjust(top=.80 if len(labels) <= 4 else .75, bottom=.16, wspace=.28)
     fig.savefig(output)
     plt.close(fig)
     return output
