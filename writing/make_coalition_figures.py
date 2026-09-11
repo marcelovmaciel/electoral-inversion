@@ -171,6 +171,7 @@ def load_observed_coalition_timeline(artifact_root: Path) -> pd.DataFrame:
         input_path,
         {
             "election_year",
+            "first_observed",
             "period",
             "period_start",
             "period_end",
@@ -209,6 +210,9 @@ def load_observed_coalition_timeline(artifact_root: Path) -> pd.DataFrame:
     if not (inversion_rows["seats"] >= SEAT_MAJORITY).all():
         raise ValueError(f"An observed inversion has fewer than 257 seats in {input_path}")
 
+    observed["first_observed"] = pd.to_datetime(observed["first_observed"], errors="raise")
+    if observed["first_observed"].isna().any():
+        raise ValueError(f"Missing first-observed date in {input_path}")
     observed["period_start"] = pd.to_datetime(observed["period_start"], errors="raise")
     observed["period_end"] = pd.to_datetime(observed["period_end"], errors="raise")
     if (observed["period_end"] < observed["period_start"]).any():
@@ -491,16 +495,16 @@ def save_party_vote_share_vs_seat_share(artifact_root: Path, figure_dir: Path) -
 ELECTION_COLORS = {2014: "#1f77b4", 2018: "#ff7f0e", 2022: "#2ca02c"}
 
 def plot_observed_coalition_starts(axes, observed: pd.DataFrame) -> None:
-    """One point per distinct set; horizontal order is first appearance."""
+    """One point per distinct set at its first observed calendar date."""
     series = (("vote_share", 100, "o"), ("seat_share", 100, "s"),
               ("representation_ratio", 1, "^"))
     for year, rows in observed.groupby("election_year", sort=True):
         for ax, (column, scale, marker) in zip(axes, series, strict=True):
-            ax.plot(rows.index, rows[column] * scale, linestyle="none",
+            ax.plot(rows["first_observed"], rows[column] * scale, linestyle="none",
                     marker=marker, color=ELECTION_COLORS[year], label=ELECTION_LABELS[year], markersize=4)
     inverted = observed.loc[observed.coalition_inversion]
     for ax, (column, scale, _) in zip(axes, series, strict=True):
-        ax.plot(inverted.index, inverted[column] * scale, linestyle="none", marker="o",
+        ax.plot(inverted["first_observed"], inverted[column] * scale, linestyle="none", marker="o",
                 markersize=10, markerfacecolor="none", markeredgecolor="black",
                 markeredgewidth=1.1, label="Inversion", zorder=5)
 
@@ -509,25 +513,28 @@ def save_observed_coalition_timeline(artifact_root: Path, figure_dir: Path) -> P
     # Filename retained for manuscript label compatibility; chronology input
     # remains separately exported as figure_data/observed_coalition_timeline.csv.
     observed = load_observed_coalition_timeline(artifact_root).sort_values(
-        ["election_year", "first_observed", "cabinet_party_set_id"]).reset_index(drop=True)
+        ["first_observed", "cabinet_party_set_id"]).reset_index(drop=True)
     observed.to_csv(artifact_root / "figure_data/cabinet_party_set_comparison.csv", index=False)
     fig, axes = plt.subplots(1, 3, figsize=(9.2, 3.4), sharex=True)
     plot_observed_coalition_starts(axes, observed)
-    year_positions = {str(year): (rows.index.min() + rows.index.max()) / 2
-                      for year, rows in observed.groupby("election_year", sort=True)}
+    annual_ticks = pd.date_range("2015-01-01", "2026-01-01", freq="YS")
+    date_padding = pd.Timedelta(days=90)
+    date_limits = (min(annual_ticks[0], observed.first_observed.min()) - date_padding,
+                   max(annual_ticks[-1], observed.first_observed.max()) + date_padding)
     for ax, threshold, title, ylabel in zip(axes, (50, SEAT_MAJORITY / EXPECTED_SEATS * 100, 1),
             ("Vote share", "Seat share", "Representation ratio"), ("Vote (%)", "Seats (%)", r"$R_C$")):
         ax.axhline(threshold, linestyle="--", color="#666666", linewidth=.8)
         ax.set_title(title, loc="left", fontsize=10)
         ax.set_ylabel(ylabel)
         ax.grid(axis="y", linewidth=.35, alpha=.35)
-        for boundary in observed.index[observed.election_year.ne(observed.election_year.shift())][1:]:
-            ax.axvline(boundary-.5, color="#bbbbbb", lw=.6)
-        ax.set_xticks(list(year_positions.values()), list(year_positions), fontsize=9)
-    fig.supxlabel("Cabinet party set", y=.03, fontsize=10)
+        ax.set_xticks(annual_ticks)
+        ax.xaxis.set_major_formatter(DateFormatter("%Y"))
+        ax.set_xlim(date_limits)
+        plt.setp(ax.get_xticklabels(), rotation=90, ha="center", fontsize=7)
+    fig.supxlabel("First observed", y=.03, fontsize=10)
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", ncol=4, frameon=False, bbox_to_anchor=(.53,1.0))
-    fig.subplots_adjust(top=.80,bottom=.20,left=.065,right=.99,wspace=.42)
+    fig.subplots_adjust(top=.80,bottom=.25,left=.065,right=.99,wspace=.42)
     output = figure_dir / "observed_coalition_timeline.pdf"
     fig.savefig(output, metadata={"CreationDate":None,"ModDate":None})
     plt.close(fig)
