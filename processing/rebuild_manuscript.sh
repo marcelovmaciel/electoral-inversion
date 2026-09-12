@@ -42,6 +42,7 @@ fi
 "$python_cmd" writing/make_coalition_figures.py --artifact-root processing/Processing/output/paper --figure-dir writing/submission_inversions_review/manuscript
 "$python_cmd" writing/make_coalition_figures.py --artifact-root processing/Processing/output/paper --figure-dir writing/figures
 "$python_cmd" processing/cabinet_party_set_report.py --sync-assets
+"$python_cmd" writing/make_appendix_assets.py
 "$python_cmd" processing/audit_ideological_universes.py
 "$python_cmd" processing/cabinet_party_set_validation.py
 latexmk -cd -g -pdf -synctex=1 -interaction=nonstopmode -halt-on-error -outdir=../../output/decomposition/report processing/Processing/decomposition/report/intermediate_accounting_report.tex

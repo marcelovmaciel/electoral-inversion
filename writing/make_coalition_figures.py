@@ -612,6 +612,26 @@ def save_ideological_interval_heatmaps(artifact_root: Path, figure_dir: Path) ->
 
 
 
+def load_seat_winning_order(artifact_root: Path, year: int) -> pd.DataFrame:
+    """Return the validated ordinal party order used by Figure 3."""
+    order_path = artifact_root / "raw" / f"ideology_order_{year}.csv"
+    order = read_csv(order_path)
+    require_columns(
+        order, order_path,
+        {"ideological_universe", "election_year", "ordinal_position", "party"},
+    )
+    order = order.loc[
+        order["ideological_universe"].eq("seat_winning")
+        & order["election_year"].eq(year)
+    ].sort_values("ordinal_position")
+    require_finite_numeric(order, order_path, {"ordinal_position"})
+    if (order["party"].isna().any() or order["party"].duplicated().any()
+            or not np.array_equal(order["ordinal_position"], np.arange(1, len(order) + 1))
+            or order["party"].eq("PT").sum() != 1):
+        raise ValueError(f"Invalid seat-winning party order in {order_path}")
+    return order
+
+
 def build_minimal_connected_winning_inversions(artifact_root: Path) -> plt.Figure:
     """Plot the exact-connected minimal inversions in the seat-winning order.
 
@@ -632,21 +652,7 @@ def build_minimal_connected_winning_inversions(artifact_root: Path) -> plt.Figur
     years = sorted(ELECTION_LABELS)
     orders = {}
     for year in years:
-        order_path = artifact_root / "raw" / f"ideology_order_{year}.csv"
-        order = read_csv(order_path)
-        require_columns(
-            order, order_path,
-            {"ideological_universe", "election_year", "ordinal_position", "party"},
-        )
-        order = order.loc[
-            order["ideological_universe"].eq("seat_winning")
-            & order["election_year"].eq(year)
-        ].sort_values("ordinal_position")
-        require_finite_numeric(order, order_path, {"ordinal_position"})
-        if (order["party"].isna().any() or order["party"].duplicated().any()
-                or not np.array_equal(order["ordinal_position"], np.arange(1, len(order) + 1))
-                or order["party"].eq("PT").sum() != 1):
-            raise ValueError(f"Invalid seat-winning party order in {order_path}")
+        order = load_seat_winning_order(artifact_root, year)
         positions = order.set_index("party")["ordinal_position"]
         rows = minimal.loc[minimal["election_year"].eq(year)]
         if rows.empty:
